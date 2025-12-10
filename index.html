@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>NewEnergy - Login</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #0b0f1b;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .card {
+      background: #1b1f33;
+      border-radius: 15px;
+      padding: 25px;
+      width: 350px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.7);
+      text-align: center;
+    }
+
+    h1 { color: #00bcd4; margin-bottom: 20px; }
+    input { width: 100%; padding: 10px; margin-bottom: 12px; border-radius: 8px; border: none; }
+    button { width: 100%; padding: 12px; border: none; border-radius: 12px; font-size: 16px; cursor: pointer; margin-bottom: 10px; }
+    .btn-login { background: #16a34a; color: #fff; }
+    .btn-register { background: #2196f3; color: #fff; }
+    #error { color: #ff4444; margin-bottom: 10px; }
+  </style>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+  <div class="card">
+    <h1>Login NewEnergy</h1>
+    <div id="error"></div>
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Senha">
+    <button id="btnLogin" class="btn-login">Entrar</button>
+    <button id="btnRegister" class="btn-register">Cadastrar</button>
+  </div>
+
+  <script>
+    // ===== CONFIGURAÇÃO FIREBASE =====
+    const firebaseConfig = {
+      apiKey: "AIzaSyB5FnkQiFi3gn9Iup2KNcbrKxWd-0Jjo6Y",
+      authDomain: "oficial-688e8.firebaseapp.com",
+      databaseURL: "https://oficial-688e8-default-rtdb.firebaseio.com/",
+      projectId: "oficial-688e8",
+      storageBucket: "oficial-688e8.firebasestorage.app",
+      messagingSenderId: "547217835774",
+      appId: "1:547217835774:web:c7186da5bf6156590c47af"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    const emailEl = document.getElementById("email");
+    const passEl = document.getElementById("password");
+    const btnLogin = document.getElementById("btnLogin");
+    const btnRegister = document.getElementById("btnRegister");
+    const errorEl = document.getElementById("error");
+
+    // ===== LOGIN =====
+    btnLogin.addEventListener("click", () => {
+      errorEl.textContent = "";
+      auth.signInWithEmailAndPassword(emailEl.value, passEl.value)
+        .then(() => {
+          window.location.href = "painel.html";
+        })
+        .catch(err => { errorEl.textContent = err.message; });
+    });
+
+    // ===== CADASTRO =====
+    btnRegister.addEventListener("click", () => {
+      errorEl.textContent = "";
+      auth.createUserWithEmailAndPassword(emailEl.value, passEl.value)
+        .then(() => {
+          window.location.href = "painel.html";
+        })
+        .catch(err => { errorEl.textContent = err.message; });
+    });
+  </script>
+</body>
+</html>
