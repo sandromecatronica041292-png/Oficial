@@ -3,93 +3,100 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Painel NewEnergy</title>
-
+  <title>NewEnergy - Painel</title>
   <style>
     body {
       margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: #0b0f1b;
       color: #fff;
-      font-family: 'Segoe UI', Tahoma, sans-serif;
       display: flex;
       justify-content: center;
-      padding-top: 30px;
-    }
-
-    .container {
-      width: 90%;
-      max-width: 380px;
-      background: #1b1f33;
+      align-items: flex-start;
       padding: 20px;
+    }
+
+    .card {
+      background: #1b1f33;
       border-radius: 15px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
-      text-align: center;
+      padding: 25px;
+      width: 420px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.7);
     }
 
-    h1 { 
-      color: #00bcd4;
-      margin-bottom: 25px;
-      font-size: 22px;
-    }
-
-    .gauge {
-      margin: 20px 0;
-    }
+    h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
+    .logo { text-align: center; margin-bottom: 20px; font-size: 20px; color: #00bcd4; font-weight: bold; letter-spacing: 1px; }
+    .status { text-align: center; font-weight: bold; font-size: 18px; margin-bottom: 12px; }
 
     .btn {
       width: 100%;
       padding: 12px;
       border: none;
-      border-radius: 10px;
-      font-size: 16px;
+      border-radius: 12px;
+      font-size: 18px;
+      margin-bottom: 20px;
       cursor: pointer;
-      margin-top: 15px;
+      transition: all 0.3s ease;
     }
 
-    .btn-led {
-      background: #16a34a;
-      color: #fff;
-    }
+    .on { background: #16a34a; color: #fff; }
+    .off { background: #ef4444; color: #fff; }
 
-    .btn-hist {
-      background: #0d293a;
+    .gauges { display: flex; justify-content: space-between; margin-top: 10px; }
+    .gbox { width: 48%; text-align: center; background: #0c1424; padding: 15px; border-radius: 15px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
+    .gtitle { font-size: 14px; margin-bottom: 8px; color: #8fa3c6; letter-spacing: 0.5px; }
+    .gvalue { margin-top: -10px; font-size: 22px; font-weight: bold; color: #00bcd4; }
+
+    #btnLogout { background: #ff5722; margin-top: 10px; }
+
+    /* ===== BOTÃO HISTÓRICO (DISCRETO) ===== */
+    #btnHistorico {
+      background: #0c1424;
+      color: #8fa3c6;
+      border: 1px solid #1f2a44;
+      font-size: 15px;
+      margin-top: 10px;
+    }
+    #btnHistorico:hover {
+      background: #142038;
       color: #00bcd4;
-      margin-top: 25px;
-      border: 1px solid #00bcd4;
     }
   </style>
 
-  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gaugeJS/dist/gauge.min.js"></script>
 </head>
-
 <body>
-  <div class="container">
-    <h1>Painel NewEnergy</h1>
+  <div class="card">
+    <div class="logo">NewEnergy</div>
+    <h1>Monitoramento Industrial</h1>
 
-    <!-- GAUGE TEMPERATURA -->
-    <div class="gauge">
-      <canvas id="gaugeTemp" width="260" height="160"></canvas>
-      <div id="tempValue" style="font-size:18px;margin-top:5px;"></div>
+    <div id="status" class="status">Conectando...</div>
+    <button id="btnLED" class="btn off">Carregando...</button>
+
+    <div class="gauges">
+      <div class="gbox">
+        <div class="gtitle">Temperatura (°C)</div>
+        <canvas id="gTemp" width="180" height="160"></canvas>
+        <div id="tempVal" class="gvalue">-- °C</div>
+      </div>
+
+      <div class="gbox">
+        <div class="gtitle">Umidade (%)</div>
+        <canvas id="gHum" width="180" height="160"></canvas>
+        <div id="humVal" class="gvalue">-- %</div>
+      </div>
     </div>
 
-    <!-- GAUGE UMIDADE -->
-    <div class="gauge">
-      <canvas id="gaugeUmid" width="260" height="160"></canvas>
-      <div id="umidValue" style="font-size:18px;margin-top:5px;"></div>
-    </div>
+    <!-- ===== BOTÃO DISCRETO DE HISTÓRICO ===== -->
+    <button id="btnHistorico" class="btn">Histórico</button>
 
-    <!-- BOTÃO LED -->
-    <button id="btnLed" class="btn btn-led">Ligar LED</button>
-
-    <!-- BOTÃO HISTÓRICO -->
-    <button onclick="window.location.href='historico.html'" class="btn btn-hist">Ver Histórico</button>
-
+    <button id="btnLogout" class="btn">Sair</button>
   </div>
 
   <script>
-    // ===== CONFIG FIREBASE =====
     const firebaseConfig = {
       apiKey: "AIzaSyB5FnkQiFi3gn9Iup2KNcbrKxWd-0Jjo6Y",
       authDomain: "oficial-688e8.firebaseapp.com",
@@ -102,74 +109,64 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+    const auth = firebase.auth();
 
-    // ===== FUNÇÃO GAUGE =====
-    function drawGauge(canvas, value, min, max, color) {
-      const ctx = canvas.getContext("2d");
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      const centerX = canvas.width / 2;
-      const centerY = canvas.height * 0.9;
-      const radius = 70;
-
-      const startAngle = Math.PI;
-      const endAngle = 0;
-
-      let percent = (value - min) / (max - min);
-      if (percent < 0) percent = 0;
-      if (percent > 1) percent = 1;
-
-      // Fundo
-      ctx.beginPath();
-      ctx.lineWidth = 15;
-      ctx.strokeStyle = "#333";
-      ctx.arc(centerX, centerY, radius, startAngle, endAngle);
-      ctx.stroke();
-
-      // Progresso
-      ctx.beginPath();
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 15;
-      ctx.arc(centerX, centerY, radius, startAngle, startAngle + (Math.PI * percent));
-      ctx.stroke();
-    }
-
-    // ===== ATUALIZA GAUGES EM TEMPO REAL =====
-    const tempEl = document.getElementById("tempValue");
-    const umidEl = document.getElementById("umidValue");
-
-    const gaugeTemp = document.getElementById("gaugeTemp");
-    const gaugeUmid = document.getElementById("gaugeUmid");
-
-    db.ref("sensores").on("value", snap => {
-      const data = snap.val();
-      if (!data) return;
-
-      const t = data.temperatura;
-      const u = data.umidade;
-
-      tempEl.textContent = t + " °C";
-      umidEl.textContent = u + " %";
-
-      drawGauge(gaugeTemp, t, 0, 60, "#00bcd4");
-      drawGauge(gaugeUmid, u, 0, 100, "#4ade80");
+    auth.onAuthStateChanged(user => {
+      if (!user) window.location.href = "index.html";
     });
 
-    // ===== BOTÃO LIGA/DESLIGA LED =====
-    const btnLed = document.getElementById("btnLed");
-    let ledState = false;
+    const LEDREF = db.ref("/led");
+    const TEMPREF = db.ref("/temp");
+    const HUMREF = db.ref("/hum");
 
-    // Ouvir o estado do LED
-    db.ref("led").on("value", snap => {
-      ledState = snap.val() === 1;
-      btnLed.textContent = ledState ? "Desligar LED" : "Ligar LED";
-      btnLed.style.background = ledState ? "#b91c1c" : "#16a34a";
+    const statusEl = document.getElementById("status");
+    const btn = document.getElementById("btnLED");
+    const btnLogout = document.getElementById("btnLogout");
+
+    const gaugeTemp = new Gauge(document.getElementById("gTemp")).setOptions({});
+    gaugeTemp.maxValue = 50; gaugeTemp.setMinValue(0); gaugeTemp.animationSpeed = 30; gaugeTemp.set(0);
+
+    const gaugeHum = new Gauge(document.getElementById("gHum")).setOptions({});
+    gaugeHum.maxValue = 100; gaugeHum.setMinValue(0); gaugeHum.animationSpeed = 30; gaugeHum.set(0);
+
+    LEDREF.on("value", snap => {
+      const v = snap.val();
+      const on = (v === 1 || v === "1" || v === true);
+      statusEl.textContent = on ? "LED LIGADO" : "LED DESLIGADO";
+      btn.textContent = on ? "DESLIGAR" : "LIGAR";
+      btn.className = on ? "btn on" : "btn off";
     });
 
-    btnLed.addEventListener("click", () => {
-      db.ref("led").set(ledState ? 0 : 1);
+    btn.addEventListener("click", async () => {
+      const snap = await LEDREF.get();
+      const cur = snap.val();
+      LEDREF.set((cur === 1 || cur === "1") ? 0 : 1);
     });
 
+    TEMPREF.on("value", snap => {
+      const t = Number(snap.val());
+      if (!isNaN(t)) {
+        gaugeTemp.set(t);
+        document.getElementById("tempVal").innerText = t.toFixed(1) + " °C";
+      }
+    });
+
+    HUMREF.on("value", snap => {
+      const h = Number(snap.val());
+      if (!isNaN(h)) {
+        gaugeHum.set(h);
+        document.getElementById("humVal").innerText = h.toFixed(1) + " %";
+      }
+    });
+
+    btnLogout.addEventListener("click", () => {
+      auth.signOut().then(() => window.location.href = "index.html");
+    });
+
+    // ===== BOTÃO HISTÓRICO =====
+    document.getElementById("btnHistorico").addEventListener("click", () => {
+      window.location.href = "historico.html";
+    });
   </script>
 </body>
 </html>
