@@ -1,142 +1,74 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NewEnergy • Painel</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel • NewEnergy</title>
 
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f2f2f2;
+            padding: 20px;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+            max-width: 420px;
+            margin: auto;
+            text-align: center;
+        }
+        h2 { margin-top: 0; }
+        .value {
+            font-size: 42px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+    </style>
 
-<style>
-body {
-    margin: 0; padding: 0; background: #000;
-    color: white; font-family: Arial, sans-serif;
-}
-header {
-    background: #111; padding: 12px;
-    text-align: center; font-size: 22px;
-    color: #f1c40f; border-bottom: 1px solid #222;
-}
-.container {
-    padding: 20px; max-width: 500px;
-    margin: auto; text-align: center;
-}
-.card {
-    background: #111; padding: 15px;
-    border-radius: 10px; border: 1px solid #333;
-    margin-bottom: 15px;
-}
-.card h3 {
-    margin: 0; margin-bottom: 10px;
-    color: #f1c40f;
-}
-button {
-    width: 100%; padding: 10px;
-    border: none; font-size: 16px;
-    border-radius: 8px; background: #f1c40f;
-    color: #000; cursor: pointer;
-    font-weight: bold;
-}
-button:hover { background: #ffe35a; }
-.status-online { color: #2ecc71; font-weight: bold; }
-.status-offline { color: #e74c3c; font-weight: bold; }
-</style>
+    <!-- Firebase compat (a versão que funcionava para você) -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 </head>
 <body>
 
-<header>Painel NewEnergy</header>
+<div class="card">
+    <h2>Sensores</h2>
 
-<div class="container">
+    <p>Temperatura</p>
+    <div id="temp" class="value">--</div>
 
-    <div class="card">
-        <h3>Status do ESP32</h3>
-        <p id="statusESP">Carregando...</p>
-    </div>
-
-    <div class="card">
-        <h3>Temperatura Atual</h3>
-        <p id="tempAtual">-- °C</p>
-    </div>
-
-    <div class="card">
-        <h3>Umidade Atual</h3>
-        <p id="umiAtual">-- %</p>
-    </div>
-
-    <button onclick="window.location.href='historico.html'">
-        📘 Histórico Completo
-    </button>
-
+    <p>Umidade</p>
+    <div id="umi" class="value">--</div>
 </div>
 
 <script>
-// ---- CONFIG FIREBASE ----
-const firebaseConfig = {
-  apiKey:"AIzaSyAEgLyJ6i2ZaSNnBrLMoe2ajInd4MGKHIs",
-  authDomain:"controle-led-esp-oficial.firebaseapp.com",
-  databaseURL:"https://controle-led-esp-oficial-default-rtdb.firebaseio.com",
-  projectId:"controle-led-esp-oficial",
-  storageBucket:"controle-led-esp-oficial.firebasestorage.app",
-  messagingSenderId:"1082980860084",
-  appId:"1:1082980860084:web:b3b669b8f1801c3d6657e1"
-};
-firebase.initializeApp(firebaseConfig);
+    // === CONFIGURAÇÃO DO FIREBASE ===
+    const firebaseConfig = {
+      apiKey: "AIzaSyB5FnkQiFi3gn9Iup2KNcbrKxWd-0Jjo6Y",
+      authDomain: "oficial-688e8.firebaseapp.com",
+      databaseURL: "https://oficial-688e8-default-rtdb.firebaseio.com",
+      projectId: "oficial-688e8",
+      storageBucket: "oficial-688e8.firebasestorage.app",
+      messagingSenderId: "547217835774",
+      appId: "1:547217835774:web:c7186da5bf6156590c47af"
+    };
 
-const auth = firebase.auth();
-const db = firebase.database();
+    // Inicializa Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-let espID = "";
-
-// ---- Verifica Login ----
-auth.onAuthStateChanged(user => {
-    if (!user) {
-        alert("Você precisa fazer login!");
-        window.location.href = "index.html";
-        return;
-    }
-
-    const uid = user.uid;
-
-    // Pega o ID do ESP32 vinculado
-    db.ref("usuarios/" + uid + "/esp32ID").once("value").then(snap => {
-        espID = snap.val();
-
-        if (!espID) {
-            alert("Nenhum ESP32 vinculado à sua conta.");
-            return;
-        }
-
-        iniciarLeituras();
-    });
-});
-
-// ---- Busca dados em tempo real ----
-function iniciarLeituras() {
-
-    // STATUS
-    db.ref("status/" + espID).on("value", snap => {
-        const statusEl = document.getElementById("statusESP");
-        if (snap.val() === "online") {
-            statusEl.innerHTML = "<span class='status-online'>🟢 Online</span>";
-        } else {
-            statusEl.innerHTML = "<span class='status-offline'>🔴 Offline</span>";
+    // Lê dados em tempo real
+    db.ref("sensores").on("value", (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            document.getElementById("temp").innerText = data.temperatura + "°C";
+            document.getElementById("umi").innerText = data.umidade + "%";
         }
     });
-
-    // TEMPERATURA
-    db.ref("sensores/" + espID + "/temperatura").on("value", snap => {
-        document.getElementById("tempAtual").innerText =
-            snap.val() !== null ? snap.val() + " °C" : "-- °C";
-    });
-
-    // UMIDADE
-    db.ref("sensores/" + espID + "/umidade").on("value", snap => {
-        document.getElementById("umiAtual").innerText =
-            snap.val() !== null ? snap.val() + " %" : "-- %";
-    });
-}
 </script>
 
 </body>
