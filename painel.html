@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>NewEnergy - Monitoramento</title>
+  <title>NewEnergy - Painel</title>
 
   <style>
     body {
@@ -89,11 +89,17 @@
       font-weight: bold;
       color: #00bcd4;
     }
+
+    #btnLogout {
+      background: #ff5722;
+      margin-top: 10px;
+    }
   </style>
 
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
   <!-- GaugeJS -->
   <script src="https://cdn.jsdelivr.net/npm/gaugeJS/dist/gauge.min.js"></script>
@@ -106,6 +112,7 @@
 
     <div id="status" class="status">Conectando...</div>
     <button id="btnLED" class="btn off">Carregando...</button>
+    <button id="btnLogout" class="btn">Sair</button>
 
     <div class="gauges">
       <div class="gbox">
@@ -131,11 +138,18 @@
       projectId: "oficial-688e8",
       storageBucket: "oficial-688e8.firebasestorage.app",
       messagingSenderId: "547217835774",
-      appId: "1:547217835774:web:c7186da5bf6156590c47af"
+      appId: "1:547217834c7186da5bf6156590c47af"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+    const auth = firebase.auth();
+
+    // ===== VERIFICA LOGIN =====
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        window.location.href = "login.html"; // redireciona se não estiver logado
+      }
+    });
 
     const LEDREF = db.ref("/led");
     const TEMPREF = db.ref("/temp");
@@ -143,15 +157,15 @@
 
     const statusEl = document.getElementById("status");
     const btn = document.getElementById("btnLED");
+    const btnLogout = document.getElementById("btnLogout");
 
-    // ===== GAUGE TEMPERATURA =====
+    // ===== GAUGES =====
     const gaugeTemp = new Gauge(document.getElementById("gTemp")).setOptions({});
     gaugeTemp.maxValue = 50;
     gaugeTemp.setMinValue(0);
     gaugeTemp.animationSpeed = 30;
     gaugeTemp.set(0);
 
-    // ===== GAUGE UMIDADE =====
     const gaugeHum = new Gauge(document.getElementById("gHum")).setOptions({});
     gaugeHum.maxValue = 100;
     gaugeHum.setMinValue(0);
@@ -162,7 +176,6 @@
     LEDREF.on("value", snap => {
       const v = snap.val();
       const on = (v === 1 || v === "1" || v === true);
-
       statusEl.textContent = on ? "LED LIGADO" : "LED DESLIGADO";
       btn.textContent = on ? "DESLIGAR" : "LIGAR";
       btn.className = on ? "btn on" : "btn off";
@@ -191,6 +204,13 @@
         gaugeHum.set(h);
         document.getElementById("humVal").innerText = h.toFixed(1) + " %";
       }
+    });
+
+    // ===== LOGOUT =====
+    btnLogout.addEventListener("click", () => {
+      auth.signOut().then(() => {
+        window.location.href = "login.html";
+      });
     });
   </script>
 </body>
