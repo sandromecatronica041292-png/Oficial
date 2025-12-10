@@ -29,7 +29,6 @@
     input { width: 100%; padding: 10px; margin-bottom: 12px; border-radius: 8px; border: none; }
     button { width: 100%; padding: 12px; border: none; border-radius: 12px; font-size: 16px; cursor: pointer; margin-bottom: 10px; }
     .btn-login { background: #16a34a; color: #fff; }
-    .btn-register { background: #2196f3; color: #fff; }
     #error { color: #ff4444; margin-bottom: 10px; }
   </style>
 
@@ -44,7 +43,6 @@
     <input type="email" id="email" placeholder="Email">
     <input type="password" id="password" placeholder="Senha">
     <button id="btnLogin" class="btn-login">Entrar</button>
-    <button id="btnRegister" class="btn-register">Cadastrar</button>
   </div>
 
   <script>
@@ -64,7 +62,6 @@
     const emailEl = document.getElementById("email");
     const passEl = document.getElementById("password");
     const btnLogin = document.getElementById("btnLogin");
-    const btnRegister = document.getElementById("btnRegister");
     const errorEl = document.getElementById("error");
 
     // ===== LOGIN =====
@@ -74,17 +71,9 @@
         .then(() => {
           window.location.href = "painel.html";
         })
-        .catch(err => { errorEl.textContent = err.message; });
-    });
-
-    // ===== CADASTRO =====
-    btnRegister.addEventListener("click", () => {
-      errorEl.textContent = "";
-      auth.createUserWithEmailAndPassword(emailEl.value, passEl.value)
-        .then(() => {
-          window.location.href = "painel.html";
-        })
-        .catch(err => { errorEl.textContent = err.message; });
+        .catch(err => { 
+          errorEl.textContent = "Erro: " + err.message; 
+        });
     });
   </script>
 </body>
