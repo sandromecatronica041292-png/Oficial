@@ -1,107 +1,61 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>NewEnergy - Histórico SaaS</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>NewEnergy - Histórico</title>
 
-<style>
-  body {
-    margin: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #0b0f1b;
-    color: #fff;
-    display: flex;
-    justify-content: center;
-    padding: 20px;
-  }
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #0b0f1b;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 20px;
+    }
+    .card {
+      background: #1b1f33;
+      border-radius: 15px;
+      padding: 25px;
+      width: 480px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.7);
+    }
+    h1 {
+      text-align: center;
+      color: #00bcd4;
+      margin-bottom: 20px;
+    }
+    .tabs { display: flex; margin-bottom: 15px; }
+    .tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; border-radius: 10px 10px 0 0; background: #0c1424; margin-right: 2px; }
+    .tab.active { background: #00bcd4; color: #0b0f1b; }
+    .item { background: #0c1424; padding: 15px; border-radius: 12px; margin-bottom: 12px; box-shadow: inset 0 0 10px rgba(0,0,0,0.4); }
+    .data { font-size: 14px; color: #8fa3c6; margin-bottom: 5px; }
+    .valor { font-size: 16px; font-weight: bold; color: #00bcd4; }
+    .btn { width: 100%; padding: 12px; border: none; border-radius: 12px; background: #ff5722; font-size: 16px; cursor: pointer; margin-top: 15px; color: white; }
+  </style>
 
-  .card {
-    background: #1b1f33;
-    border-radius: 15px;
-    padding: 25px;
-    width: 100%;
-    max-width: 600px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.7);
-  }
-
-  h1 {
-    text-align: center;
-    color: #00bcd4;
-    margin-bottom: 20px;
-  }
-
-  .tabs {
-    display: flex;
-    justify-content: space-around;
-    margin-bottom: 20px;
-  }
-
-  .tab {
-    cursor: pointer;
-    padding: 10px 20px;
-    border-radius: 12px;
-    background: #0c1424;
-    color: #8fa3c6;
-    transition: 0.3s;
-  }
-
-  .tab.active {
-    background: #00bcd4;
-    color: #0b0f1b;
-    font-weight: bold;
-  }
-
-  .item {
-    background: #0c1424;
-    padding: 15px;
-    border-radius: 12px;
-    margin-bottom: 12px;
-    box-shadow: inset 0 0 10px rgba(0,0,0,0.4);
-  }
-
-  .data { font-size: 14px; color: #8fa3c6; margin-bottom: 5px; }
-  .valor { font-size: 16px; font-weight: bold; color: #00bcd4; }
-
-  .btn {
-    width: 100%;
-    padding: 12px;
-    border: none;
-    border-radius: 12px;
-    background: #ff5722;
-    font-size: 16px;
-    cursor: pointer;
-    margin-top: 15px;
-    color: white;
-  }
-
-  @media(max-width: 500px) {
-    .tabs { flex-direction: column; gap: 10px; }
-  }
-</style>
-
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<!-- jsPDF para exportar PDF -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
+
 <div class="card">
   <h1>Histórico de Leituras</h1>
 
   <div class="tabs">
-    <div class="tab active" data-period="diario">Diário</div>
-    <div class="tab" data-period="semanal">Semanal</div>
-    <div class="tab" data-period="mensal">Mensal</div>
-    <div class="tab" data-period="anual">Anual</div>
+    <div class="tab active" onclick="showTab('diario')">Diário</div>
+    <div class="tab" onclick="showTab('semanal')">Semanal</div>
+    <div class="tab" onclick="showTab('mensal')">Mensal</div>
+    <div class="tab" onclick="showTab('anual')">Anual</div>
   </div>
 
   <div id="lista"></div>
-
-  <button class="btn" id="exportBtn">Exportar PDF</button>
+  <button class="btn" onclick="exportPDF()">Exportar PDF</button>
   <button class="btn" onclick="window.location.href='painel.html'">Voltar</button>
 </div>
 
@@ -115,89 +69,77 @@ const firebaseConfig = {
   messagingSenderId: "547217835774",
   appId: "1:547217835774:web:c7186da5bf6156590c47af"
 };
+
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const auth = firebase.auth();
 
-auth.onAuthStateChanged(user => { if (!user) window.location.href = "index.html"; });
-
-const LISTA = document.getElementById("lista");
-const REF_HISTORY = db.ref("/historico");
-
-let dadosGlobais = {};
-let periodoAtual = "diario";
-
-// Função para filtrar dados por período
-function filtrarDados(periodo) {
-  const agora = new Date();
-  let limite;
-
-  switch(periodo) {
-    case "diario": limite = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate()); break;
-    case "semanal": limite = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate() - 7); break;
-    case "mensal": limite = new Date(agora.getFullYear(), agora.getMonth(), 1); break;
-    case "anual": limite = new Date(agora.getFullYear(), 0, 1); break;
-  }
-
-  const filtered = Object.entries(dadosGlobais).filter(([ts, val]) => new Date(ts*1000) >= limite);
-  return filtered.sort((a,b)=>b[0]-a[0]);
-}
-
-// Função para renderizar lista
-function renderizar(periodo) {
-  const filtered = filtrarDados(periodo);
-  LISTA.innerHTML = "";
-
-  if (!filtered.length) {
-    LISTA.innerHTML = "<p>Nenhum registro encontrado.</p>";
-    return;
-  }
-
-  filtered.forEach(([ts, item])=>{
-    const data = new Date(ts*1000).toLocaleString("pt-BR");
-    LISTA.innerHTML += `
-      <div class="item">
-        <div class="data">${data}</div>
-        <div class="valor">🌡 Temp: ${item.temperatura} °C</div>
-        <div class="valor">💧 Umidade: ${item.umidade} %</div>
-      </div>
-    `;
-  });
-}
-
-// Mudança de aba
-document.querySelectorAll(".tab").forEach(tab=>{
-  tab.addEventListener("click", ()=>{
-    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-    tab.classList.add("active");
-    periodoAtual = tab.dataset.period;
-    renderizar(periodoAtual);
-  });
+auth.onAuthStateChanged(user => {
+  if (!user) window.location.href = "index.html";
 });
 
-// Exportar PDF
-document.getElementById("exportBtn").addEventListener("click", ()=>{
+let currentTab = 'diario';
+
+function showTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+  event.target.classList.add('active');
+  carregarHistorico();
+}
+
+function carregarHistorico() {
+  const LISTA = document.getElementById("lista");
+  LISTA.innerHTML = "<p>Carregando...</p>";
+
+  const REF = db.ref("/historico/" + currentTab);
+  REF.once("value", snap => {
+    const dados = snap.val();
+    if (!dados) {
+      LISTA.innerHTML = "<p>Nenhum registro encontrado.</p>";
+      return;
+    }
+
+    LISTA.innerHTML = "";
+    // Para cada período (diário/semana/mês/ano)
+    const chavesPeriodo = Object.keys(dados).sort((a,b) => b.localeCompare(a));
+    chavesPeriodo.forEach(periodo => {
+      const registros = dados[periodo];
+      const timestamps = Object.keys(registros).sort((a,b)=>b-a);
+      timestamps.forEach(ts=>{
+        const item = registros[ts];
+        const date = new Date(parseInt(ts)*1000).toLocaleString("pt-BR");
+        LISTA.innerHTML += `
+          <div class="item">
+            <div class="data">${date}</div>
+            <div class="valor">🌡 Temp: ${item.temperatura} °C</div>
+            <div class="valor">💧 Umidade: ${item.umidade} %</div>
+          </div>
+        `;
+      });
+    });
+  });
+}
+
+// Exportar PDF usando jsPDF
+function exportPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
-  const filtered = filtrarDados(periodoAtual);
+  let y = 10;
   doc.setFontSize(12);
-  doc.text(`Histórico - ${periodoAtual.toUpperCase()}`, 10, 10);
-
-  let y = 20;
-  filtered.forEach(([ts, item])=>{
-    const data = new Date(ts*1000).toLocaleString("pt-BR");
-    doc.text(`${data} - Temp: ${item.temperatura}°C | Umidade: ${item.umidade}%`, 10, y);
-    y += 10;
+  doc.text("Histórico - " + currentTab.charAt(0).toUpperCase() + currentTab.slice(1), 10, y); y+=10;
+  document.querySelectorAll("#lista .item").forEach(el=>{
+    const lines = el.innerText.split("\n");
+    lines.forEach(line=>{
+      doc.text(line, 10, y); y+=7;
+    });
+    y+=5;
   });
+  doc.save("historico_" + currentTab + ".pdf");
+}
 
-  doc.save(`historico_${periodoAtual}.pdf`);
-});
-
-// Carregar dados do Firebase
-REF_HISTORY.on("value", snap=>{
-  dadosGlobais = snap.val() || {};
-  renderizar(periodoAtual);
-});
+// Carregar inicial
+carregarHistorico();
 </script>
+
 </body>
 </html>
