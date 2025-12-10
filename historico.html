@@ -3,46 +3,94 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NewEnergy • Histórico</title>
+<title>NewEnergy • Histórico Completo</title>
 
 <!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+<!-- jsPDF para exportar PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 <style>
-body{margin:0;font-family:Arial;background:#f2f2f2;}
-header{background:#111;color:#fff;text-align:center;padding:15px;font-size:20px;}
-.container{max-width:950px;margin:auto;padding:15px;}
-button{
-    padding:10px 16px;background:#111;color:white;border:none;border-radius:6px;
-    cursor:pointer;font-size:15px;margin:10px 0;
+body{
+    margin:0;
+    background:#0b0f1b;
+    font-family: Arial;
+    color:white;
 }
-button:hover{opacity:0.8;}
+header{
+    background:#111;
+    text-align:center;
+    padding:15px;
+    font-size:22px;
+    color:#00eaff;
+}
+.container{
+    max-width:1100px;
+    margin:auto;
+    padding:15px;
+}
 .card{
-    background:white;padding:15px;border-radius:12px;box-shadow:0 0 10px rgba(0,0,0,0.1);margin-bottom:20px;
+    background:#1b1f33;
+    padding:15px;
+    border-radius:12px;
+    box-shadow:0 0 10px rgba(0,0,0,0.5);
+    margin-bottom:20px;
 }
-h3{margin-top:0;color:#111;}
+button{
+    padding:10px 16px;
+    border:none;
+    background:#00eaff;
+    color:black;
+    font-weight:bold;
+    font-size:15px;
+    border-radius:6px;
+    cursor:pointer;
+}
+button:hover{ opacity:0.8; }
+
 select{
-    padding:10px;border-radius:6px;border:1px solid #ccc;font-size:15px;width:100%;max-width:200px;
+    padding:10px;
+    border-radius:6px;
+    border:none;
+    width:200px;
+    font-size:15px;
 }
-table{width:100%;border-collapse:collapse;margin-top:10px;}
-th,td{padding:10px;text-align:center;border-bottom:1px solid #ddd;}
-th{background:#111;color:white;}
-canvas{width:100%;height:280px !important;}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    background:#0f1629;
+}
+th,td{
+    padding:10px;
+    text-align:center;
+}
+th{
+    background:#00eaff;
+    color:black;
+}
+tr:nth-child(even){
+    background:#1a233a;
+}
+canvas{
+    width:100%;
+    height:330px !important;
+}
 </style>
 </head>
-
 <body>
 
-<header>Histórico de Leituras • NewEnergy</header>
+<header>Histórico Completo • NewEnergy</header>
 
 <div class="container">
 
-<button onclick="window.location.href='painel.html'">⬅ Voltar ao Painel</button>
+<button onclick="window.location.href='painel.html'">⬅ Voltar</button>
 
 <div class="card">
     <h3>Filtros</h3>
@@ -51,6 +99,7 @@ canvas{width:100%;height:280px !important;}
         <option value="dia">Hoje</option>
         <option value="semana">Últimos 7 dias</option>
         <option value="mes">Este mês</option>
+        <option value="ano">Este ano</option>
     </select>
     <button onclick="carregarHistorico()">Aplicar</button>
 </div>
@@ -61,7 +110,9 @@ canvas{width:100%;height:280px !important;}
 </div>
 
 <div class="card">
-    <h3>Tabela de Registros</h3>
+    <h3>Tabela</h3>
+    <button onclick="gerarPDF()">📄 Exportar PDF</button>
+
     <table>
         <thead>
             <tr>
@@ -77,15 +128,15 @@ canvas{width:100%;height:280px !important;}
 </div>
 
 <script>
-// ======== CONFIG FIREBASE (mesmo do painel/login) =========
+// ======== CONFIG FIREBASE (MESMO DO PAINEL SIMPLES) =========
 const firebaseConfig = {
-    apiKey:"AIzaSyAEgLyJ6i2ZaSNnBrLMoe2ajInd4MGKHIs",
-    authDomain:"controle-led-esp-oficial.firebaseapp.com",
-    databaseURL:"https://controle-led-esp-oficial-default-rtdb.firebaseio.com",
-    projectId:"controle-led-esp-oficial",
-    storageBucket:"controle-led-esp-oficial.firebasestorage.app",
-    messagingSenderId:"1082980860084",
-    appId:"1:1082980860084:web:b3b669b8f1801c3d6657e1"
+    apiKey: "AIzaSyB5FnkQiFi3gn9Iup2KNcbrKxWd-0Jjo6Y",
+    authDomain: "oficial-688e8.firebaseapp.com",
+    databaseURL: "https://oficial-688e8-default-rtdb.firebaseio.com/",
+    projectId: "oficial-688e8",
+    storageBucket: "oficial-688e8.firebasestorage.app",
+    messagingSenderId: "547217835774",
+    appId: "1:547217835774:web:c7186da5bf6156590c47af"
 };
 firebase.initializeApp(firebaseConfig);
 
@@ -94,56 +145,60 @@ const db = firebase.database();
 
 let espID = "";
 
-// Verifica login e puxa o ID do ESP
+// PEGAR ESP32 DO USUÁRIO LOGADO
 auth.onAuthStateChanged(user => {
     if (!user) return window.location.href = "index.html";
+
     db.ref("usuarios/" + user.uid + "/esp32ID").once("value")
-    .then(snap => {
-        espID = snap.val();
-        if (!espID) {
-            alert("Nenhum ESP32 vinculado!");
-            return;
-        }
-        carregarHistorico();
-    });
+        .then(snap => {
+            espID = snap.val();
+
+            if (!espID) {
+                alert("Nenhum ESP32 vinculado ao usuário!");
+                return;
+            }
+
+            carregarHistorico();
+        });
 });
 
-// ==== Gráfico ====
+// ==== GRÁFICO ====
 let ctx = document.getElementById("grafico").getContext("2d");
 let grafico = new Chart(ctx, {
     type: "line",
     data: {
         labels: [],
         datasets: [
-            { label: "Temperatura (°C)", data: [], borderColor: "red", fill: false },
-            { label: "Umidade (%)", data: [], borderColor: "blue", fill: false }
+            { label: "Temperatura (°C)", data: [], borderColor: "red", fill:false },
+            { label: "Umidade (%)", data: [], borderColor: "cyan", fill:false }
         ]
     },
-    options: { responsive: true }
+    options: { responsive:true }
 });
 
-// ==== Carregar dados ====
+// ==== CARREGAR HISTÓRICO ====
 function carregarHistorico(){
+
     if (!espID) return;
 
     const filtro = document.getElementById("filtro").value;
     const tabela = document.getElementById("tabela");
 
     db.ref("historico/" + espID).once("value").then(snap => {
+
         tabela.innerHTML = "";
-        let labels = [], temp = [], umid = [];
+        let dados = snap.val();
 
-        const agora = new Date();
-        const dados = snap.val();
-
-        if (!dados) {
+        if (!dados){
             tabela.innerHTML = "<tr><td colspan='3'>Nenhum registro encontrado</td></tr>";
             return;
         }
 
+        let labels=[], temp=[], umid=[];
+        let agora = new Date();
+
         for (const key in dados){
             const item = dados[key];
-
             const dt = new Date(item.timestamp);
 
             let incluir = true;
@@ -151,6 +206,7 @@ function carregarHistorico(){
             if (filtro === "dia") incluir = dt.toDateString() === agora.toDateString();
             if (filtro === "semana") incluir = (agora - dt) <= 7*24*60*60*1000;
             if (filtro === "mes") incluir = (dt.getMonth() === agora.getMonth() && dt.getFullYear() === agora.getFullYear());
+            if (filtro === "ano") incluir = (dt.getFullYear() === agora.getFullYear());
 
             if (!incluir) continue;
 
@@ -172,6 +228,26 @@ function carregarHistorico(){
         grafico.data.datasets[1].data = umid;
         grafico.update();
     });
+}
+
+// ===== EXPORTAR PDF =====
+function gerarPDF(){
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    doc.text("Histórico NewEnergy", 10, 10);
+
+    let linha = 20;
+
+    document.querySelectorAll("#tabela tr").forEach(tr => {
+        const cols = tr.querySelectorAll("td");
+        if (cols.length > 0){
+            doc.text(`${cols[0].innerText} | Temp: ${cols[1].innerText} | Umid: ${cols[2].innerText}`, 10, linha);
+            linha += 8;
+        }
+    });
+
+    doc.save("historico_newenergy.pdf");
 }
 </script>
 
