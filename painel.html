@@ -3,84 +3,92 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>NewEnergy - Painel</title>
+  <title>Painel - NewEnergy</title>
 
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
+  <!-- ESTILO -->
   <style>
     body {
       margin: 0;
-      font-family: 'Segoe UI', sans-serif;
       background: #0b0f1b;
       color: #fff;
+      font-family: Arial, sans-serif;
       text-align: center;
       padding: 20px;
     }
 
     h1 {
       color: #00bcd4;
+      margin-bottom: 10px;
+    }
+
+    .gauges {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
       margin-top: 20px;
     }
 
-    .gauge-container {
-      display: flex;
-      justify-content: center;
-      gap: 40px;
-      margin-top: 30px;
+    .gauge {
+      width: 160px;
+      height: 160px;
     }
 
-    canvas {
-      width: 160px !important;
-      height: 160px !important;
-    }
-
-    /* BOTÃO HISTÓRICO */
-    .btn-historico {
-      margin-top: 35px;
-      padding: 12px 25px;
+    /* Botões */
+    .btn {
       background: #1b1f33;
-      color: #00eaff;
-      border: 1px solid #00eaff;
+      padding: 12px;
       border-radius: 10px;
-      cursor: pointer;
+      border: 2px solid #00bcd4;
+      color: #00bcd4;
+      margin-top: 20px;
       font-size: 16px;
+      cursor: pointer;
+      width: 200px;
       transition: 0.3s;
     }
 
-    .btn-historico:hover {
+    .btn:hover {
       background: #00bcd4;
-      color: #000;
+      color: #0b0f1b;
+    }
+
+    .btn-small {
+      width: 140px;
+      margin-top: 15px;
+      font-size: 14px;
     }
   </style>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <!-- Gauge (igual madrugada) -->
+  <script src="https://cdn.jsdelivr.net/npm/justgage"></script>
+  <script src="https://cdn.jsdelivr.net/npm/raphael"></script>
+
 </head>
 <body>
 
   <h1>Painel NewEnergy</h1>
 
   <!-- GAUGES -->
-  <div class="gauge-container">
-    <div>
-      <canvas id="tempGauge"></canvas>
-      <p>Temperatura</p>
-    </div>
-    <div>
-      <canvas id="umidGauge"></canvas>
-      <p>Umidade</p>
-    </div>
+  <div class="gauges">
+    <div id="gaugeTemp" class="gauge"></div>
+    <div id="gaugeUmid" class="gauge"></div>
   </div>
 
-  <!-- BOTÃO DISCRETO -->
-  <button class="btn-historico" onclick="window.location.href='historico.html'">
-    Ver Histórico
+  <!-- BOTÃO LED -->
+  <button id="btnLed" class="btn">Ligar LED</button>
+
+  <!-- BOTÃO HISTÓRICO -->
+  <button onclick="window.location.href='historico.html'" class="btn btn-small">
+    Histórico
   </button>
 
   <script>
-    // ===== CONFIG FIREBASE =====
+    // ===== FIREBASE =====
     const firebaseConfig = {
       apiKey: "AIzaSyB5FnkQiFi3gn9Iup2KNcbrKxWd-0Jjo6Y",
       authDomain: "oficial-688e8.firebaseapp.com",
@@ -93,38 +101,58 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+    const auth = firebase.auth();
 
-    // ===== GAUGES COM CHART.JS =====
-    function criarGauge(ctx, label, min, max) {
-      return new Chart(ctx, {
-        type: 'doughnut',
-        data: { datasets: [{
-          data: [0, 100],
-          backgroundColor: ['#00eaff', '#1b1f33'],
-          borderWidth: 0,
-        }]},
-        options: {
-          cutout: '70%',
-          plugins: { tooltip: { enabled: false } }
-        }
-      });
-    }
-
-    const tempGauge = criarGauge(document.getElementById('tempGauge'), "Temp", 0, 100);
-    const umidGauge = criarGauge(document.getElementById('umidGauge'), "Umid", 0, 100);
-
-    // ===== ATUALIZAÇÃO EM TEMPO REAL =====
-    db.ref("sensores").on("value", snap => {
-      const temp = snap.val().temperatura;
-      const umid = snap.val().umidade;
-
-      tempGauge.data.datasets[0].data = [temp, 100 - temp];
-      tempGauge.update();
-
-      umidGauge.data.datasets[0].data = [umid, 100 - umid];
-      umidGauge.update();
+    // ===== GAUGES (mesmo visual da madrugada) =====
+    const gaugeTemp = new JustGage({
+      id: "gaugeTemp",
+      min: 0,
+      max: 100,
+      value: 0,
+      title: "Temperatura °C",
+      gaugeWidthScale: 0.6,
+      counter: true,
+      hideInnerShadow: true,
+      levelColors: ["#00eaff"]
     });
-  </script>
 
+    const gaugeUmid = new JustGage({
+      id: "gaugeUmid",
+      min: 0,
+      max: 100,
+      value: 0,
+      title: "Umidade %",
+      gaugeWidthScale: 0.6,
+      counter: true,
+      hideInnerShadow: true,
+      levelColors: ["#00eaff"]
+    });
+
+    // ===== RECEBER DADOS DO ESP32 =====
+    db.ref("sensores").on("value", snap => {
+      const data = snap.val();
+      if (!data) return;
+
+      if (data.temperatura !== undefined)
+        gaugeTemp.refresh(data.temperatura);
+
+      if (data.umidade !== undefined)
+        gaugeUmid.refresh(data.umidade);
+    });
+
+    // ===== BOTÃO LED =====
+    const btnLed = document.getElementById("btnLed");
+    let ledState = false;
+
+    btnLed.onclick = () => {
+      ledState = !ledState;
+
+      db.ref("comandos/led").set(ledState ? 1 : 0);
+
+      btnLed.textContent = ledState ? "Desligar LED" : "Ligar LED";
+      btnLed.style.borderColor = ledState ? "#16a34a" : "#00bcd4";
+      btnLed.style.color = ledState ? "#16a34a" : "#00bcd4";
+    };
+  </script>
 </body>
 </html>
