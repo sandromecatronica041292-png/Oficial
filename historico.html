@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NewEnergy • Histórico Completo</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+body{margin:0;padding:0;font-family:Arial,sans-serif;background:#000;color:white;}
+header{background:#111;padding:10px;text-align:center;font-size:18px;color:#f1c40f;border-bottom:1px solid #222;}
+.container{padding:10px;max-width:900px;margin:auto;display:flex;flex-direction:column;gap:15px;}
+.card{background:#111;padding:12px;border-radius:10px;border:1px solid #333;box-shadow:0 0 6px rgba(255,255,0,0.1);}
+.card h3{margin-bottom:10px;font-size:16px;color:#f1c40f;}
+select,button{padding:8px;margin-top:5px;border-radius:6px;border:none;font-size:14px;}
+button{background:#f1c40f;color:#000;font-weight:bold;cursor:pointer;}
+button:hover{background:#ffe35a;}
+table{width:100%;border-collapse:collapse;margin-top:10px;}
+th,td{padding:6px;text-align:center;border:1px solid #333;}
+thead{background:#222;}
+canvas{width:100%!important;height:200px!important;display:block;margin:auto;}
+</style>
+</head>
+<body>
+<header>Histórico Completo • NewEnergy</header>
+<div class="container">
+
+<div class="card">
+  <h3>Filtros</h3>
+  <select id="periodo">
+    <option value="diario">Diário</option>
+    <option value="semanal">Semanal</option>
+    <option value="mensal">Mensal</option>
+    <option value="anual">Anual</option>
+  </select>
+  <button id="btnFiltrar">Aplicar Filtro</button>
+  <button id="btnRelatorio">Gerar PDF</button>
+</div>
+
+<div class="card">
+  <h3>Gráfico do Período</h3>
+  <canvas id="graficoHistorico"></canvas>
+</div>
+
+<div class="card">
+  <h3>Tabela de Leituras</h3>
+  <table id="tabelaHistorico">
+    <thead>
+      <tr><th>Data/Hora</th><th>Temperatura (°C)</th><th>Umidade (%)</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+</div>
+
+<script>
+const firebaseConfig = {
+  apiKey:"AIzaSyAEgLyJ6i2ZaSNnBrLMoe2ajInd4MGKHIs",
+  authDomain:"controle-led-esp-oficial.firebaseapp.com",
+  databaseURL:"https://controle-led-esp-oficial-default-rtdb.firebaseio.com",
+  projectId:"controle-led-esp-oficial",
+  storageBucket:"controle-led-esp-oficial.firebasestorage.app",
+  messagingSenderId:"1082980860084",
+  appId:"1:1082980860084:web:b3b669b8f1801c3d6657e1"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.database();
+
+const periodoEl = document.getElementById("periodo");
+const btnFiltrar = document.getElementById("btnFiltrar");
+const btnRelatorio = document.getElementById("btnRelatorio");
+const tabelaBody = document.querySelector("#tabelaHistorico tbody");
+const ctxGrafico = document.getElementById("graficoHistorico");
+let graficoHistorico = new Chart(ctxGrafico,{
+    type:"line",
+    data:{labels:[],datasets:[{label:"Temperatura",data:[],borderColor:"#ff3b3b",fill:false},{label:"Umidade",data:[],borderColor:"#3498db",fill:false}]},
+    options:{plugins:{legend:{display:true}},scales:{y:{beginAtZero:true}}}
+});
+
+let espID="";
+auth.onAuthStateChanged(user=>{
+    if(user){
+        const uid = user.uid;
+        db.ref("/usuarios/"+uid+"/esp32ID").once("value").then(snapshot=>{
+            espID = snapshot.val();
+            if(!espID){alert("Nenhum ESP32 vinculado!"); return;}
+            carregarHistorico();
+        });
+    } else {
+        alert("Usuário não logado!");
+        window.location.href="index.html";
+    }
+});
+
+function carregarHistorico(){
+    if(!espID) return;
+    db.ref("/historico/"+espID).once("value").then(snapshot=>{
+        const data = snapshot.val();
+        if(!data) return;
+
+        const periodo = periodoEl.value;
+        let labels=[], tempData=[], umidData=[], tbodyHTML="";
+        const agora = new Date();
+        for(const key in data){
+            const item = data[key];
+            const dt = new Date(item.timestamp);
+
+            let incluir=false;
+            if(periodo==="diario" && dt.toDateString()===agora.toDateString()) incluir=true;
+            else if(periodo==="semanal" && (agora-dt)<=7*24*60*60*1000) incluir=true;
+            else if(periodo==="mensal" && agora.getMonth()===dt.getMonth() && agora.getFullYear()===dt.getFullYear()) incluir=true;
+            else if(periodo==="anual" && agora.getFullYear()===dt.getFullYear()) incluir=true;
+
+            if(incluir){
+                labels.push(dt.toLocaleString());
+                tempData.push(item.temperatura);
+                umidData.push(item.umidade);
+                tbodyHTML += `<tr><td>${dt.toLocaleString()}</td><td>${item.temperatura}</td><td>${item.umidade}</td></tr>`;
+            }
+        }
+        graficoHistorico.data.labels=labels;
+        graficoHistorico.data.datasets[0].data=tempData;
+        graficoHistorico.data.datasets[1].data=umidData;
+        graficoHistorico.update();
+        tabelaBody.innerHTML=tbodyHTML;
+    });
+}
+
+btnFiltrar.addEventListener("click", carregarHistorico);
+
+// Gerar PDF
+btnRelatorio.addEventListener("click", async ()=>{
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text("Relatório de Leituras - NewEnergy",10,15);
+    doc.setFontSize(12);
+    doc.text("Período: "+periodoEl.value,10,25);
+
+    let y=35;
+    const linhas = tabelaBody.querySelectorAll("tr");
+    linhas.forEach((tr,i)=>{
+        const td = tr.querySelectorAll("td");
+        doc.text(`${td[0].innerText} | Temp: ${td[1].innerText}°C | Umid: ${td[2].innerText}%`,10,y);
+        y+=7;
+        if(y>280){doc.addPage(); y=10;}
+    });
+    doc.save(`relatorio_${periodoEl.value}.pdf`);
+});
+</script>
+</body>
+</html>
