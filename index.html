@@ -5,12 +5,31 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>NewEnergy - Login</title>
   <style>
-    body { margin:0; font-family:'Segoe UI', Tahoma, Geneva, Verdana,sans-serif; background:#0b0f1b; color:#fff; display:flex; justify-content:center; align-items:center; height:100vh; }
-    .card { background:#1b1f33; border-radius:15px; padding:25px; width:350px; box-shadow:0 10px 25px rgba(0,0,0,0.7); text-align:center; }
-    h1 { color:#00bcd4; margin-bottom:20px; }
-    input { width:100%; padding:10px; margin-bottom:12px; border-radius:8px; border:none; }
-    button { width:100%; padding:12px; border:none; border-radius:12px; font-size:16px; cursor:pointer; margin-bottom:10px; background:#16a34a; color:#fff; }
-    #error { color:#ff4444; margin-bottom:10px; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #0b0f1b;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .card {
+      background: #1b1f33;
+      border-radius: 15px;
+      padding: 25px;
+      width: 350px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.7);
+      text-align: center;
+    }
+
+    h1 { color: #00bcd4; margin-bottom: 20px; }
+    input { width: 100%; padding: 10px; margin-bottom: 12px; border-radius: 8px; border: none; }
+    button { width: 100%; padding: 12px; border: none; border-radius: 12px; font-size: 16px; cursor: pointer; margin-bottom: 10px; }
+    .btn-login { background: #16a34a; color: #fff; }
+    #error { color: #ff4444; margin-bottom: 10px; }
   </style>
 
   <!-- Firebase SDKs -->
@@ -23,10 +42,11 @@
     <div id="error"></div>
     <input type="email" id="email" placeholder="Email">
     <input type="password" id="password" placeholder="Senha">
-    <button id="btnLogin">Entrar</button>
+    <button id="btnLogin" class="btn-login">Entrar</button>
   </div>
 
   <script>
+    // ===== CONFIGURAÇÃO FIREBASE =====
     const firebaseConfig = {
       apiKey: "AIzaSyB5FnkQiFi3gn9Iup2KNcbrKxWd-0Jjo6Y",
       authDomain: "oficial-688e8.firebaseapp.com",
@@ -44,11 +64,16 @@
     const btnLogin = document.getElementById("btnLogin");
     const errorEl = document.getElementById("error");
 
+    // ===== LOGIN =====
     btnLogin.addEventListener("click", () => {
       errorEl.textContent = "";
       auth.signInWithEmailAndPassword(emailEl.value, passEl.value)
-        .then(() => { window.location.href = "painel.html"; })
-        .catch(err => { errorEl.textContent = "Email ou senha inválidos."; });
+        .then(() => {
+          window.location.href = "painel.html";
+        })
+        .catch(err => { 
+          errorEl.textContent = "Erro: " + err.message; 
+        });
     });
   </script>
 </body>
