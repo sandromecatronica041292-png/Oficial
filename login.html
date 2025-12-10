@@ -17,11 +17,11 @@
   <input id="senhaCad" type="password" placeholder="Senha"><br>
   <button id="btnCadastro">Cadastrar</button>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } 
-      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  <!-- Firebase compat -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
+  <script>
     const firebaseConfig = {
       apiKey: "AIzaSyB5FnkQiFi3gn9Iup2KNcbrKxWd-0Jjo6Y",
       authDomain: "oficial-688e8.firebaseapp.com",
@@ -32,15 +32,15 @@
       appId: "1:547217835774:web:c7186da5bf6156590c47af"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
 
     // LOGIN
     document.getElementById("btnLogin").onclick = () => {
       let email = document.getElementById("email").value;
       let senha = document.getElementById("senha").value;
 
-      signInWithEmailAndPassword(auth, email, senha)
+      auth.signInWithEmailAndPassword(email, senha)
         .then(() => {
           alert("Login OK!");
           window.location = "index.html";
@@ -53,7 +53,7 @@
       let email = document.getElementById("emailCad").value;
       let senha = document.getElementById("senhaCad").value;
 
-      createUserWithEmailAndPassword(auth, email, senha)
+      auth.createUserWithEmailAndPassword(email, senha)
         .then(() => alert("Usuário criado com sucesso!"))
         .catch(e => alert("Erro: " + e.message));
     };
