@@ -15,11 +15,11 @@
   <h3>Umidade atual:</h3>
   <div id="umid">Carregando...</div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getDatabase, ref, onValue } 
-      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+  <!-- Firebase compat -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
+  <script>
     const firebaseConfig = {
       apiKey: "AIzaSyB5FnkQiFi3gn9Iup2KNcbrKxWd-0Jjo6Y",
       authDomain: "oficial-688e8.firebaseapp.com",
@@ -30,16 +30,14 @@
       appId: "1:547217835774:web:c7186da5bf6156590c47af"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-    // CAMINHO do seu ESP32 no Realtime Database
-    const sensorRef = ref(db, "sensores");
+    const sensorRef = db.ref("sensores");
 
-    onValue(sensorRef, (snapshot) => {
+    sensorRef.on("value", (snapshot) => {
       if (snapshot.exists()) {
         const dados = snapshot.val();
-
         document.getElementById("temp").textContent = dados.temperatura + " °C";
         document.getElementById("umid").textContent = dados.umidade + " %";
       } else {
