@@ -1,94 +1,62 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Sistema ESP32</title>
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f0f2f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-
-        .card {
-            background: white;
-            width: 350px;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            text-align: center;
-        }
-
-        h2 { margin-bottom: 20px; color: #333; }
-
-        input {
-            width: 90%;
-            padding: 12px;
-            margin: 10px 0;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            font-size: 16px;
-        }
-
-        button {
-            width: 95%;
-            padding: 12px;
-            border: none;
-            background: #007bff;
-            color: white;
-            font-size: 18px;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-
-        button:hover { background: #005fcc; }
-
-        #erro {
-            color: red;
-            margin-top: 10px;
-            font-size: 15px;
-            display: none;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login • NewEnergy</title>
 </head>
+
 <body>
+  <h2>Login</h2>
+  <input id="email" type="email" placeholder="E-mail"><br>
+  <input id="senha" type="password" placeholder="Senha"><br>
+  <button id="btnLogin">Entrar</button>
 
-    <div class="card">
-        <h2>Login</h2>
+  <h2>Cadastro</h2>
+  <input id="emailCad" type="email" placeholder="E-mail"><br>
+  <input id="senhaCad" type="password" placeholder="Senha"><br>
+  <button id="btnCadastro">Cadastrar</button>
 
-        <input type="text" id="email" placeholder="Usuário">
-        <input type="password" id="senha" placeholder="Senha">
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } 
+      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-        <button onclick="login()">Entrar</button>
+    const firebaseConfig = {
+      apiKey: "AIzaSyB5FnkQiFi3gn9Iup2KNcbrKxWd-0Jjo6Y",
+      authDomain: "oficial-688e8.firebaseapp.com",
+      databaseURL: "https://oficial-688e8-default-rtdb.firebaseio.com",
+      projectId: "oficial-688e8",
+      storageBucket: "oficial-688e8.firebasestorage.app",
+      messagingSenderId: "547217835774",
+      appId: "1:547217835774:web:c7186da5bf6156590c47af"
+    };
 
-        <div id="erro">Usuário ou senha incorretos</div>
-    </div>
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
 
-    <script>
-        function login() {
-            let usuario = document.getElementById("email").value;
-            let senha = document.getElementById("senha").value;
+    // LOGIN
+    document.getElementById("btnLogin").onclick = () => {
+      let email = document.getElementById("email").value;
+      let senha = document.getElementById("senha").value;
 
-            // Login fixo temporário
-            const user = "admin";
-            const pass = "1234";
+      signInWithEmailAndPassword(auth, email, senha)
+        .then(() => {
+          alert("Login OK!");
+          window.location = "index.html";
+        })
+        .catch(e => alert("Erro: " + e.message));
+    };
 
-            if (usuario === user && senha === pass) {
+    // CADASTRO
+    document.getElementById("btnCadastro").onclick = () => {
+      let email = document.getElementById("emailCad").value;
+      let senha = document.getElementById("senhaCad").value;
 
-                // SESSÃO DE LOGIN
-                localStorage.setItem("logado", "true");
-
-                window.location.href = "dashboard.html";
-            } else {
-                document.getElementById("erro").style.display = "block";
-            }
-        }
-    </script>
-
+      createUserWithEmailAndPassword(auth, email, senha)
+        .then(() => alert("Usuário criado com sucesso!"))
+        .catch(e => alert("Erro: " + e.message));
+    };
+  </script>
 </body>
 </html>
