@@ -1,48 +1,197 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Painel • NewEnergy</title>
-</head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>NewEnergy - Monitoramento</title>
 
-<body>
-  <h1>Painel Conectado ao Firebase</h1>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #0b0f1b;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 20px;
+    }
 
-  <h3>Temperatura atual:</h3>
-  <div id="temp">Carregando...</div>
+    .card {
+      background: #1b1f33;
+      border-radius: 15px;
+      padding: 25px;
+      width: 420px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.7);
+    }
 
-  <h3>Umidade atual:</h3>
-  <div id="umid">Carregando...</div>
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 26px;
+      color: #00bcd4;
+    }
 
-  <!-- Firebase compat -->
+    .logo {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 20px;
+      color: #00bcd4;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    .status {
+      text-align: center;
+      font-weight: bold;
+      font-size: 18px;
+      margin-bottom: 12px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 12px;
+      font-size: 18px;
+      margin-bottom: 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .on { background: #16a34a; color: #fff; }
+    .off { background: #ef4444; color: #fff; }
+
+    .gauges {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .gbox {
+      width: 48%;
+      text-align: center;
+      background: #0c1424;
+      padding: 15px;
+      border-radius: 15px;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+    }
+
+    .gtitle {
+      font-size: 14px;
+      margin-bottom: 8px;
+      color: #8fa3c6;
+      letter-spacing: 0.5px;
+    }
+
+    .gvalue {
+      margin-top: -10px;
+      font-size: 22px;
+      font-weight: bold;
+      color: #00bcd4;
+    }
+  </style>
+
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyB5FnkQiFi3gn9Iup2KNcbrKxWd-0Jjo6Y",
-      authDomain: "oficial-688e8.firebaseapp.com",
-      databaseURL: "https://oficial-688e8-default-rtdb.firebaseio.com",
-      projectId: "oficial-688e8",
-      storageBucket: "oficial-688e8.firebasestorage.app",
-      messagingSenderId: "547217835774",
-      appId: "1:547217835774:web:c7186da5bf6156590c47af"
-    };
+  <!-- GaugeJS -->
+  <script src="https://cdn.jsdelivr.net/npm/gaugeJS/dist/gauge.min.js"></script>
+</head>
 
+<body>
+  <div class="card">
+    <div class="logo">NewEnergy</div>
+    <h1>Monitoramento Industrial</h1>
+
+    <div id="status" class="status">Conectando...</div>
+    <button id="btnLED" class="btn off">Carregando...</button>
+
+    <div class="gauges">
+      <!-- GAUGE TEMPERATURA -->
+      <div class="gbox">
+        <div class="gtitle">Temperatura (°C)</div>
+        <canvas id="gTemp" width="180" height="160"></canvas>
+        <div id="tempVal" class="gvalue">-- °C</div>
+      </div>
+
+      <!-- GAUGE UMIDADE -->
+      <div class="gbox">
+        <div class="gtitle">Umidade (%)</div>
+        <canvas id="gHum" width="180" height="160"></canvas>
+        <div id="humVal" class="gvalue">-- %</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===== CONFIGURAÇÃO FIREBASE =====
+    const firebaseConfig = {
+  apiKey: "AIzaSyB5FnkQiFi3gn9Iup2KNcbrKxWd-0Jjo6Y",
+  authDomain: "oficial-688e8.firebaseapp.com",
+  databaseURL: "https://oficial-688e8-default-rtdb.firebaseio.com",
+  projectId: "oficial-688e8",
+  storageBucket: "oficial-688e8.firebasestorage.app",
+  messagingSenderId: "547217835774",
+  appId: "1:547217835774:web:c7186da5bf6156590c47af"
+};
+    
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    const sensorRef = db.ref("sensores");
+    const LEDREF = db.ref("/led");
+    const TEMPREF = db.ref("/temp");
+    const HUMREF = db.ref("/hum");
 
-    sensorRef.on("value", (snapshot) => {
-      if (snapshot.exists()) {
-        const dados = snapshot.val();
-        document.getElementById("temp").textContent = dados.temperatura + " °C";
-        document.getElementById("umid").textContent = dados.umidade + " %";
-      } else {
-        document.getElementById("temp").textContent = "Sem dados";
-        document.getElementById("umid").textContent = "Sem dados";
+    const statusEl = document.getElementById("status");
+    const btn = document.getElementById("btnLED");
+
+    // ===== GAUGE TEMPERATURA =====
+    const gaugeTemp = new Gauge(document.getElementById("gTemp")).setOptions({});
+    gaugeTemp.maxValue = 50;
+    gaugeTemp.setMinValue(0);
+    gaugeTemp.animationSpeed = 30;
+    gaugeTemp.set(0);
+
+    // ===== GAUGE UMIDADE =====
+    const gaugeHum = new Gauge(document.getElementById("gHum")).setOptions({});
+    gaugeHum.maxValue = 100;
+    gaugeHum.setMinValue(0);
+    gaugeHum.animationSpeed = 30;
+    gaugeHum.set(0);
+
+    // ===== LED EM TEMPO REAL =====
+    LEDREF.on("value", snap => {
+      const v = snap.val();
+      const on = (v === 1 || v === "1" || v === true);
+
+      statusEl.textContent = on ? "LED LIGADO" : "LED DESLIGADO";
+      btn.textContent = on ? "DESLIGAR" : "LIGAR";
+      btn.className = on ? "btn on" : "btn off";
+    });
+
+    btn.addEventListener("click", async () => {
+      const snap = await LEDREF.get();
+      const cur = snap.val();
+      const newVal = (cur === 1 || cur === "1") ? 0 : 1;
+      LEDREF.set(newVal);
+    });
+
+    // ===== TEMPERATURA EM TEMPO REAL =====
+    TEMPREF.on("value", snap => {
+      const t = Number(snap.val());
+      if (!isNaN(t)) {
+        gaugeTemp.set(t);
+        document.getElementById("tempVal").innerText = t.toFixed(1) + " °C";
+      }
+    });
+
+    // ===== UMIDADE EM TEMPO REAL =====
+    HUMREF.on("value", snap => {
+      const h = Number(snap.val());
+      if (!isNaN(h)) {
+        gaugeHum.set(h);
+        document.getElementById("humVal").innerText = h.toFixed(1) + " %";
       }
     });
   </script>
