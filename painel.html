@@ -4,7 +4,6 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>NewEnergy - Painel</title>
-
   <style>
     body {
       margin: 0;
@@ -25,86 +24,24 @@
       box-shadow: 0 10px 25px rgba(0,0,0,0.7);
     }
 
-    h1 {
-      text-align: center;
-      margin-bottom: 20px;
-      font-size: 26px;
-      color: #00bcd4;
-    }
-
-    .logo {
-      text-align: center;
-      margin-bottom: 20px;
-      font-size: 20px;
-      color: #00bcd4;
-      font-weight: bold;
-      letter-spacing: 1px;
-    }
-
-    .status {
-      text-align: center;
-      font-weight: bold;
-      font-size: 18px;
-      margin-bottom: 12px;
-    }
-
-    .btn {
-      width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 12px;
-      font-size: 18px;
-      margin-bottom: 20px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
+    h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
+    .logo { text-align: center; margin-bottom: 20px; font-size: 20px; color: #00bcd4; font-weight: bold; letter-spacing: 1px; }
+    .status { text-align: center; font-weight: bold; font-size: 18px; margin-bottom: 12px; }
+    .btn { width: 100%; padding: 12px; border: none; border-radius: 12px; font-size: 18px; margin-bottom: 20px; cursor: pointer; transition: all 0.3s ease; }
     .on { background: #16a34a; color: #fff; }
     .off { background: #ef4444; color: #fff; }
-
-    .gauges {
-      display: flex;
-      justify-content: space-between;
-    }
-
-    .gbox {
-      width: 48%;
-      text-align: center;
-      background: #0c1424;
-      padding: 15px;
-      border-radius: 15px;
-      box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
-    }
-
-    .gtitle {
-      font-size: 14px;
-      margin-bottom: 8px;
-      color: #8fa3c6;
-      letter-spacing: 0.5px;
-    }
-
-    .gvalue {
-      margin-top: -10px;
-      font-size: 22px;
-      font-weight: bold;
-      color: #00bcd4;
-    }
-
-    #btnLogout {
-      background: #ff5722;
-      margin-top: 10px;
-    }
+    .gauges { display: flex; justify-content: space-between; }
+    .gbox { width: 48%; text-align: center; background: #0c1424; padding: 15px; border-radius: 15px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
+    .gtitle { font-size: 14px; margin-bottom: 8px; color: #8fa3c6; letter-spacing: 0.5px; }
+    .gvalue { margin-top: -10px; font-size: 22px; font-weight: bold; color: #00bcd4; }
+    #btnLogout { background: #ff5722; margin-top: 10px; }
   </style>
 
-  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-
-  <!-- GaugeJS -->
   <script src="https://cdn.jsdelivr.net/npm/gaugeJS/dist/gauge.min.js"></script>
 </head>
-
 <body>
   <div class="card">
     <div class="logo">NewEnergy</div>
@@ -112,7 +49,7 @@
 
     <div id="status" class="status">Conectando...</div>
     <button id="btnLED" class="btn off">Carregando...</button>
-    <button id="btnLogout" class="btn">Sair</button>
+    <button id="btnLogout" class="btn" id="btnLogout">Sair</button>
 
     <div class="gauges">
       <div class="gbox">
@@ -130,7 +67,6 @@
   </div>
 
   <script>
-    // ===== CONFIGURAÇÃO FIREBASE =====
     const firebaseConfig = {
       apiKey: "AIzaSyB5FnkQiFi3gn9Iup2KNcbrKxWd-0Jjo6Y",
       authDomain: "oficial-688e8.firebaseapp.com",
@@ -138,7 +74,7 @@
       projectId: "oficial-688e8",
       storageBucket: "oficial-688e8.firebasestorage.app",
       messagingSenderId: "547217835774",
-      appId: "1:547217834c7186da5bf6156590c47af"
+      appId: "1:547217835774:web:c7186da5bf6156590c47af"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
@@ -146,33 +82,22 @@
 
     // ===== VERIFICA LOGIN =====
     auth.onAuthStateChanged(user => {
-      if (!user) {
-        window.location.href = "login.html"; // redireciona se não estiver logado
-      }
+      if (!user) window.location.href = "index.html";
     });
 
     const LEDREF = db.ref("/led");
     const TEMPREF = db.ref("/temp");
     const HUMREF = db.ref("/hum");
-
     const statusEl = document.getElementById("status");
     const btn = document.getElementById("btnLED");
     const btnLogout = document.getElementById("btnLogout");
 
-    // ===== GAUGES =====
     const gaugeTemp = new Gauge(document.getElementById("gTemp")).setOptions({});
-    gaugeTemp.maxValue = 50;
-    gaugeTemp.setMinValue(0);
-    gaugeTemp.animationSpeed = 30;
-    gaugeTemp.set(0);
-
+    gaugeTemp.maxValue = 50; gaugeTemp.setMinValue(0); gaugeTemp.animationSpeed = 30; gaugeTemp.set(0);
     const gaugeHum = new Gauge(document.getElementById("gHum")).setOptions({});
-    gaugeHum.maxValue = 100;
-    gaugeHum.setMinValue(0);
-    gaugeHum.animationSpeed = 30;
-    gaugeHum.set(0);
+    gaugeHum.maxValue = 100; gaugeHum.setMinValue(0); gaugeHum.animationSpeed = 30; gaugeHum.set(0);
 
-    // ===== LED EM TEMPO REAL =====
+    // ===== LED =====
     LEDREF.on("value", snap => {
       const v = snap.val();
       const on = (v === 1 || v === "1" || v === true);
@@ -184,11 +109,10 @@
     btn.addEventListener("click", async () => {
       const snap = await LEDREF.get();
       const cur = snap.val();
-      const newVal = (cur === 1 || cur === "1") ? 0 : 1;
-      LEDREF.set(newVal);
+      LEDREF.set((cur === 1 || cur === "1") ? 0 : 1);
     });
 
-    // ===== TEMPERATURA EM TEMPO REAL =====
+    // ===== TEMPERATURA =====
     TEMPREF.on("value", snap => {
       const t = Number(snap.val());
       if (!isNaN(t)) {
@@ -197,7 +121,7 @@
       }
     });
 
-    // ===== UMIDADE EM TEMPO REAL =====
+    // ===== UMIDADE =====
     HUMREF.on("value", snap => {
       const h = Number(snap.val());
       if (!isNaN(h)) {
@@ -208,9 +132,7 @@
 
     // ===== LOGOUT =====
     btnLogout.addEventListener("click", () => {
-      auth.signOut().then(() => {
-        window.location.href = "login.html";
-      });
+      auth.signOut().then(() => window.location.href = "index.html");
     });
   </script>
 </body>
