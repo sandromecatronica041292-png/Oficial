@@ -1,113 +1,142 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NewEnergy • Painel</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NewEnergy • Painel</title>
 
-    <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-    <style>
-        body {
-            font-family: Arial;
-            margin: 0;
-            background: #f5f5f5;
-        }
-        header {
-            background: #111;
-            color: #fff;
-            padding: 15px;
-            text-align: center;
-            font-size: 20px;
-        }
-        .card {
-            background: #fff;
-            margin: 20px;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        .valor {
-            font-size: 32px;
-            font-weight: bold;
-            margin-top: 10px;
-        }
-        .botoes {
-            margin-top: 25px;
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-        }
-        button {
-            padding: 10px 15px;
-            font-size: 16px;
-            border: none;
-            background: #111;
-            color: white;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        button:hover {
-            opacity: 0.8;
-        }
-    </style>
+<style>
+body {
+    margin: 0; padding: 0; background: #000;
+    color: white; font-family: Arial, sans-serif;
+}
+header {
+    background: #111; padding: 12px;
+    text-align: center; font-size: 22px;
+    color: #f1c40f; border-bottom: 1px solid #222;
+}
+.container {
+    padding: 20px; max-width: 500px;
+    margin: auto; text-align: center;
+}
+.card {
+    background: #111; padding: 15px;
+    border-radius: 10px; border: 1px solid #333;
+    margin-bottom: 15px;
+}
+.card h3 {
+    margin: 0; margin-bottom: 10px;
+    color: #f1c40f;
+}
+button {
+    width: 100%; padding: 10px;
+    border: none; font-size: 16px;
+    border-radius: 8px; background: #f1c40f;
+    color: #000; cursor: pointer;
+    font-weight: bold;
+}
+button:hover { background: #ffe35a; }
+.status-online { color: #2ecc71; font-weight: bold; }
+.status-offline { color: #e74c3c; font-weight: bold; }
+</style>
 </head>
 <body>
 
-<header>
-    Painel NewEnergy
-</header>
+<header>Painel NewEnergy</header>
 
-<div class="card">
-    <h2>Temperatura Atual</h2>
-    <div id="temp" class="valor">-- °C</div>
-</div>
+<div class="container">
 
-<div class="card">
-    <h2>Umidade Atual</h2>
-    <div id="umid" class="valor">-- %</div>
-</div>
+    <div class="card">
+        <h3>Status do ESP32</h3>
+        <p id="statusESP">Carregando...</p>
+    </div>
 
-<div class="botoes">
-    <button onclick="window.location.href='historico.html'">Ver Histórico</button>
-    <button onclick="logout()">Sair</button>
+    <div class="card">
+        <h3>Temperatura Atual</h3>
+        <p id="tempAtual">-- °C</p>
+    </div>
+
+    <div class="card">
+        <h3>Umidade Atual</h3>
+        <p id="umiAtual">-- %</p>
+    </div>
+
+    <button onclick="window.location.href='historico.html'">
+        📘 Histórico Completo
+    </button>
+
 </div>
 
 <script>
-    // === CONFIG FIREBASE - MESMA DO LOGIN ===
-    const firebaseConfig = {
-        apiKey: "SUA_API_KEY",
-        authDomain: "SEU_AUTH_DOMAIN",
-        databaseURL: "SEU_DATABASE_URL",
-        projectId: "SEU_PROJECT_ID",
-        storageBucket: "SEU_BUCKET",
-        messagingSenderId: "SEU_SENDER",
-        appId: "SEU_APP_ID"
-    };
-    firebase.initializeApp(firebaseConfig);
+// ---- CONFIG FIREBASE ----
+const firebaseConfig = {
+  apiKey:"AIzaSyAEgLyJ6i2ZaSNnBrLMoe2ajInd4MGKHIs",
+  authDomain:"controle-led-esp-oficial.firebaseapp.com",
+  databaseURL:"https://controle-led-esp-oficial-default-rtdb.firebaseio.com",
+  projectId:"controle-led-esp-oficial",
+  storageBucket:"controle-led-esp-oficial.firebasestorage.app",
+  messagingSenderId:"1082980860084",
+  appId:"1:1082980860084:web:b3b669b8f1801c3d6657e1"
+};
+firebase.initializeApp(firebaseConfig);
 
-    // Verifica login
-    firebase.auth().onAuthStateChanged(user => {
-        if (!user) window.location.href = "index.html";
-    });
+const auth = firebase.auth();
+const db = firebase.database();
 
-    // Lê dados
-    firebase.database().ref("sensores").on("value", snap => {
-        const temp = snap.child("temperatura").val();
-        const umid = snap.child("umidade").val();
+let espID = "";
 
-        document.getElementById("temp").innerHTML = temp ? temp + " °C" : "--";
-        document.getElementById("umid").innerHTML = umid ? umid + " %" : "--";
-    });
-
-    function logout() {
-        firebase.auth().signOut().then(() => {
-            window.location.href = "index.html";
-        });
+// ---- Verifica Login ----
+auth.onAuthStateChanged(user => {
+    if (!user) {
+        alert("Você precisa fazer login!");
+        window.location.href = "index.html";
+        return;
     }
+
+    const uid = user.uid;
+
+    // Pega o ID do ESP32 vinculado
+    db.ref("usuarios/" + uid + "/esp32ID").once("value").then(snap => {
+        espID = snap.val();
+
+        if (!espID) {
+            alert("Nenhum ESP32 vinculado à sua conta.");
+            return;
+        }
+
+        iniciarLeituras();
+    });
+});
+
+// ---- Busca dados em tempo real ----
+function iniciarLeituras() {
+
+    // STATUS
+    db.ref("status/" + espID).on("value", snap => {
+        const statusEl = document.getElementById("statusESP");
+        if (snap.val() === "online") {
+            statusEl.innerHTML = "<span class='status-online'>🟢 Online</span>";
+        } else {
+            statusEl.innerHTML = "<span class='status-offline'>🔴 Offline</span>";
+        }
+    });
+
+    // TEMPERATURA
+    db.ref("sensores/" + espID + "/temperatura").on("value", snap => {
+        document.getElementById("tempAtual").innerText =
+            snap.val() !== null ? snap.val() + " °C" : "-- °C";
+    });
+
+    // UMIDADE
+    db.ref("sensores/" + espID + "/umidade").on("value", snap => {
+        document.getElementById("umiAtual").innerText =
+            snap.val() !== null ? snap.val() + " %" : "-- %";
+    });
+}
 </script>
 
 </body>
