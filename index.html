@@ -48,15 +48,6 @@
       margin-bottom: 12px;
     }
 
-    .debug {
-      font-size: 12px;
-      color: #ffcc00;
-      margin-bottom: 10px;
-      text-align: center;
-      white-space: pre-line;
-      word-wrap: break-word;
-    }
-
     .btn {
       width: 100%;
       padding: 12px;
@@ -114,7 +105,6 @@
     <h1>Monitoramento Industrial</h1>
 
     <div id="status" class="status">Conectando...</div>
-    <div id="debug" class="debug"></div>
     <button id="btnLED" class="btn off">Carregando...</button>
 
     <div class="gauges">
@@ -133,7 +123,7 @@
   </div>
 
   <script>
-    // ===== CONFIGURAÇÃO FIREBASE (novo projeto) =====
+    // ===== CONFIGURAÇÃO FIREBASE =====
     const firebaseConfig = {
       apiKey: "AIzaSyB5FnkQiFi3gn9Iup2KNcbrKxWd-0Jjo6Y",
       authDomain: "oficial-688e8.firebaseapp.com",
@@ -152,7 +142,6 @@
     const HUMREF = db.ref("/hum");
 
     const statusEl = document.getElementById("status");
-    const debugEl = document.getElementById("debug");
     const btn = document.getElementById("btnLED");
 
     // ===== GAUGE TEMPERATURA =====
@@ -169,16 +158,9 @@
     gaugeHum.animationSpeed = 30;
     gaugeHum.set(0);
 
-    // ===== FUNÇÃO DE DEBUG =====
-    function logDebug(msg) {
-      console.log(msg);
-      debugEl.textContent += msg + "\n";
-    }
-
     // ===== LED EM TEMPO REAL =====
     LEDREF.on("value", snap => {
       const v = snap.val();
-      logDebug("LED: " + v);
       const on = (v === 1 || v === "1" || v === true);
 
       statusEl.textContent = on ? "LED LIGADO" : "LED DESLIGADO";
@@ -190,14 +172,12 @@
       const snap = await LEDREF.get();
       const cur = snap.val();
       const newVal = (cur === 1 || cur === "1") ? 0 : 1;
-      logDebug("Atualizando LED para: " + newVal);
       LEDREF.set(newVal);
     });
 
     // ===== TEMPERATURA EM TEMPO REAL =====
     TEMPREF.on("value", snap => {
       const t = Number(snap.val());
-      logDebug("TEMP: " + t);
       if (!isNaN(t)) {
         gaugeTemp.set(t);
         document.getElementById("tempVal").innerText = t.toFixed(1) + " °C";
@@ -207,17 +187,11 @@
     // ===== UMIDADE EM TEMPO REAL =====
     HUMREF.on("value", snap => {
       const h = Number(snap.val());
-      logDebug("HUM: " + h);
       if (!isNaN(h)) {
         gaugeHum.set(h);
         document.getElementById("humVal").innerText = h.toFixed(1) + " %";
       }
     });
-
-    // ===== TESTE DE CONEXÃO =====
-    db.ref("/").once("value")
-      .then(() => logDebug("Conectado ao Firebase!"))
-      .catch(err => logDebug("Erro de conexão: " + err));
   </script>
 </body>
 </html>
