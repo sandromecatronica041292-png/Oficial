@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>NewEnergy - Histórico</title>
+<title>NewEnergy - Histórico Profissional</title>
 
 <style>
 body {
@@ -20,7 +20,7 @@ body {
   background: #1b1f33;
   border-radius: 15px;
   padding: 20px;
-  width: 600px;
+  width: 650px;
   max-height: 95vh;
   display: flex;
   flex-direction: column;
@@ -45,9 +45,9 @@ h1 {
 .tab.active { background: #00bcd4; color: #0b0f1b; }
 
 #grafico-container { overflow-x: auto; margin-bottom: 10px; }
-#grafico-temp, #grafico-hum { min-width: 500px; height: 220px; margin-bottom: 10px; }
+#grafico-temp, #grafico-hum { min-width: 600px; height: 250px; margin-bottom: 10px; }
 
-#lista { overflow-y: auto; flex: 1; padding-right: 5px; font-size: 14px; max-height: 250px; }
+#lista { overflow-y: auto; flex: 1; padding-right: 5px; font-size: 14px; max-height: 300px; }
 
 .item {
   background: #0c1424;
@@ -77,6 +77,8 @@ h1 {
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
 </head>
 <body>
 
@@ -98,7 +100,7 @@ h1 {
   <div id="lista"></div>
 
   <div class="btn-container">
-    <button class="btn" onclick="exportPDF()">Exportar PDF do Período</button>
+    <button class="btn" onclick="exportPDFProfissional()">Exportar PDF Profissional</button>
     <button class="btn" onclick="window.location.href='painel.html'">Voltar</button>
   </div>
 </div>
@@ -129,7 +131,6 @@ function showTab(tab){
   carregarHistorico();
 }
 
-// Carregar histórico em tempo real
 function carregarHistorico(){
   const LISTA = document.getElementById("lista");
   LISTA.innerHTML = "<p>Carregando...</p>";
@@ -158,8 +159,8 @@ function carregarHistorico(){
 
         LISTA.innerHTML += `<div class="item">
           <div class="data">${date}</div>
-          <div class="valor">🌡 Temp: ${item.temperatura} °C</div>
-          <div class="valor">💧 Umidade: ${item.umidade} %</div>
+          <div class="valor">Temperatura: ${item.temperatura} °C</div>
+          <div class="valor">Umidade: ${item.umidade} %</div>
         </div>`;
 
         labels.push(date);
@@ -168,7 +169,6 @@ function carregarHistorico(){
       });
     });
 
-    // Gráfico temperatura
     const ctxT = document.getElementById('grafico-temp').getContext('2d');
     if(chartTemp) chartTemp.destroy();
     chartTemp = new Chart(ctxT,{
@@ -177,7 +177,6 @@ function carregarHistorico(){
       options:{ responsive:true, plugins:{ legend:{ labels:{color:'#000'} } }, scales:{ x:{ ticks:{ color:'#000', maxRotation:45, minRotation:0 } }, y:{ ticks:{ color:'#000' } } } }
     });
 
-    // Gráfico umidade
     const ctxH = document.getElementById('grafico-hum').getContext('2d');
     if(chartHum) chartHum.destroy();
     chartHum = new Chart(ctxH,{
@@ -188,31 +187,67 @@ function carregarHistorico(){
   });
 }
 
-// Exportar PDF do período selecionado
-function exportPDF(){
+async function exportPDFProfissional(){
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({orientation:'p', unit:'pt', format:'a4'});
+  let y = 50;
 
-  let y=40;
-  doc.setFontSize(16);
-  doc.setTextColor(0,188,212);
-  doc.text("Histórico - " + currentTab.charAt(0).toUpperCase()+currentTab.slice(1),40,y); y+=25;
+  // Fundo branco
+  doc.setFillColor(255,255,255);
+  doc.rect(0,0,595,842,'F');
+
+  // Logotipo fictício (círculo azul)
+  doc.setFillColor(0, 188, 212);
+  doc.circle(50,40,15,'F');
+
+  // Título
+  doc.setFontSize(18);
+  doc.setTextColor(0,88,150);
+  doc.text("Relatório Profissional - " + currentTab.charAt(0).toUpperCase()+currentTab.slice(1), 90, 50);
+
+  // Data de geração
+  const dataGeracao = new Date().toLocaleString('pt-BR');
+  doc.setFontSize(10);
+  doc.setTextColor(50);
+  doc.text("Data de Geração: " + dataGeracao, 90, 65);
+
+  y += 50;
+
+  // Gráfico Temperatura
+  const canvasTemp = document.getElementById('grafico-temp');
+  const imgTemp = await html2canvas(canvasTemp,{backgroundColor:'#ffffff'});
+  const imgDataTemp = imgTemp.toDataURL('image/png');
+  doc.addImage(imgDataTemp,'PNG',40,y,515,200);
+  y += 220;
+
+  // Gráfico Umidade
+  const canvasHum = document.getElementById('grafico-hum');
+  const imgHum = await html2canvas(canvasHum,{backgroundColor:'#ffffff'});
+  const imgDataHum = imgHum.toDataURL('image/png');
+  doc.addImage(imgDataHum,'PNG',40,y,515,200);
+  y += 220;
+
+  // Tabela
+  doc.setFontSize(12);
+  doc.setTextColor(0,0,0);
+  doc.text("Data",40,y); doc.text("Temperatura (°C)",220,y); doc.text("Umidade (%)",400,y);
+  y += 15;
 
   for(const periodo of Object.keys(historicoAtual).sort((a,b)=>b.localeCompare(a))){
     const registros = historicoAtual[periodo];
     for(const ts of Object.keys(registros).sort((a,b)=>b-a)){
       const item = registros[ts];
       const date = new Date(parseInt(ts)*1000).toLocaleString("pt-BR");
-      doc.setFontSize(12);
-      doc.setTextColor(0,0,0);
-      doc.text(`Data: ${date}`,40,y); y+=12;
-      doc.text(`🌡 Temp: ${item.temperatura} °C  💧 Umidade: ${item.umidade} %`,40,y); y+=14;
+      doc.text(date,40,y);
+      doc.text(String(item.temperatura),220,y);
+      doc.text(String(item.umidade),400,y);
+      y += 12;
       if(y>750){ doc.addPage(); y=40; }
     }
   }
 
-  alert("PDF gerado com sucesso!");
-  doc.save(`historico_${currentTab}.pdf`);
+  alert("PDF Corporativo gerado com sucesso!");
+  doc.save(`historico_corporativo_${currentTab}.pdf`);
 }
 
 // Inicial
