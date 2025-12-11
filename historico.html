@@ -47,10 +47,14 @@ h1 {
 
 .item {
   background: #0c1424;
-  padding: 8px;
+  padding: 10px;
   border-radius: 10px;
   margin-bottom: 6px;
   box-shadow: inset 0 0 8px rgba(0,0,0,0.4);
+}
+.item.ultima {
+  background: #112233; /* Destaque da última leitura */
+  border-left: 4px solid #00bcd4;
 }
 .data { color: #8fa3c6; margin-bottom: 2px; font-size: 13px; }
 .valor { font-weight: bold; color: #00bcd4; }
@@ -141,6 +145,7 @@ function carregarHistoricoRealTime(tab){
 
     LISTA.innerHTML = "";
     const labels=[], tempData=[], humData=[];
+    let primeira = true;
 
     const chavesPeriodo = Object.keys(dados).sort((a,b)=>b.localeCompare(a));
     chavesPeriodo.forEach(periodo=>{
@@ -150,11 +155,13 @@ function carregarHistoricoRealTime(tab){
         const item = registros[ts];
         const date = new Date(parseInt(ts)*1000).toLocaleString("pt-BR");
 
-        LISTA.innerHTML = `<div class="item">
+        const classe = primeira ? "item ultima" : "item";
+        LISTA.innerHTML = `<div class="${classe}">
           <div class="data">${date}</div>
           <div class="valor">Temp: ${item.temperatura} °C</div>
           <div class="valor">Umidade: ${item.umidade} %</div>
         </div>` + LISTA.innerHTML;
+        primeira = false;
 
         labels.push(date);
         tempData.push(item.temperatura);
@@ -162,32 +169,31 @@ function carregarHistoricoRealTime(tab){
       });
     });
 
-    // Gráfico Temperatura
+    const coresTemp = '#ff9800'; // padrão
+    const coresHum = '#00bcd4'; // padrão
+
     const ctxT = document.getElementById('grafico-temp').getContext('2d');
     if(chartTemp) chartTemp.destroy();
     chartTemp = new Chart(ctxT,{
       type:'line',
-      data:{ labels:labels.reverse(), datasets:[{label:'Temperatura (°C)', data:tempData.reverse(), borderColor:'#ff9800', backgroundColor:'rgba(255,152,0,0.2)', fill:true, pointRadius:2}] },
+      data:{ labels:labels.reverse(), datasets:[{label:'Temperatura (°C)', data:tempData.reverse(), borderColor:coresTemp, backgroundColor:'rgba(255,152,0,0.2)', fill:true, pointRadius:2}] },
       options:{ responsive:true, plugins:{ legend:{ labels:{color:'#fff'} } }, scales:{ x:{ ticks:{ color:'#fff', maxRotation:45, minRotation:0 } }, y:{ ticks:{ color:'#fff' } } } }
     });
 
-    // Gráfico Umidade
     const ctxH = document.getElementById('grafico-hum').getContext('2d');
     if(chartHum) chartHum.destroy();
     chartHum = new Chart(ctxH,{
       type:'line',
-      data:{ labels:labels.reverse(), datasets:[{label:'Umidade (%)', data:humData.reverse(), borderColor:'#00bcd4', backgroundColor:'rgba(0,188,212,0.2)', fill:true, pointRadius:2}] },
+      data:{ labels:labels.reverse(), datasets:[{label:'Umidade (%)', data:humData.reverse(), borderColor:coresHum, backgroundColor:'rgba(0,188,212,0.2)', fill:true, pointRadius:2}] },
       options:{ responsive:true, plugins:{ legend:{ labels:{color:'#fff'} } }, scales:{ x:{ ticks:{ color:'#fff', maxRotation:45, minRotation:0 } }, y:{ ticks:{ color:'#fff' } } } }
     });
   });
 }
 
-// Exportar PDF em formato tipo planilha
+// PDF estilo tabela colorida
 function exportPDF(){
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({orientation:'p', unit:'pt', format:'a4'});
-
-  // Fundo branco
   doc.setFillColor(255,255,255);
   doc.rect(0,0,595,842,'F');
 
@@ -199,16 +205,17 @@ function exportPDF(){
   const dados = historicosTodos[currentTab];
   if(!dados){ doc.text("Nenhum registro encontrado.",40,y); doc.save("historico.pdf"); return; }
 
-  // Cabeçalho estilo planilha
   doc.setFontSize(12);
-  doc.setTextColor(0,0,0);
-  doc.setFillColor(200,200,200);
+  // Cabeçalho tabela
+  doc.setFillColor(0,150,136);
+  doc.setTextColor(255,255,255);
   doc.rect(40,y,515,20,'F');
   doc.text("Data/Hora",45,y+14);
   doc.text("Temperatura (°C)",200,y+14);
   doc.text("Umidade (%)",350,y+14);
   y+=22;
 
+  let corLinha = false;
   const chavesPeriodo = Object.keys(dados).sort((a,b)=>b.localeCompare(a));
   chavesPeriodo.forEach(periodo=>{
     const registros = dados[periodo];
@@ -217,14 +224,14 @@ function exportPDF(){
       const item = registros[ts];
       const date = new Date(parseInt(ts)*1000).toLocaleString("pt-BR");
 
-      // Linha
-      doc.setFillColor(245,245,245);
+      doc.setFillColor(corLinha?230:245, corLinha?230:245, 245);
       doc.rect(40,y,515,18,'F');
       doc.setTextColor(0,0,0);
       doc.text(date,45,y+13);
       doc.text(String(item.temperatura),200,y+13);
       doc.text(String(item.umidade),350,y+13);
       y+=20;
+      corLinha = !corLinha;
       if(y>750){ doc.addPage(); y=40; }
     });
   });
@@ -232,7 +239,6 @@ function exportPDF(){
   doc.save("historico_"+currentTab+".pdf");
 }
 
-// Inicial
 showTab('diario');
 </script>
 
