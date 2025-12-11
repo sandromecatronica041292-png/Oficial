@@ -9,21 +9,23 @@
 body {
   margin: 0;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: #0b0f1b;
-  color: #fff;
+  background: #f5f5f5;
+  color: #000;
   display: flex;
   justify-content: center;
+  align-items: flex-start;
   padding: 10px;
 }
 .card {
-  background: #1b1f33;
+  background: #ffffff;
   border-radius: 15px;
-  padding: 15px;
-  width: 100%;
+  padding: 20px;
+  width: 95%;
   max-width: 600px;
+  max-height: 95vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.7);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
 }
 h1 {
   text-align: center;
@@ -37,40 +39,45 @@ h1 {
   text-align: center;
   cursor: pointer;
   border-radius: 10px 10px 0 0;
-  background: #0c1424;
-  margin: 2px;
+  background: #e0e0e0;
+  margin-right: 2px;
   font-size: 14px;
 }
-.tab.active { background: #00bcd4; color: #0b0f1b; }
+.tab.active { background: #00bcd4; color: #fff; }
 
-#grafico-container { overflow-x: auto; margin-bottom: 10px; display: flex; flex-direction: column; gap:10px; }
-#grafico-temp, #grafico-hum { min-width: 500px; height: 220px; border-radius: 10px; background: #0b0f1b; }
+#grafico-container { overflow-x: auto; margin-bottom: 10px; }
+#grafico-temp, #grafico-hum { min-width: 500px; height: 220px; margin-bottom: 10px; }
 
 #lista { overflow-y: auto; flex: 1; padding-right: 5px; font-size: 14px; max-height: 250px; }
 
 .item {
-  background: #0c1424;
+  background: #e3f2fd;
   padding: 8px;
   border-radius: 10px;
   margin-bottom: 6px;
-  box-shadow: inset 0 0 8px rgba(0,0,0,0.4);
+  box-shadow: inset 0 0 8px rgba(0,0,0,0.05);
 }
-.data { color: #8fa3c6; margin-bottom: 2px; }
-.valor { font-weight: bold; color: #00bcd4; }
+.data { color: #1565c0; margin-bottom: 2px; font-size: 13px; }
+.valor { font-weight: bold; color: #000; }
 
-.btn-container { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.btn-container { display: flex; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
 .btn {
   flex: 1;
   padding: 10px;
   border: none;
   border-radius: 10px;
-  background: #ff5722;
+  background: #00bcd4;
   font-size: 14px;
   cursor: pointer;
   color: white;
 }
-@media(max-width:480px){
-  #grafico-temp, #grafico-hum { min-width: 300px; height:180px; }
+.select-period {
+  flex: 1;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  margin-bottom: 8px;
 }
 </style>
 
@@ -85,12 +92,12 @@ h1 {
 <div class="card">
   <h1>Histórico de Leituras</h1>
 
-  <div class="tabs">
-    <div class="tab active" onclick="showTab('diario')">Diário</div>
-    <div class="tab" onclick="showTab('semanal')">Semanal</div>
-    <div class="tab" onclick="showTab('mensal')">Mensal</div>
-    <div class="tab" onclick="showTab('anual')">Anual</div>
-  </div>
+  <select class="select-period" id="periodSelect" onchange="showTab(this.value)">
+    <option value="diario">Diário</option>
+    <option value="semanal">Semanal</option>
+    <option value="mensal">Mensal</option>
+    <option value="anual">Anual</option>
+  </select>
 
   <div id="grafico-container">
     <canvas id="grafico-temp"></canvas>
@@ -100,7 +107,7 @@ h1 {
   <div id="lista"></div>
 
   <div class="btn-container">
-    <button class="btn" onclick="exportPDFTodos()">Exportar PDF Profissional</button>
+    <button class="btn" onclick="exportPDF()">Exportar PDF</button>
     <button class="btn" onclick="window.location.href='painel.html'">Voltar</button>
   </div>
 </div>
@@ -122,24 +129,29 @@ auth.onAuthStateChanged(user => { if(!user) window.location.href="index.html"; }
 
 let currentTab = 'diario';
 let chartTemp, chartHum;
-let historicosTodos = {}; // guardar todos os períodos
+let historicosTodos = {}; // guardar todos os períodos para PDF
 
 function showTab(tab){
   currentTab = tab;
-  document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
-  event.target.classList.add('active');
-  carregarHistorico(tab);
+  carregarHistoricoRealTime(tab);
 }
 
-function carregarHistorico(tab){
+// Função de atualização em tempo real
+function carregarHistoricoRealTime(tab){
   const LISTA = document.getElementById("lista");
   LISTA.innerHTML = "<p>Carregando...</p>";
   const REF = db.ref("/historico/" + tab);
 
-  REF.once("value", snap=>{
+  REF.off(); // remove listeners antigos
+  REF.on("value", snap=>{
     const dados = snap.val();
     historicosTodos[tab] = dados || {};
-    if(!dados){ LISTA.innerHTML="<p>Nenhum registro encontrado.</p>"; if(chartTemp) chartTemp.destroy(); if(chartHum) chartHum.destroy(); return; }
+    if(!dados){ 
+      LISTA.innerHTML="<p>Nenhum registro encontrado.</p>"; 
+      if(chartTemp) chartTemp.destroy(); 
+      if(chartHum) chartHum.destroy(); 
+      return; 
+    }
 
     LISTA.innerHTML = "";
     const labels=[], tempData=[], humData=[];
@@ -147,16 +159,16 @@ function carregarHistorico(tab){
     const chavesPeriodo = Object.keys(dados).sort((a,b)=>b.localeCompare(a));
     chavesPeriodo.forEach(periodo=>{
       const registros = dados[periodo];
-      const timestamps = Object.keys(registros).sort((a,b)=>b-a).reverse(); // última leitura no topo
+      const timestamps = Object.keys(registros).sort((a,b)=>b-a);
       timestamps.forEach(ts=>{
         const item = registros[ts];
         const date = new Date(parseInt(ts)*1000).toLocaleString("pt-BR");
 
-        LISTA.innerHTML += `<div class="item">
+        LISTA.innerHTML = `<div class="item">
           <div class="data">${date}</div>
-          <div class="valor">🌡 Temp: ${item.temperatura} °C</div>
-          <div class="valor">💧 Umidade: ${item.umidade} %</div>
-        </div>`;
+          <div class="valor">Temp: ${item.temperatura} °C</div>
+          <div class="valor">Umidade: ${item.umidade} %</div>
+        </div>` + LISTA.innerHTML; // última leitura no topo
 
         labels.push(date);
         tempData.push(item.temperatura);
@@ -164,119 +176,70 @@ function carregarHistorico(tab){
       });
     });
 
-    // Chart Temperatura
+    // Gráfico Temperatura
     const ctxT = document.getElementById('grafico-temp').getContext('2d');
     if(chartTemp) chartTemp.destroy();
     chartTemp = new Chart(ctxT,{
       type:'line',
-      data:{
-        labels:labels,
-        datasets:[{
-          label:'Temperatura (°C)',
-          data:tempData,
-          borderColor:'#ff9800',
-          backgroundColor:'rgba(255,152,0,0.2)',
-          fill:true,
-          pointRadius:2,
-          tension:0.2
-        }]
-      },
-      options:{
-        responsive:true,
-        plugins:{ legend:{ labels:{color:'#000'} } },
-        scales:{
-          x:{ ticks:{ color:'#000', maxRotation:45, minRotation:0 } },
-          y:{ ticks:{ color:'#000' } }
-        }
-      }
+      data:{ labels:labels.reverse(), datasets:[{label:'Temperatura (°C)', data:tempData.reverse(), borderColor:'#ff5722', backgroundColor:'rgba(255,87,34,0.2)', fill:true, pointRadius:2}] },
+      options:{ responsive:true, plugins:{ legend:{ labels:{color:'#000'} } }, scales:{ x:{ ticks:{ color:'#000', maxRotation:45, minRotation:0 } }, y:{ ticks:{ color:'#000' } } } }
     });
 
-    // Chart Umidade
+    // Gráfico Umidade
     const ctxH = document.getElementById('grafico-hum').getContext('2d');
     if(chartHum) chartHum.destroy();
     chartHum = new Chart(ctxH,{
       type:'line',
-      data:{
-        labels:labels,
-        datasets:[{
-          label:'Umidade (%)',
-          data:humData,
-          borderColor:'#00bcd4',
-          backgroundColor:'rgba(0,188,212,0.2)',
-          fill:true,
-          pointRadius:2,
-          tension:0.2
-        }]
-      },
-      options:{
-        responsive:true,
-        plugins:{ legend:{ labels:{color:'#000'} } },
-        scales:{
-          x:{ ticks:{ color:'#000', maxRotation:45, minRotation:0 } },
-          y:{ ticks:{ color:'#000' } }
-        }
-      }
+      data:{ labels:labels.reverse(), datasets:[{label:'Umidade (%)', data:humData.reverse(), borderColor:'#03a9f4', backgroundColor:'rgba(3,169,244,0.2)', fill:true, pointRadius:2}] },
+      options:{ responsive:true, plugins:{ legend:{ labels:{color:'#000'} } }, scales:{ x:{ ticks:{ color:'#000', maxRotation:45, minRotation:0 } }, y:{ ticks:{ color:'#000' } } } }
     });
   });
 }
 
-// Exportar PDF Profissional
-function exportPDFTodos(){
+// Exportar PDF profissional
+function exportPDF(){
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({orientation:'p', unit:'pt', format:'a4'});
-  let pagina = 0;
 
-  for(const tab in historicosTodos){
-    const dados = historicosTodos[tab];
-    if(!dados) continue;
+  doc.setFillColor(255,255,255);
+  doc.rect(0,0,595,842,'F'); // fundo branco
 
-    if(pagina>0) doc.addPage();
-    pagina++;
+  doc.setFontSize(16);
+  doc.setTextColor(0, 0, 0);
+  doc.text("Histórico - " + currentTab.charAt(0).toUpperCase()+currentTab.slice(1), 40, 40);
 
-    let y = 40;
-    doc.setFontSize(18);
-    doc.setTextColor(0,0,0);
-    doc.text(`Histórico - ${tab.charAt(0).toUpperCase() + tab.slice(1)}`, 40, y); 
-    y += 25;
+  let y=60;
+  const dados = historicosTodos[currentTab];
+  if(!dados){ doc.text("Nenhum registro encontrado.",40,y); doc.save("historico.pdf"); return; }
 
-    // --- Adiciona gráficos ---
-    const canvasT = document.getElementById('grafico-temp');
-    doc.addImage(canvasT.toDataURL("image/png"), 'PNG', 40, y, 500, 220); y+=230;
+  // Gráficos separadamente
+  const canvasTemp = document.getElementById('grafico-temp');
+  const imgTemp = canvasTemp.toDataURL("image/png");
+  doc.addImage(imgTemp,'PNG',40, y, 500, 200);
+  y += 210;
 
-    const canvasH = document.getElementById('grafico-hum');
-    doc.addImage(canvasH.toDataURL("image/png"), 'PNG', 40, y, 500, 220); y+=230;
+  const canvasHum = document.getElementById('grafico-hum');
+  const imgHum = canvasHum.toDataURL("image/png");
+  doc.addImage(imgHum,'PNG',40, y, 500, 200);
+  y += 210;
 
-    doc.setFontSize(14);
-    doc.setTextColor(0,0,0);
-    doc.text("Detalhes das Leituras:", 40, y); y+=20;
+  doc.setFontSize(12);
+  doc.setTextColor(0,0,0);
+  doc.text("Registros:",40,y); y+=15;
 
-    const chavesPeriodo = Object.keys(dados).sort((a,b)=>b.localeCompare(a));
-    for(const periodo of chavesPeriodo){
-      const registros = dados[periodo];
-      const timestamps = Object.keys(registros).sort((a,b)=>b-a).reverse();
+  const chavesPeriodo = Object.keys(dados).sort((a,b)=>b.localeCompare(a));
+  chavesPeriodo.forEach(periodo=>{
+    const registros = dados[periodo];
+    const timestamps = Object.keys(registros).sort((a,b)=>b-a);
+    timestamps.forEach(ts=>{
+      const item = registros[ts];
+      const date = new Date(parseInt(ts)*1000).toLocaleString("pt-BR");
+      doc.text(`${date} | Temp: ${item.temperatura} °C | Umidade: ${item.umidade}%`,40,y); y+=12;
+      if(y>750){ doc.addPage(); y=40; }
+    });
+  });
 
-      for(const ts of timestamps){
-        const item = registros[ts];
-        const date = new Date(parseInt(ts)*1000).toLocaleString("pt-BR");
-
-        doc.setFontSize(12);
-        doc.setTextColor(0,0,0);
-        doc.text(`Data: ${date}`, 40, y); y+=14;
-
-        doc.setTextColor(255,77,109);
-        doc.text(`🌡 Temp: ${item.temperatura} °C`, 40, y);
-
-        doc.setTextColor(0,180,216);
-        doc.text(`💧 Umidade: ${item.umidade} %`, 200, y); 
-        y+=18;
-
-        if(y>750){ doc.addPage(); y=40; }
-      }
-    }
-  }
-
-  alert("PDF gerado com gráficos no topo e design profissional!");
-  doc.save("historico_profissional.pdf");
+  doc.save("historico_"+currentTab+".pdf");
 }
 
 // Inicial
