@@ -62,19 +62,11 @@ h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
   color: #00bcd4;
 }
 
-/* Alerta visual */
-#alertBox {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  background: #ff4444;
-  color: white;
-  padding: 15px 20px;
-  border-radius: 10px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-  display: none;
-  z-index: 9999;
-  max-width: 300px;
+#alertMessage {
+  text-align: center;
+  font-size: 14px;
+  margin-top: 10px;
+  color: #ffcc00;
 }
 </style>
 
@@ -82,15 +74,12 @@ h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-
-<!-- Gauge -->
 <script src="https://cdn.jsdelivr.net/npm/gaugeJS/dist/gauge.min.js"></script>
 
-<!-- EmailJS SDK v4 -->
-<script type="module">
-import emailjs from 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
-emailjs.init('W2__8f2fBoqRPX9hX');
-window.emailjs = emailjs;
+<!-- EmailJS v4 compatível -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>
+  emailjs.init('W2__8f2fBoqRPX9hX');
 </script>
 
 </head>
@@ -116,11 +105,11 @@ window.emailjs = emailjs;
     </div>
   </div>
 
+  <div id="alertMessage"></div>
+
   <button id="btnHistorico" class="btn">Histórico</button>
   <button id="btnLogout" class="btn">Sair</button>
 </div>
-
-<div id="alertBox"></div>
 
 <script>
 const firebaseConfig = {
@@ -146,6 +135,7 @@ const HUMREF = db.ref("/hum");
 const statusEl = document.getElementById("status");
 const btn = document.getElementById("btnLED");
 const btnLogout = document.getElementById("btnLogout");
+const alertMessage = document.getElementById("alertMessage");
 
 const gaugeTemp = new Gauge(document.getElementById("gTemp")).setOptions({});
 gaugeTemp.maxValue = 50; gaugeTemp.setMinValue(0); gaugeTemp.animationSpeed = 30; gaugeTemp.set(0);
@@ -153,34 +143,28 @@ gaugeTemp.maxValue = 50; gaugeTemp.setMinValue(0); gaugeTemp.animationSpeed = 30
 const gaugeHum = new Gauge(document.getElementById("gHum")).setOptions({});
 gaugeHum.maxValue = 100; gaugeHum.setMinValue(0); gaugeHum.animationSpeed = 30; gaugeHum.set(0);
 
-// ===== ALERTAS EMAILJS V4 =====
-function mostrarAlerta(texto){
-  const alertBox = document.getElementById('alertBox');
-  alertBox.innerText = texto;
-  alertBox.style.display = 'block';
-  setTimeout(()=>{ alertBox.style.display = 'none'; },8000);
-}
-
-async function enviarAlertaEmail(temperatura, umidade, tipo){
-  const mensagem = `${tipo} fora do padrão! Valor lido: Temperatura ${temperatura} °C | Umidade ${umidade} %`;
-  mostrarAlerta(mensagem);
-  try {
+// ===== ALERTAS EMAILJS =====
+function enviarAlertaEmail(temperatura, umidade, tipo) {
     const templateParams = {
-      from_name: "NewEnergy Alerta",
-      message: mensagem
+        from_name: "NewEnergy Alerta",
+        message: `⚠️ ALERTA DE MONITORAMENTO ⚠️\nTipo: ${tipo}\nTemperatura: ${temperatura} °C\nUmidade: ${umidade} %\nData/Hora: ${new Date().toLocaleString()}`
     };
-    const response = await emailjs.send('service_kx31f3s', 'template_mqzi3at', templateParams);
-    console.log("Alerta enviado com sucesso!", response.status);
-  } catch(err) {
-    console.error("Erro ao enviar alerta:", err);
-    mostrarAlerta("Erro ao enviar alerta! Veja console.");
-  }
+
+    emailjs.send('service_kx31f3s', 'template_mqzi3at', templateParams)
+    .then(response => {
+        console.log("Alerta enviado!", response.status);
+        alertMessage.innerText = `Alerta enviado: ${tipo} (${temperatura}°C, ${umidade}%)`;
+    })
+    .catch(error => {
+        console.log("Erro ao enviar alerta", error);
+        alertMessage.innerText = `Erro ao enviar alerta: ${error.status || error}`;
+    });
 }
 
-// Limites e intervalo de alerta (10 minutos)
+// Limites e intervalo de alerta
 const TEMP_MIN = 18, TEMP_MAX = 25;
 const HUM_MIN = 45, HUM_MAX = 60;
-const ALERT_INTERVAL = 10*60*1000; // 10 min em ms
+const ALERT_INTERVAL = 10 * 60 * 1000; // 10 min
 let lastAlertTemp = 0;
 let lastAlertHum = 0;
 
@@ -208,7 +192,7 @@ TEMPREF.on("value", snap => {
 
         if((t < TEMP_MIN || t > TEMP_MAX) && Date.now() - lastAlertTemp > ALERT_INTERVAL){
             const h = Number(document.getElementById("humVal").innerText.replace(" %",""));
-            enviarAlertaEmail(t, h, "Temperatura");
+            enviarAlertaEmail(t, h, "Temperatura fora do padrão");
             lastAlertTemp = Date.now();
         }
     }
@@ -223,18 +207,16 @@ HUMREF.on("value", snap => {
 
         if((h < HUM_MIN || h > HUM_MAX) && Date.now() - lastAlertHum > ALERT_INTERVAL){
             const t = Number(document.getElementById("tempVal").innerText.replace(" °C",""));
-            enviarAlertaEmail(t, h, "Umidade");
+            enviarAlertaEmail(t, h, "Umidade fora do padrão");
             lastAlertHum = Date.now();
         }
     }
 });
 
 // ===== LOGOUT E HISTÓRICO =====
-btnLogout.addEventListener("click", ()=>auth.signOut().then(()=>window.location.href="index.html"));
-document.getElementById("btnHistorico").addEventListener("click", ()=>window.location.href="historico.html");
+btnLogout.addEventListener("click", () => auth.signOut().then(()=>window.location.href="index.html"));
+document.getElementById("btnHistorico").addEventListener("click", () => window.location.href="historico.html");
 
 </script>
 </body>
 </html>
-
-
