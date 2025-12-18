@@ -48,6 +48,17 @@ h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
 .gtitle { font-size: 14px; margin-bottom: 8px; color: #8fa3c6; letter-spacing: 0.5px; }
 .gvalue { margin-top: -10px; font-size: 22px; font-weight: bold; color: #00bcd4; }
 
+#alertMsg {
+  background: #ff9800;
+  color: #1b1f33;
+  padding: 10px;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: bold;
+  margin-bottom: 10px;
+  display: none;
+}
+
 #btnLogout { background: #ff5722; margin-top: 10px; }
 
 #btnHistorico {
@@ -61,25 +72,18 @@ h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
   background: #142038;
   color: #00bcd4;
 }
-
-#alertMessage {
-  text-align: center;
-  font-size: 14px;
-  margin-top: 10px;
-  color: #ffcc00;
-}
 </style>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<!-- GaugeJS -->
 <script src="https://cdn.jsdelivr.net/npm/gaugeJS/dist/gauge.min.js"></script>
-
-<!-- EmailJS v4 compatível -->
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-<script>
-  emailjs.init('W2__8f2fBoqRPX9hX');
+<!-- EmailJS v4 -->
+<script type="module">
+  import emailjs from 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
+  emailjs.init("W2__8f2fBoqRPX9hX");
 </script>
 
 </head>
@@ -87,6 +91,8 @@ h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
 <div class="card">
   <div class="logo">NewEnergy</div>
   <h1>Monitoramento Industrial</h1>
+
+  <div id="alertMsg"></div>
 
   <div id="status" class="status">Conectando...</div>
   <button id="btnLED" class="btn off">Carregando...</button>
@@ -105,13 +111,13 @@ h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
     </div>
   </div>
 
-  <div id="alertMessage"></div>
-
   <button id="btnHistorico" class="btn">Histórico</button>
   <button id="btnLogout" class="btn">Sair</button>
 </div>
 
-<script>
+<script type="module">
+import emailjs from 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
+
 const firebaseConfig = {
   apiKey: "AIzaSyB5FnkQiFi3gn9Iup2KNcbrKxWd-0Jjo6Y",
   authDomain: "oficial-688e8.firebaseapp.com",
@@ -135,7 +141,7 @@ const HUMREF = db.ref("/hum");
 const statusEl = document.getElementById("status");
 const btn = document.getElementById("btnLED");
 const btnLogout = document.getElementById("btnLogout");
-const alertMessage = document.getElementById("alertMessage");
+const alertMsg = document.getElementById("alertMsg");
 
 const gaugeTemp = new Gauge(document.getElementById("gTemp")).setOptions({});
 gaugeTemp.maxValue = 50; gaugeTemp.setMinValue(0); gaugeTemp.animationSpeed = 30; gaugeTemp.set(0);
@@ -144,24 +150,21 @@ const gaugeHum = new Gauge(document.getElementById("gHum")).setOptions({});
 gaugeHum.maxValue = 100; gaugeHum.setMinValue(0); gaugeHum.animationSpeed = 30; gaugeHum.set(0);
 
 // ===== ALERTAS EMAILJS =====
-function enviarAlertaEmail(temperatura, umidade, tipo) {
-    const templateParams = {
-        from_name: "NewEnergy Alerta",
-        message: `⚠️ ALERTA DE MONITORAMENTO ⚠️\nTipo: ${tipo}\nTemperatura: ${temperatura} °C\nUmidade: ${umidade} %\nData/Hora: ${new Date().toLocaleString()}`
-    };
-
-    emailjs.send('service_kx31f3s', 'template_mqzi3at', templateParams)
-    .then(response => {
-        console.log("Alerta enviado!", response.status);
-        alertMessage.innerText = `Alerta enviado: ${tipo} (${temperatura}°C, ${umidade}%)`;
-    })
-    .catch(error => {
-        console.log("Erro ao enviar alerta", error);
-        alertMessage.innerText = `Erro ao enviar alerta: ${error.status || error}`;
-    });
+async function enviarAlertaEmail(equipamento, tipo, valor) {
+    const dataHora = new Date().toLocaleString();
+    const templateParams = { equipamento, tipo, valor, data: dataHora };
+    try {
+        await emailjs.send('service_kx31f3s', 'template_mqzi3at', templateParams);
+        alertMsg.style.display = 'block';
+        alertMsg.innerText = `⚠️ ALERTA ENVIADO: ${tipo} - ${valor}`;
+    } catch(err) {
+        alertMsg.style.display = 'block';
+        alertMsg.innerText = `Erro ao enviar alerta: ${err.text || err}`;
+        console.error("Erro ao enviar alerta:", err);
+    }
 }
 
-// Limites e intervalo de alerta
+// Limites e intervalo de alerta (10 minutos)
 const TEMP_MIN = 18, TEMP_MAX = 25;
 const HUM_MIN = 45, HUM_MAX = 60;
 const ALERT_INTERVAL = 10 * 60 * 1000; // 10 min
@@ -191,8 +194,7 @@ TEMPREF.on("value", snap => {
         document.getElementById("tempVal").innerText = t.toFixed(1) + " °C";
 
         if((t < TEMP_MIN || t > TEMP_MAX) && Date.now() - lastAlertTemp > ALERT_INTERVAL){
-            const h = Number(document.getElementById("humVal").innerText.replace(" %",""));
-            enviarAlertaEmail(t, h, "Temperatura fora do padrão");
+            enviarAlertaEmail("Monitoramento Industrial", "Temperatura fora do padrão", `${t.toFixed(1)} °C`);
             lastAlertTemp = Date.now();
         }
     }
@@ -206,8 +208,7 @@ HUMREF.on("value", snap => {
         document.getElementById("humVal").innerText = h.toFixed(1) + " %";
 
         if((h < HUM_MIN || h > HUM_MAX) && Date.now() - lastAlertHum > ALERT_INTERVAL){
-            const t = Number(document.getElementById("tempVal").innerText.replace(" °C",""));
-            enviarAlertaEmail(t, h, "Umidade fora do padrão");
+            enviarAlertaEmail("Monitoramento Industrial", "Umidade fora do padrão", `${h.toFixed(1)} %`);
             lastAlertHum = Date.now();
         }
     }
