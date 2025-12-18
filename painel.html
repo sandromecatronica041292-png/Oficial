@@ -61,21 +61,15 @@ h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
   background: #142038;
   color: #00bcd4;
 }
-
-#alertLog {
-  text-align:center;
-  margin-bottom:12px;
-  font-size:14px;
-}
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gaugeJS/dist/gauge.min.js"></script>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="https://cdn.emailjs.com/dist/email.min.js"></script>
 <script type="text/javascript">
-  emailjs.init("W2__8f2fBoqRPX9hX");
+  (function(){ emailjs.init("W2__8f2fBoqRPX9hX"); })();
 </script>
 
 </head>
@@ -85,7 +79,6 @@ h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
   <h1>Monitoramento Industrial</h1>
 
   <div id="status" class="status">Conectando...</div>
-  <div id="alertLog"></div>
   <button id="btnLED" class="btn off">Carregando...</button>
 
   <div class="gauges">
@@ -130,7 +123,6 @@ const HUMREF = db.ref("/hum");
 const statusEl = document.getElementById("status");
 const btn = document.getElementById("btnLED");
 const btnLogout = document.getElementById("btnLogout");
-const alertLogEl = document.getElementById("alertLog");
 
 const gaugeTemp = new Gauge(document.getElementById("gTemp")).setOptions({});
 gaugeTemp.maxValue = 50; gaugeTemp.setMinValue(0); gaugeTemp.animationSpeed = 30; gaugeTemp.set(0);
@@ -140,28 +132,32 @@ gaugeHum.maxValue = 100; gaugeHum.setMinValue(0); gaugeHum.animationSpeed = 30; 
 
 // ===== ALERTAS EMAILJS =====
 function enviarAlertaEmail(temperatura, umidade) {
+    let mensagem = "⚠️ ALERTA DO SISTEMA ⚠️\n";
+
+    if (temperatura < TEMP_MIN || temperatura > TEMP_MAX) {
+        mensagem += `Temperatura fora do padrão: ${temperatura} °C (Limites: ${TEMP_MIN}-${TEMP_MAX} °C)\n`;
+    }
+
+    if (umidade < HUM_MIN || umidade > HUM_MAX) {
+        mensagem += `Umidade fora do padrão: ${umidade} % (Limites: ${HUM_MIN}-${HUM_MAX} %)\n`;
+    }
+
+    mensagem += `Data/Hora: ${new Date().toLocaleString()}`;
+
     const templateParams = {
         from_name: "NewEnergy Alerta",
-        message: `⚠️ ALERTA DE MONITORAMENTO ⚠️\nTemperatura: ${temperatura} °C\nUmidade: ${umidade} %`
+        message: mensagem
     };
 
     emailjs.send('service_kx31f3s', 'template_mqzi3at', templateParams)
-    .then(response => {
-        console.log("Alerta enviado!", response.status, response.text);
-        alertLogEl.innerText = `✅ Alerta enviado! Temp: ${temperatura} °C | Hum: ${umidade} %`;
-        alertLogEl.style.color = "#16a34a";
-    })
-    .catch(error => {
-        console.error("Erro ao enviar alerta completo:", error);
-        alertLogEl.innerText = `❌ Erro ao enviar alerta! Temp: ${temperatura} °C | Hum: ${umidade} %`;
-        alertLogEl.style.color = "#ff4444";
-    });
+    .then(response => console.log("Alerta enviado!", response.status))
+    .catch(error => console.log("Erro ao enviar alerta", error));
 }
 
-// Limites e intervalo de alerta (10 minutos)
+// Limites e intervalo de alerta
 const TEMP_MIN = 18, TEMP_MAX = 25;
 const HUM_MIN = 45, HUM_MAX = 60;
-const ALERT_INTERVAL = 10 * 60 * 1000; // 10 min em ms
+const ALERT_INTERVAL = 10 * 60 * 1000; // 10 min
 let lastAlertTemp = 0;
 let lastAlertHum = 0;
 
@@ -188,8 +184,7 @@ TEMPREF.on("value", snap => {
         document.getElementById("tempVal").innerText = t.toFixed(1) + " °C";
 
         if((t < TEMP_MIN || t > TEMP_MAX) && Date.now() - lastAlertTemp > ALERT_INTERVAL){
-            const hum = Number(document.getElementById("humVal").innerText.replace(" %",""));
-            enviarAlertaEmail(t, hum);
+            enviarAlertaEmail(t, Number(document.getElementById("humVal").innerText.replace(" %","")));
             lastAlertTemp = Date.now();
         }
     }
@@ -203,8 +198,7 @@ HUMREF.on("value", snap => {
         document.getElementById("humVal").innerText = h.toFixed(1) + " %";
 
         if((h < HUM_MIN || h > HUM_MAX) && Date.now() - lastAlertHum > ALERT_INTERVAL){
-            const temp = Number(document.getElementById("tempVal").innerText.replace(" °C",""));
-            enviarAlertaEmail(temp, h);
+            enviarAlertaEmail(Number(document.getElementById("tempVal").innerText.replace(" °C","")), h);
             lastAlertHum = Date.now();
         }
     }
