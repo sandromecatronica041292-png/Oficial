@@ -48,6 +48,16 @@ h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
 .gtitle { font-size: 14px; margin-bottom: 8px; color: #8fa3c6; letter-spacing: 0.5px; }
 .gvalue { margin-top: -10px; font-size: 22px; font-weight: bold; color: #00bcd4; }
 
+#alertLog {
+  background:#142038; 
+  color:#ffcc00; 
+  padding:8px; 
+  border-radius:10px; 
+  font-size:14px; 
+  min-height:30px; 
+  margin-bottom:10px;
+}
+
 #btnLogout { background: #ff5722; margin-top: 10px; }
 
 #btnHistorico {
@@ -95,6 +105,9 @@ h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
     </div>
   </div>
 
+  <!-- Log visual de alertas -->
+  <div id="alertLog">Log de alertas aparecerá aqui...</div>
+
   <button id="btnHistorico" class="btn">Histórico</button>
   <button id="btnLogout" class="btn">Sair</button>
 </div>
@@ -123,12 +136,13 @@ const HUMREF = db.ref("/hum");
 const statusEl = document.getElementById("status");
 const btn = document.getElementById("btnLED");
 const btnLogout = document.getElementById("btnLogout");
+const alertLogEl = document.getElementById("alertLog");
 
 const gaugeTemp = new Gauge(document.getElementById("gTemp")).setOptions({});
 gaugeTemp.maxValue = 50; gaugeTemp.setMinValue(0); gaugeTemp.animationSpeed = 30; gaugeTemp.set(0);
 
 const gaugeHum = new Gauge(document.getElementById("gHum")).setOptions({});
-gaugeHum.maxValue = 100; gaugeHum.setMinValue(0); gaugeHum.animationSpeed = 30; gaugeHum.set(0);
+gaugeHum.maxValue = 100; gaugeHum.setMinValue(0); gaugeHum.setMinValue(0); gaugeHum.animationSpeed = 30; gaugeHum.set(0);
 
 // ===== ALERTAS EMAILJS =====
 function enviarAlertaEmail(temperatura, umidade) {
@@ -138,14 +152,22 @@ function enviarAlertaEmail(temperatura, umidade) {
     };
 
     emailjs.send('service_kx31f3s', 'template_mqzi3at', templateParams)
-    .then(response => console.log("Alerta enviado!", response.status))
-    .catch(error => console.log("Erro ao enviar alerta", error));
+    .then(response => {
+        console.log("Alerta enviado!", response.status);
+        alertLogEl.innerText = `✅ Alerta enviado! Temp: ${temperatura} °C | Hum: ${umidade} %`;
+        alertLogEl.style.color = "#00ff00";
+    })
+    .catch(error => {
+        console.log("Erro ao enviar alerta", error);
+        alertLogEl.innerText = `❌ Erro ao enviar alerta! Temp: ${temperatura} °C | Hum: ${umidade} %`;
+        alertLogEl.style.color = "#ff4444";
+    });
 }
 
-// Limites e intervalo de alerta (10 minutos)
+// Limites e intervalo de alerta
 const TEMP_MIN = 18, TEMP_MAX = 25;
 const HUM_MIN = 45, HUM_MAX = 60;
-const ALERT_INTERVAL = 10 * 60 * 1000; // 10 min em ms
+const ALERT_INTERVAL = 10 * 60 * 1000; // 10 minutos
 let lastAlertTemp = 0;
 let lastAlertHum = 0;
 
