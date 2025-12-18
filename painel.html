@@ -48,16 +48,6 @@ h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
 .gtitle { font-size: 14px; margin-bottom: 8px; color: #8fa3c6; letter-spacing: 0.5px; }
 .gvalue { margin-top: -10px; font-size: 22px; font-weight: bold; color: #00bcd4; }
 
-#alertLog {
-  background:#142038; 
-  color:#ffcc00; 
-  padding:8px; 
-  border-radius:10px; 
-  font-size:14px; 
-  min-height:30px; 
-  margin-bottom:10px;
-}
-
 #btnLogout { background: #ff5722; margin-top: 10px; }
 
 #btnHistorico {
@@ -71,15 +61,21 @@ h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
   background: #142038;
   color: #00bcd4;
 }
+
+#alertLog {
+  text-align:center;
+  margin-bottom:12px;
+  font-size:14px;
+}
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gaugeJS/dist/gauge.min.js"></script>
-<script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script type="text/javascript">
-  (function(){ emailjs.init("W2__8f2fBoqRPX9hX"); })();
+  emailjs.init("W2__8f2fBoqRPX9hX");
 </script>
 
 </head>
@@ -89,6 +85,7 @@ h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
   <h1>Monitoramento Industrial</h1>
 
   <div id="status" class="status">Conectando...</div>
+  <div id="alertLog"></div>
   <button id="btnLED" class="btn off">Carregando...</button>
 
   <div class="gauges">
@@ -104,9 +101,6 @@ h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
       <div id="humVal" class="gvalue">-- %</div>
     </div>
   </div>
-
-  <!-- Log visual de alertas -->
-  <div id="alertLog">Log de alertas aparecerá aqui...</div>
 
   <button id="btnHistorico" class="btn">Histórico</button>
   <button id="btnLogout" class="btn">Sair</button>
@@ -142,7 +136,7 @@ const gaugeTemp = new Gauge(document.getElementById("gTemp")).setOptions({});
 gaugeTemp.maxValue = 50; gaugeTemp.setMinValue(0); gaugeTemp.animationSpeed = 30; gaugeTemp.set(0);
 
 const gaugeHum = new Gauge(document.getElementById("gHum")).setOptions({});
-gaugeHum.maxValue = 100; gaugeHum.setMinValue(0); gaugeHum.setMinValue(0); gaugeHum.animationSpeed = 30; gaugeHum.set(0);
+gaugeHum.maxValue = 100; gaugeHum.setMinValue(0); gaugeHum.animationSpeed = 30; gaugeHum.set(0);
 
 // ===== ALERTAS EMAILJS =====
 function enviarAlertaEmail(temperatura, umidade) {
@@ -153,21 +147,21 @@ function enviarAlertaEmail(temperatura, umidade) {
 
     emailjs.send('service_kx31f3s', 'template_mqzi3at', templateParams)
     .then(response => {
-        console.log("Alerta enviado!", response.status);
+        console.log("Alerta enviado!", response.status, response.text);
         alertLogEl.innerText = `✅ Alerta enviado! Temp: ${temperatura} °C | Hum: ${umidade} %`;
-        alertLogEl.style.color = "#00ff00";
+        alertLogEl.style.color = "#16a34a";
     })
     .catch(error => {
-        console.log("Erro ao enviar alerta", error);
+        console.error("Erro ao enviar alerta completo:", error);
         alertLogEl.innerText = `❌ Erro ao enviar alerta! Temp: ${temperatura} °C | Hum: ${umidade} %`;
         alertLogEl.style.color = "#ff4444";
     });
 }
 
-// Limites e intervalo de alerta
+// Limites e intervalo de alerta (10 minutos)
 const TEMP_MIN = 18, TEMP_MAX = 25;
 const HUM_MIN = 45, HUM_MAX = 60;
-const ALERT_INTERVAL = 10 * 60 * 1000; // 10 minutos
+const ALERT_INTERVAL = 10 * 60 * 1000; // 10 min em ms
 let lastAlertTemp = 0;
 let lastAlertHum = 0;
 
@@ -194,7 +188,8 @@ TEMPREF.on("value", snap => {
         document.getElementById("tempVal").innerText = t.toFixed(1) + " °C";
 
         if((t < TEMP_MIN || t > TEMP_MAX) && Date.now() - lastAlertTemp > ALERT_INTERVAL){
-            enviarAlertaEmail(t, Number(document.getElementById("humVal").innerText.replace(" %","")));
+            const hum = Number(document.getElementById("humVal").innerText.replace(" %",""));
+            enviarAlertaEmail(t, hum);
             lastAlertTemp = Date.now();
         }
     }
@@ -208,7 +203,8 @@ HUMREF.on("value", snap => {
         document.getElementById("humVal").innerText = h.toFixed(1) + " %";
 
         if((h < HUM_MIN || h > HUM_MAX) && Date.now() - lastAlertHum > ALERT_INTERVAL){
-            enviarAlertaEmail(Number(document.getElementById("tempVal").innerText.replace(" °C","")), h);
+            const temp = Number(document.getElementById("tempVal").innerText.replace(" °C",""));
+            enviarAlertaEmail(temp, h);
             lastAlertHum = Date.now();
         }
     }
