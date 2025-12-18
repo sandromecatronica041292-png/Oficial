@@ -48,17 +48,6 @@ h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
 .gtitle { font-size: 14px; margin-bottom: 8px; color: #8fa3c6; letter-spacing: 0.5px; }
 .gvalue { margin-top: -10px; font-size: 22px; font-weight: bold; color: #00bcd4; }
 
-#alertBox {
-  display:none;
-  background:#ef4444;
-  color:#fff;
-  text-align:center;
-  padding:10px;
-  margin-bottom:10px;
-  border-radius:8px;
-  font-weight:bold;
-}
-
 #btnLogout { background: #ff5722; margin-top: 10px; }
 
 #btnHistorico {
@@ -72,22 +61,42 @@ h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
   background: #142038;
   color: #00bcd4;
 }
+
+/* Alerta visual */
+#alertBox {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #ff4444;
+  color: white;
+  padding: 15px 20px;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+  display: none;
+  z-index: 9999;
+  max-width: 300px;
+}
 </style>
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+<!-- Gauge -->
 <script src="https://cdn.jsdelivr.net/npm/gaugeJS/dist/gauge.min.js"></script>
-<script src="https://cdn.emailjs.com/dist/email.min.js"></script>
-<script type="text/javascript">
-  (function(){ emailjs.init("W2__8f2fBoqRPX9hX"); })();
+
+<!-- EmailJS SDK v4 -->
+<script type="module">
+import emailjs from 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
+emailjs.init('W2__8f2fBoqRPX9hX');
+window.emailjs = emailjs;
 </script>
 
 </head>
 <body>
 <div class="card">
   <div class="logo">NewEnergy</div>
-  <div id="alertBox"></div>
   <h1>Monitoramento Industrial</h1>
 
   <div id="status" class="status">Conectando...</div>
@@ -110,6 +119,8 @@ h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
   <button id="btnHistorico" class="btn">Histórico</button>
   <button id="btnLogout" class="btn">Sair</button>
 </div>
+
+<div id="alertBox"></div>
 
 <script>
 const firebaseConfig = {
@@ -142,36 +153,36 @@ gaugeTemp.maxValue = 50; gaugeTemp.setMinValue(0); gaugeTemp.animationSpeed = 30
 const gaugeHum = new Gauge(document.getElementById("gHum")).setOptions({});
 gaugeHum.maxValue = 100; gaugeHum.setMinValue(0); gaugeHum.animationSpeed = 30; gaugeHum.set(0);
 
-// ===== LIMITES =====
+// ===== ALERTAS EMAILJS V4 =====
+function mostrarAlerta(texto){
+  const alertBox = document.getElementById('alertBox');
+  alertBox.innerText = texto;
+  alertBox.style.display = 'block';
+  setTimeout(()=>{ alertBox.style.display = 'none'; },8000);
+}
+
+async function enviarAlertaEmail(temperatura, umidade, tipo){
+  const mensagem = `${tipo} fora do padrão! Valor lido: Temperatura ${temperatura} °C | Umidade ${umidade} %`;
+  mostrarAlerta(mensagem);
+  try {
+    const templateParams = {
+      from_name: "NewEnergy Alerta",
+      message: mensagem
+    };
+    const response = await emailjs.send('service_kx31f3s', 'template_mqzi3at', templateParams);
+    console.log("Alerta enviado com sucesso!", response.status);
+  } catch(err) {
+    console.error("Erro ao enviar alerta:", err);
+    mostrarAlerta("Erro ao enviar alerta! Veja console.");
+  }
+}
+
+// Limites e intervalo de alerta (10 minutos)
 const TEMP_MIN = 18, TEMP_MAX = 25;
 const HUM_MIN = 45, HUM_MAX = 60;
-const ALERT_INTERVAL = 10 * 60 * 1000;
-let lastAlertTemp = 0, lastAlertHum = 0;
-
-// ===== FUNÇÃO DE ALERTA =====
-function enviarAlertaEmail(temperatura, umidade) {
-    let mensagem = "";
-    if (temperatura < TEMP_MIN || temperatura > TEMP_MAX) {
-        mensagem += `Temperatura fora do padrão: ${temperatura} °C (Limites: ${TEMP_MIN}-${TEMP_MAX} °C)\n`;
-    }
-    if (umidade < HUM_MIN || umidade > HUM_MAX) {
-        mensagem += `Umidade fora do padrão: ${umidade} % (Limites: ${HUM_MIN}-${HUM_MAX} %)\n`;
-    }
-    if(mensagem==="") return;
-
-    mensagem += `Data/Hora: ${new Date().toLocaleString()}`;
-
-    // Mostrar no painel
-    const alertBox = document.getElementById("alertBox");
-    alertBox.innerText = mensagem.replace(/\n/g, " | ");
-    alertBox.style.display = "block";
-    setTimeout(() => alertBox.style.display = "none", 8000);
-
-    // Enviar email
-    emailjs.send('service_kx31f3s', 'template_mqzi3at', { from_name: "NewEnergy Alerta", message: mensagem })
-    .then(response => console.log("Alerta enviado!", response.status))
-    .catch(error => console.error("Erro ao enviar alerta:", error));
-}
+const ALERT_INTERVAL = 10*60*1000; // 10 min em ms
+let lastAlertTemp = 0;
+let lastAlertHum = 0;
 
 // ===== LED =====
 LEDREF.on("value", snap => {
@@ -196,7 +207,8 @@ TEMPREF.on("value", snap => {
         document.getElementById("tempVal").innerText = t.toFixed(1) + " °C";
 
         if((t < TEMP_MIN || t > TEMP_MAX) && Date.now() - lastAlertTemp > ALERT_INTERVAL){
-            enviarAlertaEmail(t, Number(document.getElementById("humVal").innerText.replace(" %","")));
+            const h = Number(document.getElementById("humVal").innerText.replace(" %",""));
+            enviarAlertaEmail(t, h, "Temperatura");
             lastAlertTemp = Date.now();
         }
     }
@@ -210,16 +222,19 @@ HUMREF.on("value", snap => {
         document.getElementById("humVal").innerText = h.toFixed(1) + " %";
 
         if((h < HUM_MIN || h > HUM_MAX) && Date.now() - lastAlertHum > ALERT_INTERVAL){
-            enviarAlertaEmail(Number(document.getElementById("tempVal").innerText.replace(" °C","")), h);
+            const t = Number(document.getElementById("tempVal").innerText.replace(" °C",""));
+            enviarAlertaEmail(t, h, "Umidade");
             lastAlertHum = Date.now();
         }
     }
 });
 
 // ===== LOGOUT E HISTÓRICO =====
-btnLogout.addEventListener("click", () => auth.signOut().then(()=>window.location.href="index.html"));
-document.getElementById("btnHistorico").addEventListener("click", () => window.location.href="historico.html");
+btnLogout.addEventListener("click", ()=>auth.signOut().then(()=>window.location.href="index.html"));
+document.getElementById("btnHistorico").addEventListener("click", ()=>window.location.href="historico.html");
 
 </script>
 </body>
 </html>
+
+
