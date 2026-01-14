@@ -32,11 +32,12 @@ h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
   border: none;
   border-radius: 12px;
   font-size: 18px;
-  margin-bottom: 15px;
+  margin-bottom: 12px;
   cursor: pointer;
 }
 .on { background: #16a34a; color: #fff; }
 .off { background: #ef4444; color: #fff; }
+
 .gauges { display: flex; justify-content: space-between; }
 .gbox {
   width: 48%;
@@ -47,7 +48,23 @@ h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
 }
 .gtitle { font-size: 14px; color: #8fa3c6; }
 .gvalue { font-size: 22px; font-weight: bold; color: #00bcd4; }
-#alertMessage { text-align: center; font-size: 14px; color: #ffcc00; }
+
+#btnHistorico {
+  background: #0c1424;
+  color: #8fa3c6;
+  border: 1px solid #1f2a44;
+  font-size: 15px;
+}
+#btnHistorico:hover {
+  background: #142038;
+  color: #00bcd4;
+}
+
+#alertMessage {
+  text-align: center;
+  font-size: 14px;
+  color: #ffcc00;
+}
 </style>
 
 <!-- Firebase -->
@@ -87,6 +104,8 @@ emailjs.init("W2__8f2fBoqRPX9hX");
   </div>
 
   <div id="alertMessage"></div>
+
+  <button id="btnHistorico" class="btn">Histórico</button>
 </div>
 
 <script>
@@ -116,21 +135,24 @@ const gaugeHum = new Gauge(document.getElementById("gHum")).setOptions({});
 gaugeHum.maxValue = 100;
 gaugeHum.setMinValue(0);
 
-/* ===== EMAIL ALERTA (CORRIGIDO) ===== */
-function enviarAlertaEmail(temperatura, umidade, tipo) {
-  const templateParams = {
+/* ===== VARIÁVEIS ATUAIS ===== */
+let tempAtual = null;
+let humAtual = null;
+let ultimoAlerta = 0;
+
+/* ===== LIMITES ===== */
+const TEMP_MIN = 18, TEMP_MAX = 25;
+const HUM_MIN = 45, HUM_MAX = 60;
+
+/* ===== EMAIL ===== */
+function enviarAlertaEmail(temp, hum, tipo) {
+  emailjs.send("service_kx31f3s", "template_mqzi3at", {
     equipamento: "NewEnergy - Painel Industrial",
     tipo: tipo,
-    valor: `Temperatura: ${temperatura} °C | Umidade: ${umidade} %`,
+    valor: `Temperatura: ${temp.toFixed(1)} °C | Umidade: ${hum.toFixed(1)} %`,
     data: new Date().toLocaleString("pt-BR")
-  };
-
-  emailjs.send("service_kx31f3s", "template_mqzi3at", templateParams)
-  .then(() => {
+  }).then(() => {
     alertMessage.innerText = "⚠️ Alerta enviado por e-mail";
-  })
-  .catch(() => {
-    alertMessage.innerText = "Erro ao enviar alerta";
   });
 }
 
@@ -147,21 +169,16 @@ btn.onclick = async () => {
   LEDREF.set(s.val() == 1 ? 0 : 1);
 };
 
-/* ===== LIMITES ===== */
-const TEMP_MIN = 18, TEMP_MAX = 25;
-const HUM_MIN = 45, HUM_MAX = 60;
-let ultimoAlerta = 0;
-
 /* ===== TEMPERATURA ===== */
 TEMPREF.on("value", snap => {
   const t = Number(snap.val());
   if (!isNaN(t)) {
+    tempAtual = t;
     gaugeTemp.set(t);
-    tempVal.innerText = t + " °C";
+    tempVal.innerText = t.toFixed(1) + " °C";
 
-    if ((t < TEMP_MIN || t > TEMP_MAX) && Date.now() - ultimoAlerta > 600000) {
-      const h = Number(humVal.innerText.replace(" %",""));
-      enviarAlertaEmail(t, h, "Temperatura fora do padrão");
+    if ((t < TEMP_MIN || t > TEMP_MAX) && humAtual !== null && Date.now() - ultimoAlerta > 600000) {
+      enviarAlertaEmail(tempAtual, humAtual, "Temperatura fora do padrão");
       ultimoAlerta = Date.now();
     }
   }
@@ -171,16 +188,21 @@ TEMPREF.on("value", snap => {
 HUMREF.on("value", snap => {
   const h = Number(snap.val());
   if (!isNaN(h)) {
+    humAtual = h;
     gaugeHum.set(h);
-    humVal.innerText = h + " %";
+    humVal.innerText = h.toFixed(1) + " %";
 
-    if ((h < HUM_MIN || h > HUM_MAX) && Date.now() - ultimoAlerta > 600000) {
-      const t = Number(tempVal.innerText.replace(" °C",""));
-      enviarAlertaEmail(t, h, "Umidade fora do padrão");
+    if ((h < HUM_MIN || h > HUM_MAX) && tempAtual !== null && Date.now() - ultimoAlerta > 600000) {
+      enviarAlertaEmail(tempAtual, humAtual, "Umidade fora do padrão");
       ultimoAlerta = Date.now();
     }
   }
 });
+
+/* ===== HISTÓRICO ===== */
+document.getElementById("btnHistorico").onclick = () => {
+  window.location.href = "historico.html";
+};
 </script>
 </body>
 </html>
