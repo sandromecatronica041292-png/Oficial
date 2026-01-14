@@ -16,7 +16,6 @@ body {
   align-items: flex-start;
   padding: 20px;
 }
-
 .card {
   background: #1b1f33;
   border-radius: 15px;
@@ -24,65 +23,48 @@ body {
   width: 420px;
   box-shadow: 0 10px 25px rgba(0,0,0,0.7);
 }
-
 h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
-.logo { text-align: center; margin-bottom: 20px; font-size: 20px; color: #00bcd4; font-weight: bold; letter-spacing: 1px; }
+.logo { text-align: center; margin-bottom: 20px; font-size: 20px; color: #00bcd4; font-weight: bold; }
 .status { text-align: center; font-weight: bold; font-size: 18px; margin-bottom: 12px; }
-
 .btn {
   width: 100%;
   padding: 12px;
   border: none;
   border-radius: 12px;
   font-size: 18px;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
   cursor: pointer;
-  transition: all 0.3s ease;
 }
-
 .on { background: #16a34a; color: #fff; }
 .off { background: #ef4444; color: #fff; }
-
-.gauges { display: flex; justify-content: space-between; margin-top: 10px; }
-.gbox { width: 48%; text-align: center; background: #0c1424; padding: 15px; border-radius: 15px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
-.gtitle { font-size: 14px; margin-bottom: 8px; color: #8fa3c6; letter-spacing: 0.5px; }
-.gvalue { margin-top: -10px; font-size: 22px; font-weight: bold; color: #00bcd4; }
-
-#btnLogout { background: #ff5722; margin-top: 10px; }
-
-#btnHistorico {
-  background: #0c1424;
-  color: #8fa3c6;
-  border: 1px solid #1f2a44;
-  font-size: 15px;
-  margin-top: 10px;
-}
-#btnHistorico:hover {
-  background: #142038;
-  color: #00bcd4;
-}
-
-#alertMessage {
+.gauges { display: flex; justify-content: space-between; }
+.gbox {
+  width: 48%;
   text-align: center;
-  font-size: 14px;
-  margin-top: 10px;
-  color: #ffcc00;
+  background: #0c1424;
+  padding: 15px;
+  border-radius: 15px;
 }
+.gtitle { font-size: 14px; color: #8fa3c6; }
+.gvalue { font-size: 22px; font-weight: bold; color: #00bcd4; }
+#alertMessage { text-align: center; font-size: 14px; color: #ffcc00; }
 </style>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+<!-- Gauge -->
 <script src="https://cdn.jsdelivr.net/npm/gaugeJS/dist/gauge.min.js"></script>
 
-<!-- EmailJS v4 compatível -->
+<!-- EmailJS -->
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>
-  emailjs.init('W2__8f2fBoqRPX9hX');
+emailjs.init("W2__8f2fBoqRPX9hX");
 </script>
-
 </head>
+
 <body>
 <div class="card">
   <div class="logo">NewEnergy</div>
@@ -97,7 +79,6 @@ h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
       <canvas id="gTemp" width="180" height="160"></canvas>
       <div id="tempVal" class="gvalue">-- °C</div>
     </div>
-
     <div class="gbox">
       <div class="gtitle">Umidade (%)</div>
       <canvas id="gHum" width="180" height="160"></canvas>
@@ -106,9 +87,6 @@ h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
   </div>
 
   <div id="alertMessage"></div>
-
-  <button id="btnHistorico" class="btn">Histórico</button>
-  <button id="btnLogout" class="btn">Sair</button>
 </div>
 
 <script>
@@ -116,107 +94,93 @@ const firebaseConfig = {
   apiKey: "AIzaSyB5FnkQiFi3gn9Iup2KNcbrKxWd-0Jjo6Y",
   authDomain: "oficial-688e8.firebaseapp.com",
   databaseURL: "https://oficial-688e8-default-rtdb.firebaseio.com/",
-  projectId: "oficial-688e8",
-  storageBucket: "oficial-688e8.firebasestorage.app",
-  messagingSenderId: "547217835774",
-  appId: "1:547217835774:web:c7186da5bf6156590c47af"
+  projectId: "oficial-688e8"
 };
 
 firebase.initializeApp(firebaseConfig);
+
 const db = firebase.database();
-const auth = firebase.auth();
-
-auth.onAuthStateChanged(user => { if(!user) window.location.href="index.html"; });
-
 const LEDREF = db.ref("/led");
 const TEMPREF = db.ref("/temp");
 const HUMREF = db.ref("/hum");
 
 const statusEl = document.getElementById("status");
 const btn = document.getElementById("btnLED");
-const btnLogout = document.getElementById("btnLogout");
 const alertMessage = document.getElementById("alertMessage");
 
 const gaugeTemp = new Gauge(document.getElementById("gTemp")).setOptions({});
-gaugeTemp.maxValue = 50; gaugeTemp.setMinValue(0); gaugeTemp.animationSpeed = 30; gaugeTemp.set(0);
+gaugeTemp.maxValue = 50;
+gaugeTemp.setMinValue(0);
 
 const gaugeHum = new Gauge(document.getElementById("gHum")).setOptions({});
-gaugeHum.maxValue = 100; gaugeHum.setMinValue(0); gaugeHum.animationSpeed = 30; gaugeHum.set(0);
+gaugeHum.maxValue = 100;
+gaugeHum.setMinValue(0);
 
-// ===== ALERTAS EMAILJS =====
+/* ===== EMAIL ALERTA (CORRIGIDO) ===== */
 function enviarAlertaEmail(temperatura, umidade, tipo) {
-    const templateParams = {
-        from_name: "NewEnergy Alerta",
-        message: `⚠️ ALERTA DE MONITORAMENTO ⚠️\nTipo: ${tipo}\nTemperatura: ${temperatura} °C\nUmidade: ${umidade} %\nData/Hora: ${new Date().toLocaleString()}`
-    };
+  const templateParams = {
+    equipamento: "NewEnergy - Painel Industrial",
+    tipo: tipo,
+    valor: `Temperatura: ${temperatura} °C | Umidade: ${umidade} %`,
+    data: new Date().toLocaleString("pt-BR")
+  };
 
-    emailjs.send('service_kx31f3s', 'template_mqzi3at', templateParams)
-    .then(response => {
-        console.log("Alerta enviado!", response.status);
-        alertMessage.innerText = `Alerta enviado: ${tipo} (${temperatura}°C, ${umidade}%)`;
-    })
-    .catch(error => {
-        console.log("Erro ao enviar alerta", error);
-        alertMessage.innerText = `Erro ao enviar alerta: ${error.status || error}`;
-    });
+  emailjs.send("service_kx31f3s", "template_mqzi3at", templateParams)
+  .then(() => {
+    alertMessage.innerText = "⚠️ Alerta enviado por e-mail";
+  })
+  .catch(() => {
+    alertMessage.innerText = "Erro ao enviar alerta";
+  });
 }
 
-// Limites e intervalo de alerta
+/* ===== LED ===== */
+LEDREF.on("value", snap => {
+  const on = snap.val() == 1;
+  statusEl.innerText = on ? "LED LIGADO" : "LED DESLIGADO";
+  btn.innerText = on ? "DESLIGAR" : "LIGAR";
+  btn.className = "btn " + (on ? "on" : "off");
+});
+
+btn.onclick = async () => {
+  const s = await LEDREF.get();
+  LEDREF.set(s.val() == 1 ? 0 : 1);
+};
+
+/* ===== LIMITES ===== */
 const TEMP_MIN = 18, TEMP_MAX = 25;
 const HUM_MIN = 45, HUM_MAX = 60;
-const ALERT_INTERVAL = 10 * 60 * 1000; // 10 min
-let lastAlertTemp = 0;
-let lastAlertHum = 0;
+let ultimoAlerta = 0;
 
-// ===== LED =====
-LEDREF.on("value", snap => {
-  const v = snap.val();
-  const on = (v === 1 || v === "1" || v === true);
-  statusEl.textContent = on ? "LED LIGADO" : "LED DESLIGADO";
-  btn.textContent = on ? "DESLIGAR" : "LIGAR";
-  btn.className = on ? "btn on" : "btn off";
-});
-
-btn.addEventListener("click", async () => {
-  const snap = await LEDREF.get();
-  const cur = snap.val();
-  LEDREF.set((cur === 1 || cur === "1") ? 0 : 1);
-});
-
-// ===== TEMPERATURA =====
+/* ===== TEMPERATURA ===== */
 TEMPREF.on("value", snap => {
-    const t = Number(snap.val());
-    if (!isNaN(t)) {
-        gaugeTemp.set(t);
-        document.getElementById("tempVal").innerText = t.toFixed(1) + " °C";
+  const t = Number(snap.val());
+  if (!isNaN(t)) {
+    gaugeTemp.set(t);
+    tempVal.innerText = t + " °C";
 
-        if((t < TEMP_MIN || t > TEMP_MAX) && Date.now() - lastAlertTemp > ALERT_INTERVAL){
-            const h = Number(document.getElementById("humVal").innerText.replace(" %",""));
-            enviarAlertaEmail(t, h, "Temperatura fora do padrão");
-            lastAlertTemp = Date.now();
-        }
+    if ((t < TEMP_MIN || t > TEMP_MAX) && Date.now() - ultimoAlerta > 600000) {
+      const h = Number(humVal.innerText.replace(" %",""));
+      enviarAlertaEmail(t, h, "Temperatura fora do padrão");
+      ultimoAlerta = Date.now();
     }
+  }
 });
 
-// ===== UMIDADE =====
+/* ===== UMIDADE ===== */
 HUMREF.on("value", snap => {
-    const h = Number(snap.val());
-    if (!isNaN(h)) {
-        gaugeHum.set(h);
-        document.getElementById("humVal").innerText = h.toFixed(1) + " %";
+  const h = Number(snap.val());
+  if (!isNaN(h)) {
+    gaugeHum.set(h);
+    humVal.innerText = h + " %";
 
-        if((h < HUM_MIN || h > HUM_MAX) && Date.now() - lastAlertHum > ALERT_INTERVAL){
-            const t = Number(document.getElementById("tempVal").innerText.replace(" °C",""));
-            enviarAlertaEmail(t, h, "Umidade fora do padrão");
-            lastAlertHum = Date.now();
-        }
+    if ((h < HUM_MIN || h > HUM_MAX) && Date.now() - ultimoAlerta > 600000) {
+      const t = Number(tempVal.innerText.replace(" °C",""));
+      enviarAlertaEmail(t, h, "Umidade fora do padrão");
+      ultimoAlerta = Date.now();
     }
+  }
 });
-
-// ===== LOGOUT E HISTÓRICO =====
-btnLogout.addEventListener("click", () => auth.signOut().then(()=>window.location.href="index.html"));
-document.getElementById("btnHistorico").addEventListener("click", () => window.location.href="historico.html");
-
 </script>
 </body>
 </html>
