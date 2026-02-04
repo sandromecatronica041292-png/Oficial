@@ -26,7 +26,6 @@ body {
 h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
 .logo { text-align: center; margin-bottom: 20px; font-size: 20px; color: #00bcd4; font-weight: bold; }
 .status { text-align: center; font-weight: bold; font-size: 18px; margin-bottom: 12px; }
-.status-container { text-align:center; margin-bottom:12px; }
 .btn {
   width: 100%;
   padding: 12px;
@@ -62,6 +61,10 @@ h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
   font-size: 14px;
   color: #ffcc00;
 }
+
+#btnWifi {
+  margin-bottom: 15px;
+}
 </style>
 
 <!-- Firebase -->
@@ -85,9 +88,7 @@ emailjs.init("W2__8f2fBoqRPX9hX");
   <h1>Monitoramento Industrial</h1>
 
   <div id="status" class="status">Verificando login...</div>
-  <div class="status-container">
-    Wi-Fi: <span id="wifiStatus" style="display:inline-block;width:15px;height:15px;border-radius:50%;background:red;"></span>
-  </div>
+  <button id="btnWifi" class="btn off">Wi-Fi: Desconectado</button>
   <button id="btnLED" class="btn off">Carregando...</button>
 
   <div class="gauges">
@@ -134,18 +135,17 @@ auth.onAuthStateChanged(user => {
 
 /* ===== SISTEMA ===== */
 function iniciarPainel() {
-
   const LEDREF  = db.ref("/led");
   const TEMPREF = db.ref("/temp");
   const HUMREF  = db.ref("/hum");
   const WIFIREF = db.ref("/wifi_status");
 
   const statusEl = document.getElementById("status");
-  const btn = document.getElementById("btnLED");
+  const btnLED = document.getElementById("btnLED");
+  const btnWifi = document.getElementById("btnWifi");
   const tempVal = document.getElementById("tempVal");
   const humVal  = document.getElementById("humVal");
   const alertMessage = document.getElementById("alertMessage");
-  const wifiLed = document.getElementById("wifiStatus");
 
   const gaugeTemp = new Gauge(document.getElementById("gTemp")).setOptions({});
   gaugeTemp.maxValue = 50;
@@ -173,28 +173,47 @@ function iniciarPainel() {
     });
   }
 
-  /* ===== LED ===== */
+  /* ===== LED EQUIPAMENTO ===== */
   LEDREF.on("value", snap => {
     const on = snap.val() == 1;
     statusEl.innerText = on ? "LED LIGADO" : "LED DESLIGADO";
-    btn.innerText = on ? "DESLIGAR" : "LIGAR";
-    btn.className = "btn " + (on ? "on" : "off");
+    btnLED.innerText = on ? "DESLIGAR" : "LIGAR";
+    btnLED.className = "btn " + (on ? "on" : "off");
   });
 
-  btn.onclick = async () => {
+  btnLED.onclick = async () => {
     const s = await LEDREF.get();
     LEDREF.set(s.val() == 1 ? 0 : 1);
   };
 
+  /* ===== STATUS WIFI ===== */
+  WIFIREF.on("value", snap => {
+    const status = snap.val();
+    if(status === 0){
+      btnWifi.innerText = "Wi-Fi: Desconectado";
+      btnWifi.className = "btn off"; // vermelho
+    } else if(status === 1){
+      btnWifi.innerText = "Wi-Fi: Tentando reconectar";
+      btnWifi.className = "btn"; // amarelo
+      btnWifi.style.background = "#facc15";
+      btnWifi.style.color = "#000";
+    } else if(status === 2){
+      btnWifi.innerText = "Wi-Fi: Conectado";
+      btnWifi.className = "btn on"; // verde
+      btnWifi.style.background = "";
+      btnWifi.style.color = "";
+    }
+  });
+
   /* ===== TEMPERATURA ===== */
   TEMPREF.on("value", snap => {
     const t = Number(snap.val());
-    if (!isNaN(t)) {
+    if(!isNaN(t)){
       tempAtual = t;
       gaugeTemp.set(t);
       tempVal.innerText = t.toFixed(1) + " °C";
 
-      if ((t < TEMP_MIN || t > TEMP_MAX) && humAtual !== null && Date.now() - ultimoAlerta > 600000) {
+      if((t < TEMP_MIN || t > TEMP_MAX) && humAtual !== null && Date.now() - ultimoAlerta > 600000){
         enviarAlertaEmail(tempAtual, humAtual, "Temperatura fora do padrão");
         ultimoAlerta = Date.now();
       }
@@ -204,26 +223,15 @@ function iniciarPainel() {
   /* ===== UMIDADE ===== */
   HUMREF.on("value", snap => {
     const h = Number(snap.val());
-    if (!isNaN(h)) {
+    if(!isNaN(h)){
       humAtual = h;
       gaugeHum.set(h);
       humVal.innerText = h.toFixed(1) + " %";
 
-      if ((h < HUM_MIN || h > HUM_MAX) && tempAtual !== null && Date.now() - ultimoAlerta > 600000) {
+      if((h < HUM_MIN || h > HUM_MAX) && tempAtual !== null && Date.now() - ultimoAlerta > 600000){
         enviarAlertaEmail(tempAtual, humAtual, "Umidade fora do padrão");
         ultimoAlerta = Date.now();
       }
-    }
-  });
-
-  /* ===== WI-FI STATUS ===== */
-  WIFIREF.on("value", snap => {
-    const val = snap.val();
-    switch(val){
-      case 0: wifiLed.style.background = "red"; break;       // desconectado
-      case 1: wifiLed.style.background = "yellow"; break;    // instável
-      case 2: wifiLed.style.background = "green"; break;     // ok
-      default: wifiLed.style.background = "red";
     }
   });
 
