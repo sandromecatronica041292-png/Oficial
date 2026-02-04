@@ -25,23 +25,7 @@ body {
 }
 h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
 .logo { text-align: center; margin-bottom: 20px; font-size: 20px; color: #00bcd4; font-weight: bold; }
-.status-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 18px;
-  margin-bottom: 12px;
-}
-.status-led {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  margin-right: 8px;
-  background-color: gray;
-}
-.status-text { font-weight: bold; }
-
+.status { text-align: center; font-weight: bold; font-size: 18px; margin-bottom: 12px; }
 .btn {
   width: 100%;
   padding: 12px;
@@ -77,6 +61,16 @@ h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
   font-size: 14px;
   color: #ffcc00;
 }
+
+/* LED de status Wi-Fi */
+#wifiLed {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-left: 10px;
+  background-color: gray;
+}
 </style>
 
 <!-- Firebase -->
@@ -99,11 +93,7 @@ emailjs.init("W2__8f2fBoqRPX9hX");
   <div class="logo">NewEnergy</div>
   <h1>Monitoramento Industrial</h1>
 
-  <div class="status-container">
-    <div id="wifiLed" class="status-led"></div>
-    <div id="wifiStatus" class="status-text">Verificando Wi-Fi...</div>
-  </div>
-
+  <div class="status">Wi-Fi: <span id="wifiLed"></span></div>
   <button id="btnLED" class="btn off">Carregando...</button>
 
   <div class="gauges">
@@ -132,8 +122,8 @@ const firebaseConfig = {
   databaseURL: "https://oficial-688e8-default-rtdb.firebaseio.com/",
   projectId: "oficial-688e8"
 };
-firebase.initializeApp(firebaseConfig);
 
+firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.database();
 
@@ -148,18 +138,16 @@ auth.onAuthStateChanged(user => {
 
 /* ===== SISTEMA ===== */
 function iniciarPainel() {
+  const LEDREF    = db.ref("/led");
+  const TEMPREF   = db.ref("/temp");
+  const HUMREF    = db.ref("/hum");
+  const WIFIREF   = db.ref("/wifi_status"); // caminho correto
 
-  const LEDREF     = db.ref("/led");
-  const TEMPREF    = db.ref("/temp");
-  const HUMREF     = db.ref("/hum");
-  const WIFIREF    = db.ref("/wifiStatus");
-
-  const wifiLed    = document.getElementById("wifiLed");
-  const wifiText   = document.getElementById("wifiStatus");
-  const btn        = document.getElementById("btnLED");
-  const tempVal    = document.getElementById("tempVal");
-  const humVal     = document.getElementById("humVal");
+  const btn = document.getElementById("btnLED");
+  const tempVal = document.getElementById("tempVal");
+  const humVal  = document.getElementById("humVal");
   const alertMessage = document.getElementById("alertMessage");
+  const wifiLed = document.getElementById("wifiLed");
 
   const gaugeTemp = new Gauge(document.getElementById("gTemp")).setOptions({});
   gaugeTemp.maxValue = 50;
@@ -170,7 +158,7 @@ function iniciarPainel() {
   gaugeHum.setMinValue(0);
 
   let tempAtual = null;
-  let humAtual  = null;
+  let humAtual = null;
   let ultimoAlerta = 0;
 
   const TEMP_MIN = 18, TEMP_MAX = 25;
@@ -231,12 +219,12 @@ function iniciarPainel() {
 
   /* ===== WI-FI STATUS ===== */
   WIFIREF.on("value", snap => {
-    const status = snap.val();
-    switch(status) {
-      case 0: wifiLed.style.backgroundColor = "red";    wifiText.innerText = "Wi-Fi: Desconectado"; break;
-      case 1: wifiLed.style.backgroundColor = "green";  wifiText.innerText = "Wi-Fi: Conectado"; break;
-      case 2: wifiLed.style.backgroundColor = "yellow"; wifiText.innerText = "Wi-Fi: Tentando reconectar"; break;
-      default: wifiLed.style.backgroundColor = "gray";  wifiText.innerText = "Wi-Fi: Desconhecido"; break;
+    const status = Number(snap.val());
+    switch(status){
+      case 0: wifiLed.style.backgroundColor = "red"; break;       // desconectado
+      case 1: wifiLed.style.backgroundColor = "yellow"; break;    // tentando reconectar
+      case 2: wifiLed.style.backgroundColor = "green"; break;     // conectado
+      default: wifiLed.style.backgroundColor = "gray";            // indefinido
     }
   });
 
