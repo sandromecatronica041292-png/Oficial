@@ -157,7 +157,7 @@ auth.onAuthStateChanged(user => {
 
 function iniciarPainel() {
   const LEDREF  = db.ref("/led");
-  const LED2REF = db.ref("/historico/led2"); // caminho correto dentro do histórico
+  const LED2REF = db.ref("/historico/led2"); // LED2 dentro do histórico
   const TEMPREF = db.ref("/temp");
   const HUMREF  = db.ref("/hum");
 
@@ -207,10 +207,17 @@ function iniciarPainel() {
     LEDREF.set(s.val() == 1 ? 0 : 1);
   };
 
-  /* ===== LED2 (INDEPENDENTE DENTRO DE HISTÓRICO) ===== */
+  /* ===== LED2 (independente, suporta valor como objeto ou número) ===== */
   LED2REF.on("value", snap => {
-    const val = snap.val();
-    const on = Number(val) === 1; // garante leitura correta
+    let val = snap.val();
+
+    // Se for objeto, pega a primeira chave
+    if (typeof val === "object" && val !== null) {
+      const keys = Object.keys(val);
+      val = Number(keys[0]); // pega a primeira chave como valor
+    }
+
+    const on = Number(val) === 1; 
     led2El.style.background = on ? "#16a34a" : "#ef4444"; // verde ou vermelho
   });
 
