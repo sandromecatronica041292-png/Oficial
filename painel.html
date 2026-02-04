@@ -65,8 +65,8 @@ h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <!-- Gauge -->
 <script src="https://cdn.jsdelivr.net/npm/gaugeJS/dist/gauge.min.js"></script>
@@ -83,7 +83,7 @@ emailjs.init("W2__8f2fBoqRPX9hX");
   <div class="logo">NewEnergy</div>
   <h1>Monitoramento Industrial</h1>
 
-  <div id="status" class="status">Autenticando...</div>
+  <div id="status" class="status">Verificando login...</div>
   <button id="btnLED" class="btn off">Carregando...</button>
 
   <div class="gauges">
@@ -114,22 +114,21 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
+
 const auth = firebase.auth();
 const db = firebase.database();
 
-/* ===== AUTENTICAÇÃO ANÔNIMA ===== */
-auth.signInAnonymously()
-  .then(() => {
-    console.log("Firebase autenticado");
+/* 🔒 PROTEÇÃO DO PAINEL */
+auth.onAuthStateChanged(user => {
+  if (!user) {
+    window.location.href = "index.html";
+  } else {
     document.getElementById("status").innerText = "Conectado";
     iniciarPainel();
-  })
-  .catch(err => {
-    console.error(err);
-    document.getElementById("status").innerText = "Erro Firebase";
-  });
+  }
+});
 
-/* ===== INICIAR SISTEMA ===== */
+/* ===== SISTEMA ===== */
 function iniciarPainel() {
 
   const LEDREF  = db.ref("/led");
@@ -138,6 +137,8 @@ function iniciarPainel() {
 
   const statusEl = document.getElementById("status");
   const btn = document.getElementById("btnLED");
+  const tempVal = document.getElementById("tempVal");
+  const humVal  = document.getElementById("humVal");
   const alertMessage = document.getElementById("alertMessage");
 
   const gaugeTemp = new Gauge(document.getElementById("gTemp")).setOptions({});
