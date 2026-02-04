@@ -26,6 +26,7 @@ body {
 h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
 .logo { text-align: center; margin-bottom: 20px; font-size: 20px; color: #00bcd4; font-weight: bold; }
 .status { text-align: center; font-weight: bold; font-size: 18px; margin-bottom: 12px; }
+
 .btn {
   width: 100%;
   padding: 12px;
@@ -38,17 +39,6 @@ h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
 .on { background: #16a34a; color: #fff; }
 .off { background: #ef4444; color: #fff; }
 
-/* LED de status Wi-Fi */
-#wifiLED {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  display: inline-block;
-  margin-left: 10px;
-  vertical-align: middle;
-}
-
-/* Gauges */
 .gauges { display: flex; justify-content: space-between; }
 .gbox {
   width: 48%;
@@ -71,6 +61,17 @@ h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
   text-align: center;
   font-size: 14px;
   color: #ffcc00;
+}
+
+/* LED Wi-Fi */
+#wifiLED {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-left: 10px;
+  vertical-align: middle;
+  background-color: grey;
 }
 </style>
 
@@ -95,9 +96,8 @@ emailjs.init("W2__8f2fBoqRPX9hX");
   <h1>Monitoramento Industrial</h1>
 
   <div class="status">
-    Wi-Fi: <span id="wifiLED"></span>
+    Conexão Wi-Fi: <span id="wifiLED"></span>
   </div>
-
   <button id="btnLED" class="btn off">Carregando...</button>
 
   <div class="gauges">
@@ -114,6 +114,7 @@ emailjs.init("W2__8f2fBoqRPX9hX");
   </div>
 
   <div id="alertMessage"></div>
+
   <button id="btnHistorico" class="btn">Histórico</button>
 </div>
 
@@ -132,17 +133,18 @@ const db = firebase.database();
 
 /* 🔒 PROTEÇÃO DO PAINEL */
 auth.onAuthStateChanged(user => {
-  if (!user) window.location.href = "index.html";
-  else iniciarPainel();
+  if (!user) {
+    window.location.href = "index.html";
+  } else {
+    iniciarPainel();
+  }
 });
 
-/* ===== SISTEMA ===== */
 function iniciarPainel() {
-
   const LEDREF  = db.ref("/led");
   const TEMPREF = db.ref("/temp");
   const HUMREF  = db.ref("/hum");
-  const WIFIREF = db.ref("/wifi_status");
+  const WIFIREF = db.ref("/wifi_status"); // chave do Wi-Fi
 
   const btn = document.getElementById("btnLED");
   const tempVal = document.getElementById("tempVal");
@@ -151,12 +153,17 @@ function iniciarPainel() {
   const wifiLED = document.getElementById("wifiLED");
 
   const gaugeTemp = new Gauge(document.getElementById("gTemp")).setOptions({});
-  gaugeTemp.maxValue = 50; gaugeTemp.setMinValue(0);
+  gaugeTemp.maxValue = 50;
+  gaugeTemp.setMinValue(0);
 
   const gaugeHum = new Gauge(document.getElementById("gHum")).setOptions({});
-  gaugeHum.maxValue = 100; gaugeHum.setMinValue(0);
+  gaugeHum.maxValue = 100;
+  gaugeHum.setMinValue(0);
 
-  let tempAtual = null, humAtual = null, ultimoAlerta = 0;
+  let tempAtual = null;
+  let humAtual = null;
+  let ultimoAlerta = 0;
+
   const TEMP_MIN = 18, TEMP_MAX = 25;
   const HUM_MIN = 45, HUM_MAX = 60;
 
@@ -166,7 +173,9 @@ function iniciarPainel() {
       tipo: tipo,
       valor: `Temperatura: ${temp.toFixed(1)} °C | Umidade: ${hum.toFixed(1)} %`,
       data: new Date().toLocaleString("pt-BR")
-    }).then(() => alertMessage.innerText = "⚠️ Alerta enviado por e-mail");
+    }).then(() => {
+      alertMessage.innerText = "⚠️ Alerta enviado por e-mail";
+    });
   }
 
   /* ===== LED ===== */
@@ -175,6 +184,7 @@ function iniciarPainel() {
     btn.innerText = on ? "DESLIGAR" : "LIGAR";
     btn.className = "btn " + (on ? "on" : "off");
   });
+
   btn.onclick = async () => {
     const s = await LEDREF.get();
     LEDREF.set(s.val() == 1 ? 0 : 1);
@@ -210,18 +220,15 @@ function iniciarPainel() {
     }
   });
 
-  /* ===== WI-FI STATUS ===== */
+  /* ===== WIFI STATUS ===== */
   WIFIREF.on("value", snap => {
     const status = Number(snap.val());
-    switch(status){
-      case 0: wifiLED.style.background = "red"; break;      // desconectado
-      case 1: wifiLED.style.background = "yellow"; break;   // tentando reconectar
-      case 2: wifiLED.style.background = "green"; break;    // conectado
-      default: wifiLED.style.background = "gray"; break;     // desconhecido
-    }
+    if(status === 0) wifiLED.style.backgroundColor = "red";      // desconectado
+    else if(status === 1) wifiLED.style.backgroundColor = "yellow"; // tentando reconectar
+    else if(status === 2) wifiLED.style.backgroundColor = "green";  // conectado
+    else wifiLED.style.backgroundColor = "grey"; // desconhecido
   });
 
-  /* ===== HISTÓRICO ===== */
   document.getElementById("btnHistorico").onclick = () => {
     window.location.href = "historico.html";
   };
