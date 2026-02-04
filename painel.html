@@ -207,9 +207,10 @@ function iniciarPainel() {
     LEDREF.set(s.val() == 1 ? 0 : 1);
   };
 
-  /* ===== LED2 ===== */
+  /* ===== LED2 (INDEPENDENTE) ===== */
   LED2REF.on("value", snap => {
-    const on = snap.val() == 1;
+    const val = snap.val();
+    const on = Number(val) === 1; // garante leitura correta
     led2El.style.background = on ? "#16a34a" : "#ef4444"; // verde ou vermelho
   });
 
