@@ -60,16 +60,23 @@ h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
   text-align: center;
   font-size: 14px;
   color: #ffcc00;
+  margin-bottom: 12px;
 }
 
-/* LED de status Wi-Fi */
-#wifiLed {
+#wifiStatus {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+#wifiLED {
   width: 15px;
   height: 15px;
   border-radius: 50%;
-  display: inline-block;
-  margin-left: 10px;
-  background-color: gray;
+  margin-right: 8px;
+  background: gray;
+  border: 1px solid #fff;
 }
 </style>
 
@@ -93,7 +100,13 @@ emailjs.init("W2__8f2fBoqRPX9hX");
   <div class="logo">NewEnergy</div>
   <h1>Monitoramento Industrial</h1>
 
-  <div class="status">Wi-Fi: <span id="wifiLed"></span></div>
+  <!-- STATUS WIFI -->
+  <div id="wifiStatus">
+    <div id="wifiLED"></div>
+    <div id="wifiText">Wi-Fi: Verificando...</div>
+  </div>
+
+  <div id="status" class="status">Verificando login...</div>
   <button id="btnLED" class="btn off">Carregando...</button>
 
   <div class="gauges">
@@ -124,6 +137,7 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
+
 const auth = firebase.auth();
 const db = firebase.database();
 
@@ -132,22 +146,26 @@ auth.onAuthStateChanged(user => {
   if (!user) {
     window.location.href = "index.html";
   } else {
+    document.getElementById("status").innerText = "Conectado";
     iniciarPainel();
   }
 });
 
 /* ===== SISTEMA ===== */
 function iniciarPainel() {
-  const LEDREF    = db.ref("/led");
-  const TEMPREF   = db.ref("/temp");
-  const HUMREF    = db.ref("/hum");
-  const WIFIREF   = db.ref("/wifi_status"); // caminho correto
+  const LEDREF  = db.ref("/led");
+  const TEMPREF = db.ref("/temp");
+  const HUMREF  = db.ref("/hum");
+  const WIFIREF = db.ref("/wifi_status");
 
+  const statusEl = document.getElementById("status");
   const btn = document.getElementById("btnLED");
   const tempVal = document.getElementById("tempVal");
   const humVal  = document.getElementById("humVal");
   const alertMessage = document.getElementById("alertMessage");
-  const wifiLed = document.getElementById("wifiLed");
+
+  const wifiLED = document.getElementById("wifiLED");
+  const wifiText = document.getElementById("wifiText");
 
   const gaugeTemp = new Gauge(document.getElementById("gTemp")).setOptions({});
   gaugeTemp.maxValue = 50;
@@ -178,6 +196,7 @@ function iniciarPainel() {
   /* ===== LED ===== */
   LEDREF.on("value", snap => {
     const on = snap.val() == 1;
+    statusEl.innerText = on ? "LED LIGADO" : "LED DESLIGADO";
     btn.innerText = on ? "DESLIGAR" : "LIGAR";
     btn.className = "btn " + (on ? "on" : "off");
   });
@@ -217,14 +236,21 @@ function iniciarPainel() {
     }
   });
 
-  /* ===== WI-FI STATUS ===== */
+  /* ===== WIFI STATUS ===== */
   WIFIREF.on("value", snap => {
-    const status = Number(snap.val());
-    switch(status){
-      case 0: wifiLed.style.backgroundColor = "red"; break;       // desconectado
-      case 1: wifiLed.style.backgroundColor = "yellow"; break;    // tentando reconectar
-      case 2: wifiLed.style.backgroundColor = "green"; break;     // conectado
-      default: wifiLed.style.backgroundColor = "gray";            // indefinido
+    const v = snap.val();
+    if(v === 0){       // Vermelho: sem conexão
+      wifiLED.style.background = "#ef4444";
+      wifiText.innerText = "Wi-Fi: Sem conexão";
+    } else if(v === 1){ // Amarelo: tentando reconectar
+      wifiLED.style.background = "#facc15";
+      wifiText.innerText = "Wi-Fi: Reconectando...";
+    } else if(v === 2){ // Verde: conectado
+      wifiLED.style.background = "#16a34a";
+      wifiText.innerText = "Wi-Fi: Conectado";
+    } else {            // Cinza padrão
+      wifiLED.style.background = "gray";
+      wifiText.innerText = "Wi-Fi: Verificando...";
     }
   });
 
