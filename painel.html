@@ -63,14 +63,14 @@ h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
   margin-bottom: 12px;
 }
 
-#wifiStatus {
+#led2Status {
   display: flex;
   justify-content: center;
   align-items: center;
   font-weight: bold;
   margin-bottom: 12px;
 }
-#wifiLED {
+#led2LED {
   width: 15px;
   height: 15px;
   border-radius: 50%;
@@ -100,10 +100,10 @@ emailjs.init("W2__8f2fBoqRPX9hX");
   <div class="logo">NewEnergy</div>
   <h1>Monitoramento Industrial</h1>
 
-  <!-- STATUS WIFI -->
-  <div id="wifiStatus">
-    <div id="wifiLED"></div>
-    <div id="wifiText">Wi-Fi: Verificando...</div>
+  <!-- LED2 STATUS -->
+  <div id="led2Status">
+    <div id="led2LED"></div>
+    <div id="led2Text">LED2: Verificando...</div>
   </div>
 
   <div id="status" class="status">Verificando login...</div>
@@ -156,7 +156,7 @@ function iniciarPainel() {
   const LEDREF  = db.ref("/led");
   const TEMPREF = db.ref("/temp");
   const HUMREF  = db.ref("/hum");
-  const WIFIREF = db.ref("/wifi_status");
+  const LED2REF = db.ref("/led2"); // novo LED2
 
   const statusEl = document.getElementById("status");
   const btn = document.getElementById("btnLED");
@@ -164,8 +164,8 @@ function iniciarPainel() {
   const humVal  = document.getElementById("humVal");
   const alertMessage = document.getElementById("alertMessage");
 
-  const wifiLED = document.getElementById("wifiLED");
-  const wifiText = document.getElementById("wifiText");
+  const led2LED = document.getElementById("led2LED");
+  const led2Text = document.getElementById("led2Text");
 
   const gaugeTemp = new Gauge(document.getElementById("gTemp")).setOptions({});
   gaugeTemp.maxValue = 50;
@@ -236,21 +236,21 @@ function iniciarPainel() {
     }
   });
 
-  /* ===== WIFI STATUS ===== */
-  WIFIREF.on("value", snap => {
+  /* ===== LED2 ===== */
+  LED2REF.on("value", snap => {
     const v = snap.val();
-    if(v === 0){       // Vermelho: sem conexão
-      wifiLED.style.background = "#ef4444";
-      wifiText.innerText = "Wi-Fi: Sem conexão";
-    } else if(v === 1){ // Amarelo: tentando reconectar
-      wifiLED.style.background = "#facc15";
-      wifiText.innerText = "Wi-Fi: Reconectando...";
-    } else if(v === 2){ // Verde: conectado
-      wifiLED.style.background = "#16a34a";
-      wifiText.innerText = "Wi-Fi: Conectado";
-    } else {            // Cinza padrão
-      wifiLED.style.background = "gray";
-      wifiText.innerText = "Wi-Fi: Verificando...";
+    if(v === 0){       // Vermelho
+      led2LED.style.background = "#ef4444";
+      led2Text.innerText = "LED2: Vermelho";
+    } else if(v === 1){ // Amarelo
+      led2LED.style.background = "#facc15";
+      led2Text.innerText = "LED2: Amarelo";
+    } else if(v === 2){ // Verde
+      led2LED.style.background = "#16a34a";
+      led2Text.innerText = "LED2: Verde";
+    } else {            // Cinza
+      led2LED.style.background = "gray";
+      led2Text.innerText = "LED2: Verificando...";
     }
   });
 
