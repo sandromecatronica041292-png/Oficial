@@ -156,10 +156,18 @@ function iniciarPainel() {
   const TEMP_MIN = 18, TEMP_MAX = 25;
   const HUM_MIN = 45, HUM_MAX = 60;
 
-  function enviarAlertaEmail(temp, hum, tipo) {
+  // Controle para só enviar alerta 1 minuto após conectar
+  let podeEnviarAlerta = false;
+  setTimeout(() => { 
+    podeEnviarAlerta = true; 
+  }, 60000); // 60 segundos
+
+  function enviarAlertaEmail(temp, hum) {
+    if (!podeEnviarAlerta) return;
+
     emailjs.send("service_kx31f3s", "template_mqzi3at", {
       equipamento: "NewEnergy - Painel Industrial",
-      tipo: tipo,
+      tipo: "Temperatura e Umidade fora do padrão",
       valor: `Temperatura: ${temp.toFixed(1)} °C | Umidade: ${hum.toFixed(1)} %`,
       data: new Date().toLocaleString("pt-BR")
     }).then(() => {
@@ -187,11 +195,7 @@ function iniciarPainel() {
       tempAtual = t;
       gaugeTemp.set(t);
       tempVal.innerText = t.toFixed(1) + " °C";
-
-      if ((t < TEMP_MIN || t > TEMP_MAX) && humAtual !== null && Date.now() - ultimoAlerta > 600000) {
-        enviarAlertaEmail(tempAtual, humAtual, "Temperatura fora do padrão");
-        ultimoAlerta = Date.now();
-      }
+      verificarAlerta();
     }
   });
 
@@ -202,13 +206,21 @@ function iniciarPainel() {
       humAtual = h;
       gaugeHum.set(h);
       humVal.innerText = h.toFixed(1) + " %";
+      verificarAlerta();
+    }
+  });
 
-      if ((h < HUM_MIN || h > HUM_MAX) && tempAtual !== null && Date.now() - ultimoAlerta > 600000) {
-        enviarAlertaEmail(tempAtual, humAtual, "Umidade fora do padrão");
+  function verificarAlerta() {
+    if (tempAtual === null || humAtual === null) return;
+
+    if ((tempAtual < TEMP_MIN || tempAtual > TEMP_MAX) || 
+        (humAtual < HUM_MIN || humAtual > HUM_MAX)) {
+      if (Date.now() - ultimoAlerta > 600000) { // 10 minutos entre alertas
+        enviarAlertaEmail(tempAtual, humAtual);
         ultimoAlerta = Date.now();
       }
     }
-  });
+  }
 
   document.getElementById("btnHistorico").onclick = () => {
     window.location.href = "historico.html";
