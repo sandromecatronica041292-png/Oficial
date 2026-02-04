@@ -84,6 +84,12 @@ emailjs.init("W2__8f2fBoqRPX9hX");
   <h1>Monitoramento Industrial</h1>
 
   <div id="status" class="status">Verificando login...</div>
+
+  <!-- LED virtual Wi-Fi -->
+  <div style="text-align:center; margin-bottom:10px;">
+    Status Wi-Fi: <span id="wifiLed" style="display:inline-block; width:15px; height:15px; border-radius:50%; background:#ff0000;"></span>
+  </div>
+
   <button id="btnLED" class="btn off">Carregando...</button>
 
   <div class="gauges">
@@ -131,15 +137,17 @@ auth.onAuthStateChanged(user => {
 /* ===== SISTEMA ===== */
 function iniciarPainel() {
 
-  const LEDREF  = db.ref("/led");
-  const TEMPREF = db.ref("/temp");
-  const HUMREF  = db.ref("/hum");
+  const LEDREF   = db.ref("/led");
+  const TEMPREF  = db.ref("/temp");
+  const HUMREF   = db.ref("/hum");
+  const WIFIREF  = db.ref("/wifi_status");
 
   const statusEl = document.getElementById("status");
   const btn = document.getElementById("btnLED");
   const tempVal = document.getElementById("tempVal");
   const humVal  = document.getElementById("humVal");
   const alertMessage = document.getElementById("alertMessage");
+  const wifiLed = document.getElementById("wifiLed");
 
   const gaugeTemp = new Gauge(document.getElementById("gTemp")).setOptions({});
   gaugeTemp.maxValue = 50;
@@ -207,6 +215,24 @@ function iniciarPainel() {
         enviarAlertaEmail(tempAtual, humAtual, "Umidade fora do padrão");
         ultimoAlerta = Date.now();
       }
+    }
+  });
+
+  /* ===== STATUS WIFI ===== */
+  WIFIREF.on("value", snap => {
+    const status = snap.val();
+    switch(status){
+      case "0": // tentando reconectar
+        wifiLed.style.background = "#ff0000"; // vermelho
+        break;
+      case "1": // conectado mas sem leitura
+        wifiLed.style.background = "#ffcc00"; // amarelo
+        break;
+      case "2": // conectado e recebendo leitura
+        wifiLed.style.background = "#16a34a"; // verde
+        break;
+      default:
+        wifiLed.style.background = "#888"; // cinza indefinido
     }
   });
 
