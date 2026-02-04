@@ -25,7 +25,22 @@ body {
 }
 h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
 .logo { text-align: center; margin-bottom: 20px; font-size: 20px; color: #00bcd4; font-weight: bold; }
-.status { text-align: center; font-weight: bold; font-size: 18px; margin-bottom: 12px; }
+.status-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 18px;
+  margin-bottom: 12px;
+}
+.status-led {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  margin-right: 8px;
+  background-color: gray;
+}
+.status-text { font-weight: bold; }
 
 .btn {
   width: 100%;
@@ -62,17 +77,6 @@ h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
   font-size: 14px;
   color: #ffcc00;
 }
-
-/* LED Wi-Fi */
-#wifiLED {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  display: inline-block;
-  margin-left: 10px;
-  vertical-align: middle;
-  background-color: grey;
-}
 </style>
 
 <!-- Firebase -->
@@ -95,9 +99,11 @@ emailjs.init("W2__8f2fBoqRPX9hX");
   <div class="logo">NewEnergy</div>
   <h1>Monitoramento Industrial</h1>
 
-  <div class="status">
-    Conexão Wi-Fi: <span id="wifiLED"></span>
+  <div class="status-container">
+    <div id="wifiLed" class="status-led"></div>
+    <div id="wifiStatus" class="status-text">Verificando Wi-Fi...</div>
   </div>
+
   <button id="btnLED" class="btn off">Carregando...</button>
 
   <div class="gauges">
@@ -126,8 +132,8 @@ const firebaseConfig = {
   databaseURL: "https://oficial-688e8-default-rtdb.firebaseio.com/",
   projectId: "oficial-688e8"
 };
-
 firebase.initializeApp(firebaseConfig);
+
 const auth = firebase.auth();
 const db = firebase.database();
 
@@ -140,17 +146,20 @@ auth.onAuthStateChanged(user => {
   }
 });
 
+/* ===== SISTEMA ===== */
 function iniciarPainel() {
-  const LEDREF  = db.ref("/led");
-  const TEMPREF = db.ref("/temp");
-  const HUMREF  = db.ref("/hum");
-  const WIFIREF = db.ref("/wifi_status"); // chave do Wi-Fi
 
-  const btn = document.getElementById("btnLED");
-  const tempVal = document.getElementById("tempVal");
-  const humVal  = document.getElementById("humVal");
+  const LEDREF     = db.ref("/led");
+  const TEMPREF    = db.ref("/temp");
+  const HUMREF     = db.ref("/hum");
+  const WIFIREF    = db.ref("/wifiStatus");
+
+  const wifiLed    = document.getElementById("wifiLed");
+  const wifiText   = document.getElementById("wifiStatus");
+  const btn        = document.getElementById("btnLED");
+  const tempVal    = document.getElementById("tempVal");
+  const humVal     = document.getElementById("humVal");
   const alertMessage = document.getElementById("alertMessage");
-  const wifiLED = document.getElementById("wifiLED");
 
   const gaugeTemp = new Gauge(document.getElementById("gTemp")).setOptions({});
   gaugeTemp.maxValue = 50;
@@ -161,7 +170,7 @@ function iniciarPainel() {
   gaugeHum.setMinValue(0);
 
   let tempAtual = null;
-  let humAtual = null;
+  let humAtual  = null;
   let ultimoAlerta = 0;
 
   const TEMP_MIN = 18, TEMP_MAX = 25;
@@ -220,13 +229,15 @@ function iniciarPainel() {
     }
   });
 
-  /* ===== WIFI STATUS ===== */
+  /* ===== WI-FI STATUS ===== */
   WIFIREF.on("value", snap => {
-    const status = Number(snap.val());
-    if(status === 0) wifiLED.style.backgroundColor = "red";      // desconectado
-    else if(status === 1) wifiLED.style.backgroundColor = "yellow"; // tentando reconectar
-    else if(status === 2) wifiLED.style.backgroundColor = "green";  // conectado
-    else wifiLED.style.backgroundColor = "grey"; // desconhecido
+    const status = snap.val();
+    switch(status) {
+      case 0: wifiLed.style.backgroundColor = "red";    wifiText.innerText = "Wi-Fi: Desconectado"; break;
+      case 1: wifiLed.style.backgroundColor = "green";  wifiText.innerText = "Wi-Fi: Conectado"; break;
+      case 2: wifiLed.style.backgroundColor = "yellow"; wifiText.innerText = "Wi-Fi: Tentando reconectar"; break;
+      default: wifiLed.style.backgroundColor = "gray";  wifiText.innerText = "Wi-Fi: Desconhecido"; break;
+    }
   });
 
   document.getElementById("btnHistorico").onclick = () => {
