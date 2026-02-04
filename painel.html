@@ -61,25 +61,6 @@ h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
   font-size: 14px;
   color: #ffcc00;
 }
-
-/* LED2 Bolinha */
-.led2-container {
-  text-align: center;
-  margin-bottom: 12px;
-}
-.led2-circle {
-  display: inline-block;
-  width: 25px;
-  height: 25px;
-  border-radius: 50%;
-  border: 2px solid #fff;
-  background: #ef4444; /* inicial vermelho */
-}
-.led2-label {
-  font-size: 14px;
-  color: #8fa3c6;
-  margin-top: 4px;
-}
 </style>
 
 <!-- Firebase -->
@@ -103,17 +84,8 @@ emailjs.init("W2__8f2fBoqRPX9hX");
   <h1>Monitoramento Industrial</h1>
 
   <div id="status" class="status">Verificando login...</div>
-
-  <!-- Botão LED -->
   <button id="btnLED" class="btn off">Carregando...</button>
 
-  <!-- LED2 Bolinha -->
-  <div class="led2-container">
-    <div id="led2" class="led2-circle"></div>
-    <div class="led2-label">LED2</div>
-  </div>
-
-  <!-- Gauges -->
   <div class="gauges">
     <div class="gbox">
       <div class="gtitle">Temperatura (°C)</div>
@@ -142,6 +114,7 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
+
 const auth = firebase.auth();
 const db = firebase.database();
 
@@ -155,9 +128,10 @@ auth.onAuthStateChanged(user => {
   }
 });
 
+/* ===== SISTEMA ===== */
 function iniciarPainel() {
+
   const LEDREF  = db.ref("/led");
-  const LED2REF = db.ref("/historico/led2"); // LED2 dentro do histórico
   const TEMPREF = db.ref("/temp");
   const HUMREF  = db.ref("/hum");
 
@@ -166,9 +140,7 @@ function iniciarPainel() {
   const tempVal = document.getElementById("tempVal");
   const humVal  = document.getElementById("humVal");
   const alertMessage = document.getElementById("alertMessage");
-  const led2El = document.getElementById("led2");
 
-  /* ===== GAUGES ===== */
   const gaugeTemp = new Gauge(document.getElementById("gTemp")).setOptions({});
   gaugeTemp.maxValue = 50;
   gaugeTemp.setMinValue(0);
@@ -180,6 +152,7 @@ function iniciarPainel() {
   let tempAtual = null;
   let humAtual = null;
   let ultimoAlerta = 0;
+
   const TEMP_MIN = 18, TEMP_MAX = 25;
   const HUM_MIN = 45, HUM_MAX = 60;
 
@@ -206,20 +179,6 @@ function iniciarPainel() {
     const s = await LEDREF.get();
     LEDREF.set(s.val() == 1 ? 0 : 1);
   };
-
-  /* ===== LED2 (independente, suporta valor como objeto ou número) ===== */
-  LED2REF.on("value", snap => {
-    let val = snap.val();
-
-    // Se for objeto, pega a primeira chave
-    if (typeof val === "object" && val !== null) {
-      const keys = Object.keys(val);
-      val = Number(keys[0]); // pega a primeira chave como valor
-    }
-
-    const on = Number(val) === 1; 
-    led2El.style.background = on ? "#16a34a" : "#ef4444"; // verde ou vermelho
-  });
 
   /* ===== TEMPERATURA ===== */
   TEMPREF.on("value", snap => {
