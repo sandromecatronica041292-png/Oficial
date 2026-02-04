@@ -38,6 +38,17 @@ h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
 .on { background: #16a34a; color: #fff; }
 .off { background: #ef4444; color: #fff; }
 
+/* LED de status Wi-Fi */
+#wifiLED {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-left: 10px;
+  vertical-align: middle;
+}
+
+/* Gauges */
 .gauges { display: flex; justify-content: space-between; }
 .gbox {
   width: 48%;
@@ -61,10 +72,6 @@ h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
   font-size: 14px;
   color: #ffcc00;
 }
-
-#btnWifi {
-  margin-bottom: 15px;
-}
 </style>
 
 <!-- Firebase -->
@@ -87,8 +94,10 @@ emailjs.init("W2__8f2fBoqRPX9hX");
   <div class="logo">NewEnergy</div>
   <h1>Monitoramento Industrial</h1>
 
-  <div id="status" class="status">Verificando login...</div>
-  <button id="btnWifi" class="btn off">Wi-Fi: Desconectado</button>
+  <div class="status">
+    Wi-Fi: <span id="wifiLED"></span>
+  </div>
+
   <button id="btnLED" class="btn off">Carregando...</button>
 
   <div class="gauges">
@@ -105,7 +114,6 @@ emailjs.init("W2__8f2fBoqRPX9hX");
   </div>
 
   <div id="alertMessage"></div>
-
   <button id="btnHistorico" class="btn">Histórico</button>
 </div>
 
@@ -119,46 +127,36 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-
 const auth = firebase.auth();
 const db = firebase.database();
 
 /* 🔒 PROTEÇÃO DO PAINEL */
 auth.onAuthStateChanged(user => {
-  if (!user) {
-    window.location.href = "index.html";
-  } else {
-    document.getElementById("status").innerText = "Conectado";
-    iniciarPainel();
-  }
+  if (!user) window.location.href = "index.html";
+  else iniciarPainel();
 });
 
 /* ===== SISTEMA ===== */
 function iniciarPainel() {
+
   const LEDREF  = db.ref("/led");
   const TEMPREF = db.ref("/temp");
   const HUMREF  = db.ref("/hum");
   const WIFIREF = db.ref("/wifi_status");
 
-  const statusEl = document.getElementById("status");
-  const btnLED = document.getElementById("btnLED");
-  const btnWifi = document.getElementById("btnWifi");
+  const btn = document.getElementById("btnLED");
   const tempVal = document.getElementById("tempVal");
   const humVal  = document.getElementById("humVal");
   const alertMessage = document.getElementById("alertMessage");
+  const wifiLED = document.getElementById("wifiLED");
 
   const gaugeTemp = new Gauge(document.getElementById("gTemp")).setOptions({});
-  gaugeTemp.maxValue = 50;
-  gaugeTemp.setMinValue(0);
+  gaugeTemp.maxValue = 50; gaugeTemp.setMinValue(0);
 
   const gaugeHum = new Gauge(document.getElementById("gHum")).setOptions({});
-  gaugeHum.maxValue = 100;
-  gaugeHum.setMinValue(0);
+  gaugeHum.maxValue = 100; gaugeHum.setMinValue(0);
 
-  let tempAtual = null;
-  let humAtual = null;
-  let ultimoAlerta = 0;
-
+  let tempAtual = null, humAtual = null, ultimoAlerta = 0;
   const TEMP_MIN = 18, TEMP_MAX = 25;
   const HUM_MIN = 45, HUM_MAX = 60;
 
@@ -168,52 +166,29 @@ function iniciarPainel() {
       tipo: tipo,
       valor: `Temperatura: ${temp.toFixed(1)} °C | Umidade: ${hum.toFixed(1)} %`,
       data: new Date().toLocaleString("pt-BR")
-    }).then(() => {
-      alertMessage.innerText = "⚠️ Alerta enviado por e-mail";
-    });
+    }).then(() => alertMessage.innerText = "⚠️ Alerta enviado por e-mail");
   }
 
-  /* ===== LED EQUIPAMENTO ===== */
+  /* ===== LED ===== */
   LEDREF.on("value", snap => {
     const on = snap.val() == 1;
-    statusEl.innerText = on ? "LED LIGADO" : "LED DESLIGADO";
-    btnLED.innerText = on ? "DESLIGAR" : "LIGAR";
-    btnLED.className = "btn " + (on ? "on" : "off");
+    btn.innerText = on ? "DESLIGAR" : "LIGAR";
+    btn.className = "btn " + (on ? "on" : "off");
   });
-
-  btnLED.onclick = async () => {
+  btn.onclick = async () => {
     const s = await LEDREF.get();
     LEDREF.set(s.val() == 1 ? 0 : 1);
   };
 
-  /* ===== STATUS WIFI ===== */
-  WIFIREF.on("value", snap => {
-    const status = snap.val();
-    if(status === 0){
-      btnWifi.innerText = "Wi-Fi: Desconectado";
-      btnWifi.className = "btn off"; // vermelho
-    } else if(status === 1){
-      btnWifi.innerText = "Wi-Fi: Tentando reconectar";
-      btnWifi.className = "btn"; // amarelo
-      btnWifi.style.background = "#facc15";
-      btnWifi.style.color = "#000";
-    } else if(status === 2){
-      btnWifi.innerText = "Wi-Fi: Conectado";
-      btnWifi.className = "btn on"; // verde
-      btnWifi.style.background = "";
-      btnWifi.style.color = "";
-    }
-  });
-
   /* ===== TEMPERATURA ===== */
   TEMPREF.on("value", snap => {
     const t = Number(snap.val());
-    if(!isNaN(t)){
+    if (!isNaN(t)) {
       tempAtual = t;
       gaugeTemp.set(t);
       tempVal.innerText = t.toFixed(1) + " °C";
 
-      if((t < TEMP_MIN || t > TEMP_MAX) && humAtual !== null && Date.now() - ultimoAlerta > 600000){
+      if ((t < TEMP_MIN || t > TEMP_MAX) && humAtual !== null && Date.now() - ultimoAlerta > 600000) {
         enviarAlertaEmail(tempAtual, humAtual, "Temperatura fora do padrão");
         ultimoAlerta = Date.now();
       }
@@ -223,18 +198,30 @@ function iniciarPainel() {
   /* ===== UMIDADE ===== */
   HUMREF.on("value", snap => {
     const h = Number(snap.val());
-    if(!isNaN(h)){
+    if (!isNaN(h)) {
       humAtual = h;
       gaugeHum.set(h);
       humVal.innerText = h.toFixed(1) + " %";
 
-      if((h < HUM_MIN || h > HUM_MAX) && tempAtual !== null && Date.now() - ultimoAlerta > 600000){
+      if ((h < HUM_MIN || h > HUM_MAX) && tempAtual !== null && Date.now() - ultimoAlerta > 600000) {
         enviarAlertaEmail(tempAtual, humAtual, "Umidade fora do padrão");
         ultimoAlerta = Date.now();
       }
     }
   });
 
+  /* ===== WI-FI STATUS ===== */
+  WIFIREF.on("value", snap => {
+    const status = Number(snap.val());
+    switch(status){
+      case 0: wifiLED.style.background = "red"; break;      // desconectado
+      case 1: wifiLED.style.background = "yellow"; break;   // tentando reconectar
+      case 2: wifiLED.style.background = "green"; break;    // conectado
+      default: wifiLED.style.background = "gray"; break;     // desconhecido
+    }
+  });
+
+  /* ===== HISTÓRICO ===== */
   document.getElementById("btnHistorico").onclick = () => {
     window.location.href = "historico.html";
   };
