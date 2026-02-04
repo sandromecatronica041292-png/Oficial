@@ -62,11 +62,23 @@ h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
   color: #ffcc00;
 }
 
-.statusWiFi {
+/* LED2 Bolinha */
+.led2-container {
   text-align: center;
-  font-weight: bold;
-  font-size: 16px;
-  margin-bottom: 15px;
+  margin-bottom: 12px;
+}
+.led2-circle {
+  display: inline-block;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  background: #ef4444; /* inicial vermelho */
+}
+.led2-label {
+  font-size: 14px;
+  color: #8fa3c6;
+  margin-top: 4px;
 }
 </style>
 
@@ -92,13 +104,16 @@ emailjs.init("W2__8f2fBoqRPX9hX");
 
   <div id="status" class="status">Verificando login...</div>
 
-  <!-- LED de Wi-Fi -->
-  <div class="statusWiFi">
-    Wi-Fi: <span id="led2Status" style="display:inline-block; width:15px; height:15px; border-radius:50%;"></span>
-  </div>
-
+  <!-- Botão LED -->
   <button id="btnLED" class="btn off">Carregando...</button>
 
+  <!-- LED2 Bolinha -->
+  <div class="led2-container">
+    <div id="led2" class="led2-circle"></div>
+    <div class="led2-label">LED2</div>
+  </div>
+
+  <!-- Gauges -->
   <div class="gauges">
     <div class="gbox">
       <div class="gtitle">Temperatura (°C)</div>
@@ -142,17 +157,18 @@ auth.onAuthStateChanged(user => {
 
 function iniciarPainel() {
   const LEDREF  = db.ref("/led");
+  const LED2REF = db.ref("/led2");
   const TEMPREF = db.ref("/temp");
   const HUMREF  = db.ref("/hum");
-  const LED2REF = db.ref("/led2"); // nó para status do Wi-Fi
 
   const statusEl = document.getElementById("status");
   const btn = document.getElementById("btnLED");
   const tempVal = document.getElementById("tempVal");
   const humVal  = document.getElementById("humVal");
   const alertMessage = document.getElementById("alertMessage");
-  const led2El = document.getElementById("led2Status");
+  const led2El = document.getElementById("led2");
 
+  /* ===== GAUGES ===== */
   const gaugeTemp = new Gauge(document.getElementById("gTemp")).setOptions({});
   gaugeTemp.maxValue = 50;
   gaugeTemp.setMinValue(0);
@@ -191,24 +207,10 @@ function iniciarPainel() {
     LEDREF.set(s.val() == 1 ? 0 : 1);
   };
 
-  /* ===== LED2 Wi-Fi STATUS ===== */
-  function atualizarLed2(v){
-    switch(v){
-      case 0: led2El.style.background = "red"; break;
-      case 1: led2El.style.background = "yellow"; break;
-      case 2: led2El.style.background = "green"; break;
-      default: led2El.style.background = "red";
-    }
-  }
-
+  /* ===== LED2 ===== */
   LED2REF.on("value", snap => {
-    atualizarLed2(snap.val());
-  });
-
-  LED2REF.get().then(snap => {
-    if(snap.exists()){
-      atualizarLed2(snap.val());
-    }
+    const on = snap.val() == 1;
+    led2El.style.background = on ? "#16a34a" : "#ef4444"; // verde ou vermelho
   });
 
   /* ===== TEMPERATURA ===== */
