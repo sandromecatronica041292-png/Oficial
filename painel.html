@@ -23,25 +23,9 @@ body {
   width: 420px;
   box-shadow: 0 10px 25px rgba(0,0,0,0.7);
 }
-h1 {
-  text-align: center;
-  margin-bottom: 20px;
-  font-size: 26px;
-  color: #00bcd4;
-}
-.logo {
-  text-align: center;
-  margin-bottom: 20px;
-  font-size: 20px;
-  color: #00bcd4;
-  font-weight: bold;
-}
-.status {
-  text-align: center;
-  font-weight: bold;
-  font-size: 18px;
-  margin-bottom: 12px;
-}
+h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
+.logo { text-align: center; margin-bottom: 20px; font-size: 20px; color: #00bcd4; font-weight: bold; }
+.status { text-align: center; font-weight: bold; font-size: 18px; margin-bottom: 12px; }
 .btn {
   width: 100%;
   padding: 12px;
@@ -54,10 +38,7 @@ h1 {
 .on { background: #16a34a; color: #fff; }
 .off { background: #ef4444; color: #fff; }
 
-.gauges {
-  display: flex;
-  justify-content: space-between;
-}
+.gauges { display: flex; justify-content: space-between; }
 .gbox {
   width: 48%;
   text-align: center;
@@ -65,17 +46,23 @@ h1 {
   padding: 15px;
   border-radius: 15px;
 }
-.gtitle {
-  font-size: 14px;
+.gtitle { font-size: 14px; color: #8fa3c6; }
+.gvalue { font-size: 22px; font-weight: bold; color: #00bcd4; }
+
+#btnHistorico {
+  background: #0c1424;
   color: #8fa3c6;
-}
-.gvalue {
-  font-size: 22px;
-  font-weight: bold;
-  color: #00bcd4;
+  border: 1px solid #1f2a44;
+  font-size: 15px;
 }
 
-/* LED2 */
+#alertMessage {
+  text-align: center;
+  font-size: 14px;
+  color: #ffcc00;
+}
+
+/* LED2 Bolinha */
 .led2-container {
   text-align: center;
   margin-bottom: 12px;
@@ -86,23 +73,12 @@ h1 {
   height: 25px;
   border-radius: 50%;
   border: 2px solid #fff;
-  background: #ef4444;
+  background: #ef4444; /* inicial vermelho */
 }
 .led2-label {
   font-size: 14px;
   color: #8fa3c6;
   margin-top: 4px;
-}
-
-#btnHistorico {
-  background: #0c1424;
-  color: #8fa3c6;
-  border: 1px solid #1f2a44;
-}
-#alertMessage {
-  text-align: center;
-  font-size: 14px;
-  color: #ffcc00;
 }
 </style>
 
@@ -128,13 +104,16 @@ emailjs.init("W2__8f2fBoqRPX9hX");
 
   <div id="status" class="status">Verificando login...</div>
 
+  <!-- Botão LED -->
   <button id="btnLED" class="btn off">Carregando...</button>
 
+  <!-- LED2 Bolinha -->
   <div class="led2-container">
     <div id="led2" class="led2-circle"></div>
     <div class="led2-label">LED2</div>
   </div>
 
+  <!-- Gauges -->
   <div class="gauges">
     <div class="gbox">
       <div class="gtitle">Temperatura (°C)</div>
@@ -166,7 +145,7 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.database();
 
-/* ===== PROTEÇÃO ===== */
+/* 🔒 PROTEÇÃO DO PAINEL */
 auth.onAuthStateChanged(user => {
   if (!user) {
     window.location.href = "index.html";
@@ -177,11 +156,10 @@ auth.onAuthStateChanged(user => {
 });
 
 function iniciarPainel() {
-
-  const LEDREF  = db.ref("/historico/led");
-  const LED2REF = db.ref("/historico/led2");
-  const TEMPREF = db.ref("/historico/temp");
-  const HUMREF  = db.ref("/historico/hum");
+  const LEDREF  = db.ref("/led");
+  const LED2REF = db.ref("/historico/led2"); // caminho correto dentro do histórico
+  const TEMPREF = db.ref("/temp");
+  const HUMREF  = db.ref("/hum");
 
   const statusEl = document.getElementById("status");
   const btn = document.getElementById("btnLED");
@@ -190,6 +168,7 @@ function iniciarPainel() {
   const alertMessage = document.getElementById("alertMessage");
   const led2El = document.getElementById("led2");
 
+  /* ===== GAUGES ===== */
   const gaugeTemp = new Gauge(document.getElementById("gTemp")).setOptions({});
   gaugeTemp.maxValue = 50;
   gaugeTemp.setMinValue(0);
@@ -201,7 +180,6 @@ function iniciarPainel() {
   let tempAtual = null;
   let humAtual = null;
   let ultimoAlerta = 0;
-
   const TEMP_MIN = 18, TEMP_MAX = 25;
   const HUM_MIN = 45, HUM_MAX = 60;
 
@@ -216,8 +194,9 @@ function iniciarPainel() {
     });
   }
 
+  /* ===== LED ===== */
   LEDREF.on("value", snap => {
-    const on = Number(snap.val()) === 1;
+    const on = snap.val() == 1;
     statusEl.innerText = on ? "LED LIGADO" : "LED DESLIGADO";
     btn.innerText = on ? "DESLIGAR" : "LIGAR";
     btn.className = "btn " + (on ? "on" : "off");
@@ -228,11 +207,14 @@ function iniciarPainel() {
     LEDREF.set(s.val() == 1 ? 0 : 1);
   };
 
+  /* ===== LED2 (INDEPENDENTE DENTRO DE HISTÓRICO) ===== */
   LED2REF.on("value", snap => {
-    const on = Number(snap.val()) > 0;
-    led2El.style.background = on ? "#16a34a" : "#ef4444";
+    const val = snap.val();
+    const on = Number(val) === 1; // garante leitura correta
+    led2El.style.background = on ? "#16a34a" : "#ef4444"; // verde ou vermelho
   });
 
+  /* ===== TEMPERATURA ===== */
   TEMPREF.on("value", snap => {
     const t = Number(snap.val());
     if (!isNaN(t)) {
@@ -247,6 +229,7 @@ function iniciarPainel() {
     }
   });
 
+  /* ===== UMIDADE ===== */
   HUMREF.on("value", snap => {
     const h = Number(snap.val());
     if (!isNaN(h)) {
