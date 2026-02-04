@@ -26,6 +26,7 @@ body {
 h1 { text-align: center; margin-bottom: 20px; font-size: 26px; color: #00bcd4; }
 .logo { text-align: center; margin-bottom: 20px; font-size: 20px; color: #00bcd4; font-weight: bold; }
 .status { text-align: center; font-weight: bold; font-size: 18px; margin-bottom: 12px; }
+.status-container { text-align:center; margin-bottom:12px; }
 .btn {
   width: 100%;
   padding: 12px;
@@ -84,12 +85,9 @@ emailjs.init("W2__8f2fBoqRPX9hX");
   <h1>Monitoramento Industrial</h1>
 
   <div id="status" class="status">Verificando login...</div>
-
-  <!-- LED virtual Wi-Fi -->
-  <div style="text-align:center; margin-bottom:10px;">
-    Status Wi-Fi: <span id="wifiLed" style="display:inline-block; width:15px; height:15px; border-radius:50%; background:#ff0000;"></span>
+  <div class="status-container">
+    Wi-Fi: <span id="wifiStatus" style="display:inline-block;width:15px;height:15px;border-radius:50%;background:red;"></span>
   </div>
-
   <button id="btnLED" class="btn off">Carregando...</button>
 
   <div class="gauges">
@@ -137,17 +135,17 @@ auth.onAuthStateChanged(user => {
 /* ===== SISTEMA ===== */
 function iniciarPainel() {
 
-  const LEDREF   = db.ref("/led");
-  const TEMPREF  = db.ref("/temp");
-  const HUMREF   = db.ref("/hum");
-  const WIFIREF  = db.ref("/wifi_status");
+  const LEDREF  = db.ref("/led");
+  const TEMPREF = db.ref("/temp");
+  const HUMREF  = db.ref("/hum");
+  const WIFIREF = db.ref("/wifi_status");
 
   const statusEl = document.getElementById("status");
   const btn = document.getElementById("btnLED");
   const tempVal = document.getElementById("tempVal");
   const humVal  = document.getElementById("humVal");
   const alertMessage = document.getElementById("alertMessage");
-  const wifiLed = document.getElementById("wifiLed");
+  const wifiLed = document.getElementById("wifiStatus");
 
   const gaugeTemp = new Gauge(document.getElementById("gTemp")).setOptions({});
   gaugeTemp.maxValue = 50;
@@ -218,21 +216,14 @@ function iniciarPainel() {
     }
   });
 
-  /* ===== STATUS WIFI ===== */
+  /* ===== WI-FI STATUS ===== */
   WIFIREF.on("value", snap => {
-    const status = snap.val();
-    switch(status){
-      case "0": // tentando reconectar
-        wifiLed.style.background = "#ff0000"; // vermelho
-        break;
-      case "1": // conectado mas sem leitura
-        wifiLed.style.background = "#ffcc00"; // amarelo
-        break;
-      case "2": // conectado e recebendo leitura
-        wifiLed.style.background = "#16a34a"; // verde
-        break;
-      default:
-        wifiLed.style.background = "#888"; // cinza indefinido
+    const val = snap.val();
+    switch(val){
+      case 0: wifiLed.style.background = "red"; break;       // desconectado
+      case 1: wifiLed.style.background = "yellow"; break;    // instável
+      case 2: wifiLed.style.background = "green"; break;     // ok
+      default: wifiLed.style.background = "red";
     }
   });
 
