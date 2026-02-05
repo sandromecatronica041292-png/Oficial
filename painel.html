@@ -3,80 +3,62 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>NewEnergy | High Speed Monitor</title>
-
+<title>NewEnergy | Monitor</title>
 <style>
-  :root {
-    --bg-dark: #0b0f1b;
-    --card-bg: #161b2d;
-    --accent: #00d2ff;
-    --text-main: #ffffff;
-    --text-muted: #8fa3c6;
-    --on: #00ff88;
-    --off: #ff5722;
-    --warn: #ff9800;
-    --glass: rgba(255, 255, 255, 0.03);
-  }
-
+  :root { --bg-dark: #0b0f1b; --card-bg: #161b2d; --accent: #00d2ff; --text-main: #ffffff; --text-muted: #8fa3c6; --on: #00ff88; --off: #ff5722; --glass: rgba(255, 255, 255, 0.03); }
   body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-dark); color: var(--text-main); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-  .card { background: var(--card-bg); border-radius: 24px; padding: 35px; width: 100%; max-width: 450px; box-shadow: 0 30px 60px rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.05); text-align: center; }
-  .logo-top { font-size: 11px; text-transform: uppercase; letter-spacing: 4px; color: var(--accent); margin-bottom: 8px; font-weight: 700; opacity: 0.8; }
-  h1 { font-size: 24px; margin: 0 0 25px 0; font-weight: 800; letter-spacing: -1px; }
-  
-  /* Estilos das Badges de Status */
-  .status-badge { display: inline-block; padding: 6px 16px; border-radius: 50px; font-size: 11px; font-weight: 700; margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.1); transition: 0.3s; }
-  .st-online { color: var(--on); background: rgba(0, 255, 136, 0.1); border-color: var(--on); }
-  .st-offline { color: var(--off); background: rgba(255, 87, 34, 0.1); border-color: var(--off); }
-  .st-sync { color: var(--accent); background: var(--glass); }
-
-  .btn-led {
-    width: 100%; padding: 18px; border: none; border-radius: 16px; font-size: 16px; font-weight: 800; cursor: pointer;
-    transition: transform 0.1s, background 0.2s; margin-bottom: 30px; text-transform: uppercase; letter-spacing: 1px;
-  }
-  .btn-led.on { background: var(--on); color: #052e16; box-shadow: 0 0 25px rgba(0, 255, 136, 0.2); }
-  .btn-led.off { background: var(--off); color: #ffffff; }
-  .btn-led:active { transform: scale(0.97); }
-
+  .card { background: var(--card-bg); border-radius: 24px; padding: 35px; width: 100%; max-width: 450px; box-shadow: 0 30px 60px rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.05); text-align: center; position: relative; }
+  .logo-top { font-size: 11px; text-transform: uppercase; letter-spacing: 4px; color: var(--accent); margin-bottom: 8px; font-weight: 700; cursor: pointer; user-select: none; }
+  h1 { font-size: 24px; margin: 0 0 25px 0; font-weight: 800; }
+  .status-badge { display: inline-block; padding: 6px 16px; border-radius: 50px; font-size: 11px; font-weight: 700; background: var(--glass); margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.1); }
+  .btn-led { width: 100%; padding: 18px; border: none; border-radius: 16px; font-size: 16px; font-weight: 800; cursor: pointer; transition: 0.2s; margin-bottom: 30px; text-transform: uppercase; }
+  .btn-led.on { background: var(--on); color: #052e16; }
+  .btn-led.off { background: var(--off); color: #fff; }
   .gauges-container { display: flex; gap: 15px; margin-bottom: 25px; }
   .gauge-box { flex: 1; background: var(--glass); padding: 15px 5px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); }
-  .g-title { font-size: 10px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; margin-bottom: 10px; }
-  .g-value { font-size: 19px; font-weight: 800; color: var(--accent); margin-top: -5px; }
+  .g-title { font-size: 10px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 10px; }
+  .g-value { font-size: 19px; font-weight: 800; color: var(--accent); }
+  .btn-hist { width: 100%; padding: 14px; background: transparent; border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); border-radius: 14px; cursor: pointer; }
   
-  #alertMessage { min-height: 20px; font-size: 12px; color: var(--warn); margin-bottom: 20px; font-weight: 600; }
-  .btn-hist { width: 100%; padding: 14px; background: transparent; border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); border-radius: 14px; font-weight: 600; cursor: pointer; }
+  /* Painel de Admin Oculto */
+  #adminPanel { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--card-bg); border-radius: 24px; padding: 30px; box-sizing: border-box; z-index: 10; flex-direction: column; }
+  .admin-input { background: #0b0f1b; border: 1px solid #333; color: white; padding: 10px; border-radius: 8px; margin-bottom: 15px; width: 80%; }
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gaugeJS/dist/gauge.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 
 <body>
 <div class="card">
-  <div class="logo-top">NewEnergy RT</div>
-  <h1>Controle em Tempo Real</h1>
-  <div id="status" class="status-badge st-sync">Sincronizando...</div>
-  <button id="btnLED" class="btn-led off">Conectando...</button>
-  
-  <div class="gauges-container">
-    <div class="gauge-box">
-      <div class="g-title">Temperatura</div>
-      <canvas id="gTemp"></canvas>
-      <div id="tempVal" class="g-value">-- °C</div>
-    </div>
-    <div class="gauge-box">
-      <div class="g-title">Umidade</div>
-      <canvas id="gHum"></canvas>
-      <div id="humVal" class="g-value">-- %</div>
-    </div>
+  <div id="adminPanel">
+    <h3>Configurações de Alerta</h3>
+    <label>Temp Máxima (°C):</label>
+    <input type="number" id="cfgTempMax" class="admin-input" value="30">
+    <label>Umidade Máxima (%):</label>
+    <input type="number" id="cfgHumMax" class="admin-input" value="70">
+    <button class="btn-led on" onclick="salvarConfig()">Salvar Configurações</button>
+    <button class="btn-hist" onclick="fecharAdmin()">Fechar</button>
   </div>
 
-  <div id="alertMessage"></div>
+  <div class="logo-top" id="logoAdmin">NewEnergy RT</div>
+  <h1>Controle em Tempo Real</h1>
+  <div id="status" class="status-badge">Sincronizando...</div>
+  <button id="btnLED" class="btn-led off">Conectando...</button>
+  <div class="gauges-container">
+    <div class="gauge-box"><div class="g-title">Temperatura</div><canvas id="gTemp"></canvas><div id="tempVal" class="g-value">--°C</div></div>
+    <div class="gauge-box"><div class="g-title">Umidade</div><canvas id="gHum"></canvas><div id="humVal" class="g-value">--%</div></div>
+  </div>
+  <div id="alertMessage" style="color:#ffcc00; margin-bottom:15px; font-size:12px;"></div>
   <button class="btn-hist" onclick="location.href='historico.html'">Histórico de Dados</button>
 </div>
 
 <script>
+emailjs.init("W2__8f2fBoqRPX9hX");
+
 const firebaseConfig = {
   apiKey: "AIzaSyB5FnkQiFi3gn9Iup2KNcbrKxWd-0Jjo6Y",
   authDomain: "oficial-688e8.firebaseapp.com",
@@ -88,83 +70,89 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const auth = firebase.auth();
 
-// Controle de Autenticação
+let config = { tempMax: 30, humMax: 70 }; // Padrão
+
 auth.onAuthStateChanged(user => { 
   if (!user) location.href = "index.html"; 
-  else rodarPainel(); 
+  else {
+    // Carrega limites do Firebase antes de rodar
+    db.ref("/config_alertas").on("value", s => { if(s.val()) config = s.val(); });
+    rodarPainel(); 
+  }
 });
 
 function rodarPainel() {
-  const LED_REF = db.ref("/led");
-  const TEMP_REF = db.ref("/temp");
-  const HUM_REF = db.ref("/hum");
-  const SEEN_REF = db.ref("/last_seen");
-
-  const statusEl = document.getElementById("status");
-  const alertEl = document.getElementById("alertMessage");
-
-  // Configuração de Gauges (Otimizada)
-  const gOpt = (col) => ({ 
-    angle: 0.2, lineWidth: 0.15, pointer: { length: 0.5, strokeWidth: 0.04, color: '#DDD' },
-    colorStart: col, colorStop: col, strokeColor: '#1b1f33', highDpiSupport: true 
-  });
-
+  const gOpt = (col) => ({ angle: 0.2, lineWidth: 0.15, pointer: { length: 0.5, color: '#DDD' }, colorStart: col, colorStop: col, strokeColor: '#1b1f33', highDpiSupport: true });
   const gT = new Gauge(document.getElementById("gTemp")).setOptions(gOpt('#00d2ff'));
   gT.maxValue = 125; gT.setMinValue(-40); gT.animationSpeed = 128;
-
   const gH = new Gauge(document.getElementById("gHum")).setOptions(gOpt('#00ff88'));
   gH.maxValue = 100; gH.setMinValue(0); gH.animationSpeed = 128;
 
-  // --- LÓGICA DE HEARTBEAT (OFFLINE) ---
-  SEEN_REF.on("value", snap => {
-    const lastSeen = snap.val() * 1000;
-    
-    if (window.connInterval) clearInterval(window.connInterval);
-    
-    window.connInterval = setInterval(() => {
-      const diff = (Date.now() - lastSeen) / 1000;
-      if (diff > 90) {
-        statusEl.innerText = "OFFLINE";
-        statusEl.className = "status-badge st-offline";
-        alertEl.innerText = "⚠️ Hardware desconectado ou sem internet.";
-      } else {
-        statusEl.innerText = "ONLINE";
-        statusEl.className = "status-badge st-online";
-        alertEl.innerText = "";
-      }
-    }, 5000);
-  });
-
-  // Listener do Navegador
-  window.addEventListener('offline', () => {
-    statusEl.innerText = "SEM INTERNET (VOCÊ)";
-    statusEl.className = "status-badge st-offline";
-  });
-
-  // --- CONTROLE DO LED ---
-  let stLed = 0;
-  LED_REF.on("value", snap => {
-    stLed = snap.val();
-    const isOff = stLed == 0;
-    const btn = document.getElementById("btnLED");
-    btn.innerText = isOff ? "Ligar Agora" : "Desligar Agora";
-    btn.className = "btn-led " + (isOff ? "off" : "on");
+  db.ref("/led").on("value", snap => {
+    const isOff = snap.val() == 0;
+    const b = document.getElementById("btnLED");
+    b.innerText = isOff ? "Ligar Agora" : "Desligar Agora";
+    b.className = "btn-led " + (isOff ? "off" : "on");
+    document.getElementById("status").innerText = isOff ? "STBY" : "LIVE";
   });
 
   document.getElementById("btnLED").onclick = () => {
-    LED_REF.set(stLed == 1 ? 0 : 1);
+    db.ref("/led").get().then(s => db.ref("/led").set(s.val() == 1 ? 0 : 1));
   };
 
-  // --- SENSORES ---
-  TEMP_REF.on("value", s => { 
+  db.ref("/temp").on("value", s => { 
     const v = parseFloat(s.val()); gT.set(v); 
-    document.getElementById("tempVal").innerText = v.toFixed(1) + "°C"; 
+    document.getElementById("tempVal").innerText = v.toFixed(1) + "°C";
+    verificarAlertas(v, "temp");
   });
   
-  HUM_REF.on("value", s => { 
+  db.ref("/hum").on("value", s => { 
     const v = parseFloat(s.val()); gH.set(v); 
-    document.getElementById("humVal").innerText = v.toFixed(1) + "%"; 
+    document.getElementById("humVal").innerText = v.toFixed(1) + "%";
+    verificarAlertas(v, "hum");
   });
+}
+
+function verificarAlertas(valor, tipo) {
+  const msg = document.getElementById("alertMessage");
+  if (tipo === "temp" && valor > config.tempMax) {
+    msg.innerText = "🚨 ALERTA: TEMPERATURA ALTA!";
+    enviarEmailAlerta("Temperatura", valor);
+  } else if (tipo === "hum" && valor > config.humMax) {
+    msg.innerText = "🚨 ALERTA: UMIDADE ALTA!";
+    enviarEmailAlerta("Umidade", valor);
+  } else {
+    msg.innerText = "";
+  }
+}
+
+// LOGICA PAINEL ADMIN OCULTO
+let cliques = 0;
+document.getElementById("logoAdmin").onclick = () => {
+  cliques++;
+  if(cliques >= 5) {
+    document.getElementById("adminPanel").style.display = "flex";
+    document.getElementById("cfgTempMax").value = config.tempMax;
+    document.getElementById("cfgHumMax").value = config.humMax;
+    cliques = 0;
+  }
+};
+
+function salvarConfig() {
+  const t = parseFloat(document.getElementById("cfgTempMax").value);
+  const h = parseFloat(document.getElementById("cfgHumMax").value);
+  db.ref("/config_alertas").set({ tempMax: t, humMax: h })
+    .then(() => alert("Configurações Salvas!"));
+  fecharAdmin();
+}
+
+function fecharAdmin() { document.getElementById("adminPanel").style.display = "none"; }
+
+function enviarEmailAlerta(tipo, valor) {
+  // Evita envios repetidos (cooldown de 5 min)
+  if (window.lastAlert && Date.now() - window.lastAlert < 300000) return;
+  window.lastAlert = Date.now();
+  emailjs.send("service_kx31f3s", "template_mqzi3at", { tipo: tipo, valor: valor });
 }
 </script>
 </body>
