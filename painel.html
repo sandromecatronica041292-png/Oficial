@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>NewEnergy | High Speed Monitor</title>
+<title>NewEnergy | Monitor Profissional</title>
 
 <style>
   :root {
@@ -14,35 +14,38 @@
     --text-muted: #8fa3c6;
     --on: #00ff88;
     --off: #ff5722;
-    --glass: rgba(255, 255, 255, 0.03);
+    --warn: #ff9800;
+    --glass: rgba(255, 255, 255, 0.05);
   }
 
   body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-dark); color: var(--text-main); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
   .card { background: var(--card-bg); border-radius: 24px; padding: 35px; width: 100%; max-width: 450px; box-shadow: 0 30px 60px rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.05); text-align: center; }
-  .logo-top { font-size: 11px; text-transform: uppercase; letter-spacing: 4px; color: var(--accent); margin-bottom: 8px; font-weight: 700; opacity: 0.8; }
-  h1 { font-size: 24px; margin: 0 0 25px 0; font-weight: 800; letter-spacing: -1px; }
-  .status-badge { display: inline-block; padding: 6px 16px; border-radius: 50px; font-size: 11px; font-weight: 700; background: var(--glass); margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.1); }
   
-  .btn-led {
-    width: 100%; padding: 18px; border: none; border-radius: 16px; font-size: 16px; font-weight: 800; cursor: pointer;
-    transition: transform 0.1s, background 0.2s; margin-bottom: 30px; text-transform: uppercase; letter-spacing: 1px;
+  .status-badge { 
+    display: inline-block; padding: 8px 20px; border-radius: 50px; font-size: 11px; font-weight: 800; 
+    margin-bottom: 25px; transition: all 0.3s; letter-spacing: 1px;
   }
-  .btn-led.on { background: var(--on); color: #052e16; box-shadow: 0 0 25px rgba(0, 255, 136, 0.2); }
-  .btn-led.off { background: var(--off); color: #ffffff; }
-  .btn-led:active { transform: scale(0.97); }
+  .st-online { background: rgba(0, 255, 136, 0.1); color: var(--on); border: 1px solid var(--on); }
+  .st-offline { background: rgba(255, 87, 34, 0.1); color: var(--off); border: 1px solid var(--off); }
+  .st-no-internet { background: rgba(255, 152, 0, 0.1); color: var(--warn); border: 1px solid var(--warn); }
+
+  .btn-led {
+    width: 100%; padding: 18px; border: none; border-radius: 16px; font-size: 15px; font-weight: 800; 
+    cursor: pointer; transition: 0.2s; margin-bottom: 30px; text-transform: uppercase;
+  }
+  .btn-led.on { background: var(--on); color: #052e16; }
+  .btn-led.off { background: var(--off); color: #fff; }
 
   .gauges-container { display: flex; gap: 15px; margin-bottom: 25px; }
   .gauge-box { flex: 1; background: var(--glass); padding: 15px 5px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); }
-  .g-title { font-size: 10px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; margin-bottom: 10px; }
-  .g-value { font-size: 19px; font-weight: 800; color: var(--accent); margin-top: -5px; }
-  
-  #alertMessage { min-height: 20px; font-size: 12px; color: #ffcc00; margin-bottom: 20px; }
-  .btn-hist { width: 100%; padding: 14px; background: transparent; border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); border-radius: 14px; font-weight: 600; cursor: pointer; }
-  canvas { max-width: 100%; height: auto !important; }
+  .g-value { font-size: 22px; font-weight: 800; color: var(--accent); margin-top: 5px; }
+  .g-title { font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 600; }
+
+  .alert-box { min-height: 20px; font-size: 13px; color: var(--warn); margin-bottom: 20px; font-weight: 600; }
+  .btn-hist { width: 100%; padding: 14px; background: transparent; border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); border-radius: 14px; cursor: pointer; }
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gaugeJS/dist/gauge.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
@@ -50,24 +53,28 @@
 
 <body>
 <div class="card">
-  <div class="logo-top">NewEnergy RT</div>
-  <h1>Controle em Tempo Real</h1>
-  <div id="status" class="status-badge">Sincronizando...</div>
-  <button id="btnLED" class="btn-led off">Conectando...</button>
+  <div style="font-size: 10px; letter-spacing: 3px; color: var(--accent); margin-bottom: 10px;">NEWENERGY RT</div>
+  <h1 style="margin: 0 0 20px 0;">Monitor de Precisão</h1>
+
+  <div id="status" class="status-badge st-online">Sincronizando...</div>
+  
+  <button id="btnLED" class="btn-led off">Ligar LED</button>
+
   <div class="gauges-container">
     <div class="gauge-box">
       <div class="g-title">Temperatura</div>
       <canvas id="gTemp"></canvas>
-      <div id="tempVal" class="g-value">-- °C</div>
+      <div id="tempVal" class="g-value">--°C</div>
     </div>
     <div class="gauge-box">
       <div class="g-title">Umidade</div>
       <canvas id="gHum"></canvas>
-      <div id="humVal" class="g-value">-- %</div>
+      <div id="humVal" class="g-value">--%</div>
     </div>
   </div>
-  <div id="alertMessage"></div>
-  <button id="btnHistorico" class="btn-hist" onclick="location.href='historico.html'">Histórico de Dados</button>
+
+  <div id="alertMessage" class="alert-box"></div>
+  <button class="btn-hist" onclick="location.href='historico.html'">Acessar Histórico Completo</button>
 </div>
 
 <script>
@@ -82,57 +89,68 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-const auth = firebase.auth();
 
-auth.onAuthStateChanged(user => { if (!user) location.href = "index.html"; else rodarPainel(); });
+// ELEMENTOS DA UI
+const statusBadge = document.getElementById("status");
+const btnLED = document.getElementById("btnLED");
+const alertMsg = document.getElementById("alertMessage");
 
-function rodarPainel() {
-  const LED_REF = db.ref("/led");
-  const TEMP_REF = db.ref("/temp");
-  const HUM_REF = db.ref("/hum");
-  
-  // Otimização de Gauge: Velocidade aumentada e frame rate estável
-  const gOpt = (col) => ({ 
-    angle: 0.2, lineWidth: 0.15, pointer: { length: 0.5, strokeWidth: 0.04, color: '#DDD' },
-    colorStart: col, colorStop: col, strokeColor: '#1b1f33', generateGradient: true, highDpiSupport: true 
-  });
+// CONFIGURAÇÃO DOS GAUGES
+const gOpt = (col) => ({ angle: 0.2, lineWidth: 0.15, pointer: { length: 0.5, color: '#DDD' }, colorStart: col, colorStop: col, strokeColor: '#1b1f33', highDpiSupport: true });
+const gT = new Gauge(document.getElementById("gTemp")).setOptions(gOpt('#00d2ff'));
+gT.maxValue = 125; gT.setMinValue(-40); gT.animationSpeed = 128;
+const gH = new Gauge(document.getElementById("gHum")).setOptions(gOpt('#00ff88'));
+gH.maxValue = 100; gH.setMinValue(0); gH.animationSpeed = 128;
 
-  const gT = new Gauge(document.getElementById("gTemp")).setOptions(gOpt('#00d2ff'));
-  gT.maxValue = 125; gT.setMinValue(-40); gT.animationSpeed = 128; // Velocidade Máxima
-
-  const gH = new Gauge(document.getElementById("gHum")).setOptions(gOpt('#00ff88'));
-  gH.maxValue = 100; gH.setMinValue(0); gH.animationSpeed = 128;
-
-  let stLed = 0;
-
-  // Listener Ultrarápido para o LED
-  LED_REF.on("value", snap => {
-    stLed = snap.val();
-    const isOff = stLed == 0;
-    document.getElementById("btnLED").innerText = isOff ? "Ligar Agora" : "Desligar Agora";
-    document.getElementById("btnLED").className = "btn-led " + (isOff ? "off" : "on");
-    document.getElementById("status").innerText = isOff ? "STBY" : "LIVE";
-  });
-
-  // Gatilho de Comando Imediato (Sem await para não travar a UI)
-  document.getElementById("btnLED").onclick = () => {
-    const novoEstado = stLed == 1 ? 0 : 1;
-    LED_REF.set(novoEstado); // Atualização direta
+// 1. MONITOR DE CONEXÃO DO HARDWARE (HEARTBEAT)
+db.ref("/last_seen").on("value", snap => {
+  const lastSeen = snap.val() * 1000; // Firebase timestamp em segundos
+  const checkConnection = () => {
+    const diff = (Date.now() - lastSeen) / 1000;
+    if (diff > 90) { // Mais de 90 segundos sem sinal
+      statusBadge.innerText = "DISPOSITIVO OFFLINE";
+      statusBadge.className = "status-badge st-offline";
+      alertMsg.innerText = "⚠️ O sensor parou de enviar dados.";
+    } else {
+      statusBadge.innerText = "SISTEMA ONLINE";
+      statusBadge.className = "status-badge st-online";
+      alertMsg.innerText = "";
+    }
   };
+  checkConnection();
+  if(window.timerConn) clearInterval(window.timerConn);
+  window.timerConn = setInterval(checkConnection, 10000);
+});
 
-  // Listeners de Sensores Otimizados
-  TEMP_REF.on("value", s => { 
-    const v = parseFloat(s.val()); 
-    gT.set(v); 
-    document.getElementById("tempVal").innerText = v.toFixed(1) + "°C"; 
-  });
-  
-  HUM_REF.on("value", s => { 
-    const v = parseFloat(s.val()); 
-    gH.set(v); 
-    document.getElementById("humVal").innerText = v.toFixed(1) + "%"; 
-  });
-}
+// 2. MONITOR DE INTERNET DO NAVEGADOR
+window.addEventListener('offline', () => {
+  statusBadge.innerText = "SEM INTERNET NO NAVEGADOR";
+  statusBadge.className = "status-badge st-no-internet";
+});
+
+// 3. CONTROLE DO LED (RESPOSTA RÁPIDA)
+const LED_REF = db.ref("/led");
+LED_REF.on("value", snap => {
+  const on = snap.val() == 1;
+  btnLED.innerText = on ? "Desligar LED" : "Ligar LED";
+  btnLED.className = "btn-led " + (on ? "on" : "off");
+});
+
+btnLED.onclick = () => {
+  LED_REF.get().then(s => LED_REF.set(s.val() == 1 ? 0 : 1));
+};
+
+// 4. SENSORES EM TEMPO REAL
+db.ref("/temp").on("value", s => { 
+  const v = parseFloat(s.val()); gT.set(v); 
+  document.getElementById("tempVal").innerText = v.toFixed(1) + "°C"; 
+});
+
+db.ref("/hum").on("value", s => { 
+  const v = parseFloat(s.val()); gH.set(v); 
+  document.getElementById("humVal").innerText = v.toFixed(1) + "%"; 
+});
+
 </script>
 </body>
 </html>
