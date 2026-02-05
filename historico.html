@@ -120,7 +120,7 @@ let abaAtual = "diario";
 let chartTemp=null, chartHum=null;
 let dadosTela = [];
 
-/* ===== TROCA ABA ===== */
+/* ===== TROCAR ABA ===== */
 function trocarAba(aba,el){
   abaAtual = aba;
   document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
@@ -128,7 +128,7 @@ function trocarAba(aba,el){
   carregarHistorico();
 }
 
-/* ===== CARREGAR HISTÓRICO ===== */
+/* ===== HISTÓRICO ===== */
 function carregarHistorico(){
   const lista = document.getElementById("lista");
   lista.innerHTML = "Carregando...";
@@ -137,17 +137,16 @@ function carregarHistorico(){
   db.ref("/historico/"+abaAtual).once("value").then(snap=>{
     const base = snap.val();
     if(!base){
-      lista.innerHTML="Nenhum dado.";
+      lista.innerHTML="Nenhum dado encontrado.";
       destruirGraficos();
       return;
     }
 
-    // pega o período mais recente
     const periodos = Object.keys(base).sort();
-    const periodo = periodos[periodos.length-1];
-    const registros = base[periodo];
+    const periodoAtual = periodos[periodos.length-1];
+    const registros = base[periodoAtual];
 
-    lista.innerHTML = `<p><b>Período:</b> ${periodo}</p>`;
+    lista.innerHTML = `<p><b>Período:</b> ${periodoAtual}</p>`;
 
     Object.keys(registros).sort((a,b)=>a-b).forEach(ts=>{
       const r = registros[ts];
@@ -164,7 +163,7 @@ function carregarHistorico(){
         </div>`;
     });
 
-    desenharGraficos(periodo);
+    desenharGraficos(periodoAtual);
   });
 }
 
@@ -177,17 +176,13 @@ function destruirGraficos(){
 function desenharGraficos(periodo){
   destruirGraficos();
 
-  const labels = dadosTela.map(d=>d.data);
-  const temps  = dadosTela.map(d=>Number(d.temp));
-  const hums   = dadosTela.map(d=>Number(d.hum));
-
-  chartTemp = new Chart(document.getElementById("graficoTemp"),{
+  chartTemp = new Chart(graficoTemp,{
     type:"line",
     data:{
-      labels,
+      labels:dadosTela.map(d=>d.data),
       datasets:[{
         label:`Temperatura (${periodo})`,
-        data:temps,
+        data:dadosTela.map(d=>d.temp),
         borderColor:"#ff9800",
         backgroundColor:"rgba(255,152,0,.2)",
         fill:true
@@ -195,13 +190,13 @@ function desenharGraficos(periodo){
     }
   });
 
-  chartHum = new Chart(document.getElementById("graficoHum"),{
+  chartHum = new Chart(graficoHum,{
     type:"line",
     data:{
-      labels,
+      labels:dadosTela.map(d=>d.data),
       datasets:[{
         label:`Umidade (${periodo})`,
-        data:hums,
+        data:dadosTela.map(d=>d.hum),
         borderColor:"#00bcd4",
         backgroundColor:"rgba(0,188,212,.2)",
         fill:true
@@ -210,27 +205,67 @@ function desenharGraficos(periodo){
   });
 }
 
-/* ===== PDF ===== */
+/* ===== PDF PROFISSIONAL ===== */
 function exportarPDF(){
-  const {jsPDF}=window.jspdf;
-  const doc=new jsPDF();
-  doc.setFontSize(16);
-  doc.text("NewEnergy - Relatório",14,15);
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF("p","mm","a4");
+  const largura = doc.internal.pageSize.getWidth();
+  let y = 20;
+
+  doc.setFillColor(240,240,240);
+  doc.rect(0,0,largura,30,"F");
+
+  doc.setFontSize(18);
+  doc.setTextColor(0,80,120);
+  doc.text("NewEnergy Solutions",14,18);
+
   doc.setFontSize(11);
-  doc.text(`Período: ${abaAtual.toUpperCase()}`,14,25);
-  doc.text(`Gerado: ${new Date().toLocaleString("pt-BR")}`,14,32);
+  doc.setTextColor(0);
+  doc.text("Relatório de Monitoramento Ambiental",largura-14,18,{align:"right"});
 
-  doc.addImage(document.getElementById("graficoTemp"),"PNG",10,40,190,65);
-  doc.addImage(document.getElementById("graficoHum"),"PNG",10,110,190,65);
+  y = 40;
+  doc.setFontSize(12);
+  doc.text(`Período: ${abaAtual.toUpperCase()}`,14,y);
+  y+=7;
+  doc.text(`Gerado em: ${new Date().toLocaleString("pt-BR")}`,14,y);
+  y+=7;
+  doc.text("Equipamento: Sensor Ambiental Wi-Fi – Alta Precisão",14,y);
 
-  let y=185;
+  y+=10;
+  doc.line(14,y,largura-14,y);
+  y+=8;
+
+  doc.text("Gráfico de Temperatura",14,y);
+  y+=5;
+  doc.addImage(graficoTemp,"PNG",14,y,largura-28,60);
+  y+=70;
+
+  doc.text("Gráfico de Umidade",14,y);
+  y+=5;
+  doc.addImage(graficoHum,"PNG",14,y,largura-28,60);
+
+  doc.addPage();
+  y=20;
+  doc.setFontSize(14);
+  doc.text("Registros Detalhados",14,y);
+  y+=8;
+
+  doc.setFontSize(10);
   dadosTela.forEach(d=>{
-    doc.text(`${d.data} | T:${d.temp}°C | U:${d.hum}%`,14,y);
-    y+=7;
     if(y>280){ doc.addPage(); y=20; }
+    doc.text(`${d.data}  |  Temp: ${d.temp}°C  |  Umid: ${d.hum}%`,14,y);
+    y+=7;
   });
 
-  doc.save(`NewEnergy_${abaAtual}.pdf`);
+  const total = doc.internal.getNumberOfPages();
+  for(let i=1;i<=total;i++){
+    doc.setPage(i);
+    doc.setFontSize(9);
+    doc.setTextColor(120);
+    doc.text("Documento automático • NewEnergy Solutions • Compatível ISO 9001",largura/2,292,{align:"center"});
+  }
+
+  doc.save(`Relatorio_NewEnergy_${abaAtual}.pdf`);
 }
 
 /* INIT */
