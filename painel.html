@@ -8,9 +8,13 @@
   :root { --bg-dark: #0b0f1b; --card-bg: #161b2d; --accent: #00d2ff; --text-main: #ffffff; --text-muted: #8fa3c6; --on: #00ff88; --off: #ff5722; --warn: #ffcc00; --glass: rgba(255, 255, 255, 0.05); }
   body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-dark); color: var(--text-main); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 15px; }
   
-  .card { background: var(--card-bg); border-radius: 20px; padding: 25px; width: 100%; max-width: 400px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.05); text-align: center; position: relative; overflow: hidden; }
-  .logo-top { font-size: 10px; text-transform: uppercase; letter-spacing: 3px; color: var(--accent); margin-bottom: 5px; cursor: pointer; user-select: none; font-weight: 700; }
-  h1 { font-size: 20px; margin: 0 0 15px 0; font-weight: 800; }
+  .card { background: var(--card-bg); border-radius: 20px; padding: 25px; width: 100%; max-width: 420px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.05); text-align: center; position: relative; overflow: hidden; }
+  
+  .header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+  .btn-logout { background: transparent; border: 1px solid rgba(255,87,34,0.3); color: var(--off); padding: 5px 10px; border-radius: 8px; font-size: 10px; cursor: pointer; font-weight: 700; text-transform: uppercase; }
+  
+  .logo-top { font-size: 10px; text-transform: uppercase; letter-spacing: 3px; color: var(--accent); cursor: pointer; user-select: none; font-weight: 700; }
+  h1 { font-size: 20px; margin: 10px 0 15px 0; font-weight: 800; }
   
   .status-badge { display: inline-block; padding: 4px 12px; border-radius: 50px; font-size: 10px; font-weight: 700; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); }
   .st-online { color: var(--on); border-color: var(--on); background: rgba(0, 255, 136, 0.1); }
@@ -20,7 +24,7 @@
   .btn-led.on { background: var(--on); color: #052e16; }
   .btn-led.off { background: var(--off); color: #fff; }
 
-  /* Painel Administrativo - Melhorado */
+  /* Painel Administrativo Oculto */
   #adminPanel { 
     display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
     background: #1a2035; border-radius: 20px; padding: 25px; box-sizing: border-box; 
@@ -29,7 +33,6 @@
   .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
   .admin-grid label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 4px; }
   .admin-input { background: #0b0f1b; border: 1px solid #3d4455; color: white; padding: 10px; border-radius: 8px; width: 100%; box-sizing: border-box; font-size: 13px; outline: none; }
-  .admin-input:focus { border-color: var(--accent); }
   
   .btn-test { background: rgba(0, 210, 255, 0.1); color: var(--accent); border: 1px solid var(--accent); margin-top: 5px; }
   .btn-voltar { background: transparent; border: 1px solid #3d4455; color: var(--text-muted); margin-top: 10px; }
@@ -52,26 +55,25 @@
 <div class="card">
   <div id="adminPanel">
     <h2 style="font-size: 18px; margin: 0 0 20px 0; color: var(--accent);">Configuração Admin</h2>
-    
     <div class="admin-grid">
       <div><label>Temp Mín (°C)</label><input type="number" id="tMin" class="admin-input"></div>
       <div><label>Temp Máx (°C)</label><input type="number" id="tMax" class="admin-input"></div>
       <div><label>Hum Mín (%)</label><input type="number" id="hMin" class="admin-input"></div>
       <div><label>Hum Máx (%)</label><input type="number" id="hMax" class="admin-input"></div>
+      <div><label>Frequência (Seg)</label><input type="number" id="cfgIntervalo" class="admin-input"></div>
+      <div><label>E-mail Alerta</label><input type="email" id="cfgEmail" class="admin-input" placeholder="cliente@email.com"></div>
     </div>
-    
-    <div style="margin-bottom: 20px;">
-      <label style="font-size: 9px; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">E-mail do Cliente</label>
-      <input type="email" id="cfgEmail" class="admin-input" placeholder="cliente@email.com">
-    </div>
-
     <button id="btnSalvar" class="btn-led on" onclick="salvarConfig()">Salvar Alterações</button>
-    <button id="btnTeste" class="btn-led btn-test" onclick="testeRapidoEmail()">Testar Envio de E-mail</button>
+    <button id="btnTeste" class="btn-led btn-test" onclick="testeRapidoEmail()">Testar E-mail</button>
     <button class="btn-led btn-voltar" onclick="fecharAdmin()">Voltar</button>
   </div>
 
-  <div class="logo-top" id="logoAdmin">NewEnergy RT</div>
-  <h1>Status do Sistema</h1>
+  <div class="header-actions">
+    <div class="logo-top" id="logoAdmin">NewEnergy Monitor</div>
+    <button class="btn-logout" onclick="fazerLogout()">Sair</button>
+  </div>
+  
+  <h1>Status Realtime</h1>
   <div id="status" class="status-badge st-online">Iniciando...</div>
   
   <button id="btnLED" class="btn-led off">Conectando...</button>
@@ -90,7 +92,7 @@
   </div>
 
   <div id="alertMessage" style="color:var(--warn); min-height:15px; font-size:11px; margin-bottom:15px; font-weight:700;"></div>
-  <button class="btn-led btn-voltar" style="width:100%;" onclick="location.href='historico.html'">Histórico</button>
+  <button class="btn-led btn-voltar" style="width:100%;" onclick="location.href='historico.html'">Ver Histórico</button>
 </div>
 
 <script>
@@ -107,36 +109,45 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const auth = firebase.auth();
 
-let config = { tMin: 15, tMax: 35, hMin: 30, hMax: 80, emailDestino: "" };
+let config = { tMin: 15, tMax: 35, hMin: 30, hMax: 80, intervalo: 2000, emailDestino: "" };
 
+// Redirecionamento se não logado
 auth.onAuthStateChanged(user => { 
-  if (!user) location.href = "index.html"; 
+  if (!user) window.location.replace("index.html"); 
   else {
     db.ref("/config_alertas").on("value", s => { if(s.val()) config = s.val(); });
-    rodarPainel(); 
+    rodarDashboard(); 
   }
 });
 
-function rodarPainel() {
+function fazerLogout() {
+  if(confirm("Deseja sair do sistema?")) {
+    auth.signOut().then(() => window.location.replace("index.html"));
+  }
+}
+
+function rodarDashboard() {
   const gOpt = (col) => ({ angle: 0.2, lineWidth: 0.15, pointer: { length: 0.5, color: '#DDD' }, colorStart: col, colorStop: col, strokeColor: '#1b1f33', highDpiSupport: true });
   const gT = new Gauge(document.getElementById("gTemp")).setOptions(gOpt('#00d2ff'));
-  gT.maxValue = 60; gT.setMinValue(-10); gT.animationSpeed = 100;
+  gT.maxValue = 60; gT.setMinValue(-10);
   const gH = new Gauge(document.getElementById("gHum")).setOptions(gOpt('#00ff88'));
-  gH.maxValue = 100; gH.setMinValue(0); gH.animationSpeed = 100;
+  gH.maxValue = 100; gH.setMinValue(0);
 
+  // Status Online/Offline (Heartbeat)
   db.ref("/last_seen").on("value", snap => {
     const last = snap.val() * 1000;
     const check = () => {
-      const isOff = (Date.now() - last) > 95000;
+      const isOff = (Date.now() - last) > (config.intervalo + 10000); // Dinâmico com base na frequência
       const st = document.getElementById("status");
       st.innerText = isOff ? "DISPOSITIVO OFFLINE" : "DISPOSITIVO ONLINE";
       st.className = "status-badge " + (isOff ? "st-offline" : "st-online");
     };
     check();
     if(window.iv) clearInterval(window.iv);
-    window.iv = setInterval(check, 10000);
+    window.iv = setInterval(check, 5000);
   });
 
+  // Controle do LED
   db.ref("/led").on("value", snap => {
     const on = snap.val() == 1;
     document.getElementById("btnLED").innerText = on ? "Desligar LED" : "Ligar LED";
@@ -147,35 +158,34 @@ function rodarPainel() {
     db.ref("/led").get().then(s => db.ref("/led").set(s.val() == 1 ? 0 : 1));
   };
 
+  // Leituras
   db.ref("/temp").on("value", s => { 
     const v = parseFloat(s.val()); gT.set(v); 
     document.getElementById("tempVal").innerText = v.toFixed(1) + "°C";
-    processarAlertas(v, parseFloat(document.getElementById("humVal").innerText));
+    analisarAlertas(v, parseFloat(document.getElementById("humVal").innerText));
   });
   
   db.ref("/hum").on("value", s => { 
     const v = parseFloat(s.val()); gH.set(v); 
     document.getElementById("humVal").innerText = v.toFixed(1) + "%";
-    processarAlertas(parseFloat(document.getElementById("tempVal").innerText), v);
+    analisarAlertas(parseFloat(document.getElementById("tempVal").innerText), v);
   });
 }
 
-function processarAlertas(t, h) {
+function analisarAlertas(t, h) {
   if(isNaN(t) || isNaN(h)) return;
   const msg = document.getElementById("alertMessage");
   let erroT = (t > config.tMax || t < config.tMin);
   let erroH = (h > config.hMax || h < config.hMin);
   let txt = "";
-
   if (erroT && erroH) txt = "🚨 CRÍTICO: TEMP E HUM FORA!";
   else if (erroT) txt = "🚨 ALERTA: TEMPERATURA FORA!";
   else if (erroH) txt = "🚨 ALERTA: UMIDADE FORA!";
-
   msg.innerText = txt;
-  if(txt !== "") enviarEmail(txt, `Temp: ${t}°C | Hum: ${h}%`);
+  if(txt !== "") enviarAlertaEmail(txt, `Temp: ${t}°C | Hum: ${h}%`);
 }
 
-// LOGICA ADMIN
+// LOGICA PAINEL ADMINISTRATIVO
 let cliques = 0;
 document.getElementById("logoAdmin").onclick = () => {
   if(++cliques >= 5) {
@@ -184,6 +194,7 @@ document.getElementById("logoAdmin").onclick = () => {
     document.getElementById("tMax").value = config.tMax || 35;
     document.getElementById("hMin").value = config.hMin || 30;
     document.getElementById("hMax").value = config.hMax || 80;
+    document.getElementById("cfgIntervalo").value = (config.intervalo / 1000) || 2;
     document.getElementById("cfgEmail").value = config.emailDestino || "";
     cliques = 0;
   }
@@ -196,6 +207,7 @@ function salvarConfig() {
     tMax: parseFloat(document.getElementById("tMax").value),
     hMin: parseFloat(document.getElementById("hMin").value),
     hMax: parseFloat(document.getElementById("hMax").value),
+    intervalo: parseInt(document.getElementById("cfgIntervalo").value) * 1000,
     emailDestino: document.getElementById("cfgEmail").value
   };
 
@@ -215,30 +227,16 @@ function fecharAdmin() { document.getElementById("adminPanel").style.display = "
 
 function testeRapidoEmail() {
   const mail = document.getElementById("cfgEmail").value;
-  if(!mail) return alert("Por favor, insira um e-mail primeiro!");
-  
-  const btn = document.getElementById("btnTeste");
-  btn.innerText = "Enviando...";
-  
+  if(!mail) return alert("Insira um e-mail!");
   emailjs.send("service_kx31f3s", "template_mqzi3at", { 
-    tipo: "TESTE DE CONEXÃO", 
-    valor: "O sistema está configurado para enviar alertas para este e-mail.", 
-    para_email: mail, 
-    data: new Date().toLocaleString() 
-  }).then(() => {
-    btn.innerText = "✅ E-MAIL ENVIADO!";
-    setTimeout(() => btn.innerText = "Testar Envio de E-mail", 2000);
-  }).catch(err => {
-    alert("Falha no EmailJS: " + JSON.stringify(err));
-    btn.innerText = "Erro ao enviar";
-  });
+    tipo: "TESTE DE SISTEMA", valor: "Funcionando Corretamente", para_email: mail, data: new Date().toLocaleString() 
+  }).then(() => alert("E-mail de teste enviado!"));
 }
 
-function enviarEmail(tipo, valor) {
+function enviarAlertaEmail(tipo, valor) {
   if (!config.emailDestino) return;
-  if (window.lastAlert && Date.now() - window.lastAlert < 600000) return;
+  if (window.lastAlert && Date.now() - window.lastAlert < 600000) return; // 10 min de intervalo
   window.lastAlert = Date.now();
-  
   emailjs.send("service_kx31f3s", "template_mqzi3at", { 
     tipo: tipo, valor: valor, para_email: config.emailDestino, data: new Date().toLocaleString() 
   });
