@@ -1,237 +1,187 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>NewEnergy - Histórico</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>NewEnergy - Histórico Oficial</title>
 
-<style>
-body{
-  margin:0;
-  font-family:'Segoe UI',Tahoma,Verdana,sans-serif;
-  background:#0b0f1b;
-  color:#fff;
-  display:flex;
-  justify-content:center;
-  padding:15px;
-}
-.card{
-  background:#1b1f33;
-  border-radius:15px;
-  padding:20px;
-  width:100%;
-  max-width:700px;
-  box-shadow:0 10px 25px rgba(0,0,0,.7);
-}
-h1{ text-align:center;color:#00bcd4;margin-bottom:10px }
+    <style>
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #0b0f1b; color: #fff; display: flex; justify-content: center; padding: 15px; }
+        .card { background: #1b1f33; border-radius: 15px; padding: 20px; width: 100%; max-width: 650px; box-shadow: 0 10px 25px rgba(0,0,0,0.7); }
+        h1 { text-align: center; color: #00bcd4; margin-bottom: 20px; font-size: 22px; }
+        
+        .tabs { display: flex; margin-bottom: 15px; gap: 5px; overflow-x: auto; }
+        .tab { flex: 1; min-width: 80px; padding: 10px; text-align: center; cursor: pointer; border-radius: 8px; background: #0c1424; font-size: 13px; transition: 0.3s; }
+        .tab.active { background: #00bcd4; color: #0b0f1b; font-weight: bold; }
+        
+        #grafico-container { background: #fff; border-radius: 10px; padding: 10px; margin-bottom: 15px; }
+        canvas { max-height: 180px; margin-bottom: 10px; }
+        
+        #lista { overflow-y: auto; max-height: 280px; padding-right: 5px; }
+        .item { background: #0c1424; padding: 12px; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid #00bcd4; display: flex; justify-content: space-between; align-items: center; }
+        .data-info { display: flex; flex-direction: column; }
+        .data-texto { color: #8fa3c6; font-size: 11px; }
+        .valores-info { text-align: right; }
+        .v-temp { color: #ff9800; font-weight: bold; }
+        .v-hum { color: #00bcd4; font-weight: bold; }
+        
+        .btn-container { display: flex; gap: 10px; margin-top: 15px; }
+        .btn { flex: 1; padding: 12px; border: none; border-radius: 8px; background: #ff5722; color: white; cursor: pointer; font-weight: bold; }
+        .btn-voltar { background: #444; }
+    </style>
 
-.tabs{ display:flex;flex-wrap:wrap;margin-bottom:10px }
-.tab{
-  flex:1;
-  padding:8px;
-  text-align:center;
-  background:#0c1424;
-  margin:2px;
-  border-radius:10px;
-  cursor:pointer;
-  font-size:14px;
-}
-.tab.active{ background:#00bcd4;color:#0b0f1b }
-
-#grafico-temp,#grafico-hum{
-  background:#fff;
-  margin-bottom:10px;
-  height:220px;
-}
-
-#lista{ max-height:320px;overflow:auto;font-size:14px }
-
-.grupo{
-  margin-bottom:16px;
-}
-.grupo-titulo{
-  font-weight:bold;
-  color:#ff9800;
-  margin:10px 0 6px;
-  font-size:15px;
-  border-bottom:1px solid rgba(255,255,255,.2);
-  padding-bottom:4px;
-}
-
-.item{
-  background:#0c1424;
-  padding:8px;
-  border-radius:10px;
-  margin-bottom:6px;
-}
-.data{ color:#8fa3c6 }
-.valor{ color:#00bcd4;font-weight:bold }
-
-.btn-container{ display:flex;gap:10px;margin-top:10px }
-.btn{
-  flex:1;
-  padding:10px;
-  border:none;
-  border-radius:10px;
-  background:#ff5722;
-  color:#fff;
-  cursor:pointer;
-}
-</style>
-
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-
 <body>
+
 <div class="card">
-  <h1>Histórico de Leituras</h1>
+    <h1>Histórico de Leituras</h1>
 
-  <div class="tabs">
-    <div class="tab active" onclick="showTab('diario',this)">Diário</div>
-    <div class="tab" onclick="showTab('semanal',this)">Semanal</div>
-    <div class="tab" onclick="showTab('mensal',this)">Mensal</div>
-    <div class="tab" onclick="showTab('anual',this)">Anual</div>
-  </div>
+    <div class="tabs">
+        <div id="tab-diario" class="tab active" onclick="showTab('diario')">Diário</div>
+        <div id="tab-semanal" class="tab" onclick="showTab('semanal')">Semanal</div>
+        <div id="tab-mensal" class="tab" onclick="showTab('mensal')">Mensal</div>
+        <div id="tab-anual" class="tab" onclick="showTab('anual')">Anual</div>
+    </div>
 
-  <canvas id="grafico-temp"></canvas>
-  <canvas id="grafico-hum"></canvas>
+    <div id="grafico-container">
+        <canvas id="chartTemp"></canvas>
+        <canvas id="chartHum"></canvas>
+    </div>
 
-  <div id="lista"></div>
+    <div id="lista"></div>
 
-  <div class="btn-container">
-    <button class="btn" onclick="exportPDF()">Exportar PDF</button>
-    <button class="btn" onclick="window.location.href='painel.html'">Voltar</button>
-  </div>
+    <div class="btn-container">
+        <button class="btn btn-voltar" onclick="window.history.back()">Voltar</button>
+    </div>
 </div>
 
 <script>
-const firebaseConfig={
-  apiKey:"AIzaSyB5FnkQiFi3gn9Iup2KNcbrKxWd-0Jjo6Y",
-  authDomain:"oficial-688e8.firebaseapp.com",
-  databaseURL:"https://oficial-688e8-default-rtdb.firebaseio.com/",
-  projectId:"oficial-688e8"
-};
-firebase.initializeApp(firebaseConfig);
+    // Configuração idêntica ao seu banco
+    const firebaseConfig = {
+        databaseURL: "https://oficial-688e8-default-rtdb.firebaseio.com/",
+        projectId: "oficial-688e8",
+    };
 
-const auth=firebase.auth();
-const db=firebase.database();
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-auth.onAuthStateChanged(u=>{
-  if(!u) location.href="index.html";
-});
+    let chartT, chartH;
 
-let currentTab="diario";
-let chartTemp=null;
-let chartHum=null;
-
-function showTab(tab,el){
-  currentTab=tab;
-  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-  el.classList.add("active");
-  carregarHistorico();
-}
-
-function formatarPeriodo(p){
-  if(currentTab==="diario") return "Dia: "+p;
-  if(currentTab==="semanal") return "Semana: "+p.replace("-W"," / Semana ");
-  if(currentTab==="mensal") return "Mês: "+p;
-  if(currentTab==="anual") return "Ano: "+p;
-  return p;
-}
-
-function carregarHistorico(){
-  const LISTA=document.getElementById("lista");
-  LISTA.innerHTML="Carregando...";
-
-  db.ref("/historico/"+currentTab).once("value").then(snap=>{
-    const dados=snap.val();
-    LISTA.innerHTML="";
-
-    if(!dados){
-      LISTA.innerHTML="Nenhum registro encontrado.";
-      return;
+    function showTab(tab) {
+        document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+        document.getElementById('tab-' + tab).classList.add('active');
+        carregarDados(tab);
     }
 
-    const labels=[],temps=[],hums=[];
+    function carregarDados(periodo) {
+        const LISTA = document.getElementById("lista");
+        LISTA.innerHTML = "<p style='text-align:center'>Carregando dados de 2026...</p>";
+        
+        // Acessa historico/diario, historico/mensal, etc.
+        const ref = db.ref("historico/" + periodo);
 
-    Object.keys(dados).sort().reverse().forEach(periodo=>{
-      const registros=dados[periodo];
-      if(typeof registros!=="object") return;
+        ref.on("value", snapshot => {
+            const dadosRaiz = snapshot.val();
+            if (!dadosRaiz) {
+                LISTA.innerHTML = "<p style='text-align:center'>Nenhum dado encontrado para " + periodo + ".</p>";
+                limparGraficos();
+                return;
+            }
 
-      LISTA.innerHTML+=`
-        <div class="grupo">
-          <div class="grupo-titulo">${formatarPeriodo(periodo)}</div>
-        </div>
-      `;
+            const labels = [];
+            const tempArr = [];
+            const humArr = [];
+            let htmlItems = "";
 
-      const grupo=LISTA.lastElementChild;
-      Object.keys(registros).sort((a,b)=>b-a).forEach(ts=>{
-        const r=registros[ts];
-        if(!r) return;
+            // 1. Pega as pastas de data (ex: 2026-02-05 ou 2026)
+            const pastasDatas = Object.keys(dadosRaiz).sort().reverse();
 
-        const data=new Date(ts*1000).toLocaleString("pt-BR");
+            pastasDatas.forEach(dataKey => {
+                const registros = dadosRaiz[dataKey];
+                
+                // 2. Pega os timestamps dentro de cada pasta
+                const timestamps = Object.keys(registros).sort().reverse();
 
-        grupo.innerHTML+=`
-          <div class="item">
-            <div class="data">${data}</div>
-            <div class="valor">Temp: ${r.temperatura} °C</div>
-            <div class="valor">Umidade: ${r.umidade} %</div>
-          </div>
-        `;
+                timestamps.forEach(ts => {
+                    const item = registros[ts];
+                    
+                    // Mapeamento para suas chaves: 'temp' e 'hum'
+                    const t = item.temp || 0;
+                    const h = item.hum || 0;
+                    const dataObj = new Date(parseInt(ts) * 1000);
+                    const dataHoraStr = dataObj.toLocaleString("pt-BR");
 
-        labels.push(data);
-        temps.push(Number(r.temperatura));
-        hums.push(Number(r.umidade));
-      });
-    });
+                    // Adicionar na lista (Mais recentes primeiro)
+                    htmlItems += `
+                        <div class="item">
+                            <div class="data-info">
+                                <span class="data-texto">${dataHoraStr}</span>
+                                <span style="font-size:9px; color:#555">Ref: ${dataKey}</span>
+                            </div>
+                            <div class="valores-info">
+                                <span class="v-temp">${t}°C</span> | 
+                                <span class="v-hum">${h}%</span>
+                            </div>
+                        </div>`;
 
-    if(chartTemp) chartTemp.destroy();
-    if(chartHum) chartHum.destroy();
+                    // Dados para os gráficos (Usamos unshift para a ordem ser da esquerda para a direita)
+                    labels.unshift(dataHoraStr.split(' ')[1]); // Apenas a hora no eixo X
+                    tempArr.unshift(t);
+                    humArr.unshift(h);
+                });
+            });
 
-    chartTemp=new Chart(document.getElementById("grafico-temp"),{
-      type:"line",
-      data:{labels,datasets:[{
-        label:"Temperatura (°C)",
-        data:temps,
-        borderColor:"#ff9800",
-        backgroundColor:"rgba(255,152,0,.2)",
-        fill:true
-      }]}
-    });
+            LISTA.innerHTML = htmlItems;
+            atualizarGraficos(labels, tempArr, humArr);
+        });
+    }
 
-    chartHum=new Chart(document.getElementById("grafico-hum"),{
-      type:"line",
-      data:{labels,datasets:[{
-        label:"Umidade (%)",
-        data:hums,
-        borderColor:"#00bcd4",
-        backgroundColor:"rgba(0,188,212,.2)",
-        fill:true
-      }]}
-    });
-  });
-}
+    function atualizarGraficos(labels, temps, hums) {
+        const ctxT = document.getElementById('chartTemp').getContext('2d');
+        const ctxH = document.getElementById('chartHum').getContext('2d');
 
-function exportPDF(){
-  const {jsPDF}=window.jspdf;
-  const doc=new jsPDF();
-  doc.setFontSize(16);
-  doc.text("NewEnergy - Relatório de Monitoramento",14,15);
-  doc.setFontSize(11);
-  doc.text(`Período: ${currentTab.toUpperCase()}`,14,25);
-  doc.text(`Gerado em: ${new Date().toLocaleString("pt-BR")}`,14,32);
+        if (chartT) chartT.destroy();
+        if (chartH) chartH.destroy();
 
-  doc.addImage(document.getElementById("grafico-temp"),"PNG",10,40,190,70);
-  doc.addImage(document.getElementById("grafico-hum"),"PNG",10,115,190,70);
+        const commonOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { 
+                x: { ticks: { color: '#666', font: { size: 9 } } },
+                y: { ticks: { color: '#666' } }
+            },
+            plugins: { legend: { labels: { color: '#333', font: { size: 11 } } } }
+        };
 
-  doc.save(`NewEnergy_${currentTab}.pdf`);
-}
+        chartT = new Chart(ctxT, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{ label: 'Temperatura °C', data: temps, borderColor: '#ff9800', backgroundColor: 'rgba(255,152,0,0.1)', fill: true, tension: 0.3, pointRadius: 2 }]
+            },
+            options: commonOptions
+        });
 
-carregarHistorico();
+        chartH = new Chart(ctxH, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{ label: 'Umidade %', data: hums, borderColor: '#00bcd4', backgroundColor: 'rgba(0,188,212,0.1)', fill: true, tension: 0.3, pointRadius: 2 }]
+            },
+            options: commonOptions
+        });
+    }
+
+    function limparGraficos() {
+        if (chartT) chartT.destroy();
+        if (chartH) chartH.destroy();
+    }
+
+    // Inicialização automática
+    showTab('diario');
 </script>
 </body>
 </html>
