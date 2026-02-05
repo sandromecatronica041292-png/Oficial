@@ -99,13 +99,11 @@ const firebaseConfig={
 };
 firebase.initializeApp(firebaseConfig);
 
-const auth=firebase.auth();
-const db=firebase.database();
-
-auth.onAuthStateChanged(u=>{
+firebase.auth().onAuthStateChanged(u=>{
   if(!u) location.href="index.html";
 });
 
+const db=firebase.database();
 let currentTab="diario";
 let chartTemp=null;
 let chartHum=null;
@@ -118,15 +116,15 @@ function showTab(tab,el){
 }
 
 function carregarHistorico(){
-  const LISTA=document.getElementById("lista");
-  LISTA.innerHTML="Carregando...";
+  const lista=document.getElementById("lista");
+  lista.innerHTML="Carregando...";
 
-  db.ref("historico/"+currentTab).once("value").then(snapshot=>{
-    const dados=snapshot.val();
-    LISTA.innerHTML="";
+  db.ref("historico/"+currentTab).once("value").then(snap=>{
+    const dados=snap.val();
+    lista.innerHTML="";
 
     if(!dados){
-      LISTA.innerHTML="Nenhum registro encontrado.";
+      lista.innerHTML="Nenhum dado encontrado.";
       return;
     }
 
@@ -142,10 +140,10 @@ function carregarHistorico(){
       temps.push(Number(r.temp));
       hums.push(Number(r.hum));
 
-      LISTA.innerHTML+=`
+      lista.innerHTML+=`
         <div class="item">
           <div class="data">${data}</div>
-          <div class="valor">🌡 Temperatura: ${r.temp} °C</div>
+          <div class="valor">🌡 Temp: ${r.temp} °C</div>
           <div class="valor">💧 Umidade: ${r.hum} %</div>
         </div>
       `;
@@ -156,32 +154,26 @@ function carregarHistorico(){
 
     chartTemp=new Chart(document.getElementById("grafico-temp"),{
       type:"line",
-      data:{
-        labels,
-        datasets:[{
-          label:"Temperatura (°C)",
-          data:temps,
-          borderColor:"#ff9800",
-          backgroundColor:"rgba(255,152,0,.2)",
-          fill:true,
-          tension:0.3
-        }]
-      }
+      data:{labels,datasets:[{
+        label:"Temperatura (°C)",
+        data:temps,
+        borderColor:"#ff9800",
+        backgroundColor:"rgba(255,152,0,.2)",
+        fill:true,
+        tension:0.3
+      }]}
     });
 
     chartHum=new Chart(document.getElementById("grafico-hum"),{
       type:"line",
-      data:{
-        labels,
-        datasets:[{
-          label:"Umidade (%)",
-          data:hums,
-          borderColor:"#00bcd4",
-          backgroundColor:"rgba(0,188,212,.2)",
-          fill:true,
-          tension:0.3
-        }]
-      }
+      data:{labels,datasets:[{
+        label:"Umidade (%)",
+        data:hums,
+        borderColor:"#00bcd4",
+        backgroundColor:"rgba(0,188,212,.2)",
+        fill:true,
+        tension:0.3
+      }]}
     });
   });
 }
@@ -189,17 +181,14 @@ function carregarHistorico(){
 function exportPDF(){
   const {jsPDF}=window.jspdf;
   const doc=new jsPDF();
-
   doc.setFontSize(16);
-  doc.text("NewEnergy - Relatório de Monitoramento",14,15);
+  doc.text("NewEnergy - Histórico de Leituras",14,15);
   doc.setFontSize(11);
   doc.text(`Período: ${currentTab.toUpperCase()}`,14,25);
   doc.text(`Gerado em: ${new Date().toLocaleString("pt-BR")}`,14,32);
-
   doc.addImage(document.getElementById("grafico-temp"),"PNG",10,40,190,65);
   doc.addImage(document.getElementById("grafico-hum"),"PNG",10,110,190,65);
-
-  doc.save(`NewEnergy_${currentTab}.pdf`);
+  doc.save(`historico_${currentTab}.pdf`);
 }
 
 carregarHistorico();
