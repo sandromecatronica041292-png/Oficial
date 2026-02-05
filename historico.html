@@ -2,13 +2,13 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>NewEnergy - Histórico</title>
 
 <style>
 body{
   margin:0;
-  font-family:'Segoe UI',Tahoma,Verdana,sans-serif;
+  font-family:Segoe UI, Tahoma, sans-serif;
   background:#0b0f1b;
   color:#fff;
   display:flex;
@@ -20,52 +20,34 @@ body{
   border-radius:15px;
   padding:20px;
   width:100%;
-  max-width:700px;
-  box-shadow:0 10px 25px rgba(0,0,0,.7);
+  max-width:800px;
 }
-h1{ text-align:center;color:#00bcd4;margin-bottom:10px }
-.tabs{ display:flex;flex-wrap:wrap;margin-bottom:10px }
+h1{ text-align:center; color:#00bcd4 }
+.tabs{ display:flex; gap:5px; margin-bottom:10px }
 .tab{
   flex:1;
   padding:8px;
-  text-align:center;
   background:#0c1424;
-  margin:2px;
-  border-radius:10px;
+  text-align:center;
+  border-radius:8px;
   cursor:pointer;
 }
-.tab.active{ background:#00bcd4;color:#0b0f1b }
-#grafico-temp,#grafico-hum{
-  background:#fff;
-  margin-bottom:10px;
-  height:220px;
-}
-#lista{ max-height:320px;overflow:auto;font-size:14px }
+.tab.active{ background:#00bcd4; color:#000 }
+canvas{ background:#fff; margin:10px 0 }
 .item{
   background:#0c1424;
   padding:8px;
-  border-radius:10px;
+  border-radius:8px;
   margin-bottom:6px;
 }
 .data{ color:#8fa3c6 }
-.valor{ color:#00bcd4;font-weight:bold }
-.btn-container{ display:flex;gap:10px;margin-top:10px }
-.btn{
-  flex:1;
-  padding:10px;
-  border:none;
-  border-radius:10px;
-  background:#ff5722;
-  color:#fff;
-  cursor:pointer;
-}
+.valor{ color:#00bcd4; font-weight:bold }
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 
 <body>
@@ -73,125 +55,127 @@ h1{ text-align:center;color:#00bcd4;margin-bottom:10px }
   <h1>Histórico de Leituras</h1>
 
   <div class="tabs">
-    <div class="tab active" onclick="showTab('diario',this)">Diário</div>
-    <div class="tab" onclick="showTab('semanal',this)">Semanal</div>
-    <div class="tab" onclick="showTab('mensal',this)">Mensal</div>
-    <div class="tab" onclick="showTab('anual',this)">Anual</div>
+    <div class="tab active" onclick="trocar('diario',this)">Diário</div>
+    <div class="tab" onclick="trocar('semanal',this)">Semanal</div>
+    <div class="tab" onclick="trocar('mensal',this)">Mensal</div>
+    <div class="tab" onclick="trocar('anual',this)">Anual</div>
   </div>
 
-  <canvas id="grafico-temp"></canvas>
-  <canvas id="grafico-hum"></canvas>
+  <canvas id="grafTemp" height="200"></canvas>
+  <canvas id="grafHum" height="200"></canvas>
 
   <div id="lista"></div>
-
-  <div class="btn-container">
-    <button class="btn" onclick="exportPDF()">Exportar PDF</button>
-    <button class="btn" onclick="window.location.href='painel.html'">Voltar</button>
-  </div>
 </div>
 
 <script>
-const firebaseConfig={
+/* FIREBASE */
+firebase.initializeApp({
   apiKey:"AIzaSyB5FnkQiFi3gn9Iup2KNcbrKxWd-0Jjo6Y",
   authDomain:"oficial-688e8.firebaseapp.com",
   databaseURL:"https://oficial-688e8-default-rtdb.firebaseio.com/",
   projectId:"oficial-688e8"
-};
-firebase.initializeApp(firebaseConfig);
+});
 
 firebase.auth().onAuthStateChanged(u=>{
   if(!u) location.href="index.html";
 });
 
-const db=firebase.database();
-let currentTab="diario";
-let chartTemp=null;
-let chartHum=null;
+const db = firebase.database();
+let tabAtual = "diario";
+let chartT=null, chartH=null;
 
-function showTab(tab,el){
-  currentTab=tab;
+/* TROCA ABA */
+function trocar(tab,el){
+  tabAtual=tab;
   document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
   el.classList.add("active");
-  carregarHistorico();
+  carregar();
 }
 
-function carregarHistorico(){
+/* CARREGAR HISTÓRICO */
+function carregar(){
   const lista=document.getElementById("lista");
   lista.innerHTML="Carregando...";
 
-  db.ref("historico/"+currentTab).once("value").then(snap=>{
+  db.ref("historico/"+tabAtual).once("value").then(snap=>{
     const dados=snap.val();
     lista.innerHTML="";
 
     if(!dados){
       lista.innerHTML="Nenhum dado encontrado.";
+      destruirGraficos();
       return;
     }
 
-    const labels=[];
-    const temps=[];
-    const hums=[];
+    let labels=[], temps=[], hums=[];
 
-    Object.keys(dados).sort().forEach(data=>{
-      const r=dados[data];
-      if(r.temp==null || r.hum==null) return;
+    Object.keys(dados).sort().reverse().forEach(periodo=>{
+      const bloco=dados[periodo];
+      if(typeof bloco!=="object") return;
 
-      labels.push(data);
-      temps.push(Number(r.temp));
-      hums.push(Number(r.hum));
+      Object.keys(bloco).sort().reverse().forEach(ts=>{
+        const r=bloco[ts];
+        if(r.temperatura==null || r.umidade==null) return;
 
-      lista.innerHTML+=`
-        <div class="item">
-          <div class="data">${data}</div>
-          <div class="valor">🌡 Temp: ${r.temp} °C</div>
-          <div class="valor">💧 Umidade: ${r.hum} %</div>
-        </div>
-      `;
+        const data=new Date(ts*1000).toLocaleString("pt-BR");
+
+        lista.innerHTML+=`
+          <div class="item">
+            <div class="data">${data}</div>
+            <div class="valor">Temp: ${r.temperatura} °C</div>
+            <div class="valor">Umidade: ${r.umidade} %</div>
+          </div>
+        `;
+
+        labels.push(data);
+        temps.push(Number(r.temperatura));
+        hums.push(Number(r.umidade));
+      });
     });
 
-    if(chartTemp) chartTemp.destroy();
-    if(chartHum) chartHum.destroy();
+    if(labels.length===0){
+      lista.innerHTML="Nenhum registro válido.";
+      destruirGraficos();
+      return;
+    }
 
-    chartTemp=new Chart(document.getElementById("grafico-temp"),{
-      type:"line",
-      data:{labels,datasets:[{
-        label:"Temperatura (°C)",
-        data:temps,
-        borderColor:"#ff9800",
-        backgroundColor:"rgba(255,152,0,.2)",
-        fill:true,
-        tension:0.3
-      }]}
-    });
-
-    chartHum=new Chart(document.getElementById("grafico-hum"),{
-      type:"line",
-      data:{labels,datasets:[{
-        label:"Umidade (%)",
-        data:hums,
-        borderColor:"#00bcd4",
-        backgroundColor:"rgba(0,188,212,.2)",
-        fill:true,
-        tension:0.3
-      }]}
-    });
+    desenharGraficos(labels,temps,hums);
   });
 }
 
-function exportPDF(){
-  const {jsPDF}=window.jspdf;
-  const doc=new jsPDF();
-  doc.setFontSize(16);
-  doc.text("NewEnergy - Histórico de Leituras",14,15);
-  doc.setFontSize(11);
-  doc.text(`Período: ${currentTab.toUpperCase()}`,14,25);
-  doc.text(`Gerado em: ${new Date().toLocaleString("pt-BR")}`,14,32);
-  doc.addImage(document.getElementById("grafico-temp"),"PNG",10,40,190,65);
-  doc.addImage(document.getElementById("grafico-hum"),"PNG",10,110,190,65);
-  doc.save(`historico_${currentTab}.pdf`);
+/* GRÁFICOS */
+function desenharGraficos(labels,t,h){
+  destruirGraficos();
+
+  chartT=new Chart(document.getElementById("grafTemp"),{
+    type:"line",
+    data:{labels,datasets:[{
+      label:"Temperatura (°C)",
+      data:t,
+      borderColor:"#ff9800",
+      backgroundColor:"rgba(255,152,0,.2)",
+      fill:true
+    }]}
+  });
+
+  chartH=new Chart(document.getElementById("grafHum"),{
+    type:"line",
+    data:{labels,datasets:[{
+      label:"Umidade (%)",
+      data:h,
+      borderColor:"#00bcd4",
+      backgroundColor:"rgba(0,188,212,.2)",
+      fill:true
+    }]}
+  });
 }
 
-carregarHistorico();
+function destruirGraficos(){
+  if(chartT){ chartT.destroy(); chartT=null }
+  if(chartH){ chartH.destroy(); chartH=null }
+}
+
+carregar();
 </script>
 </body>
 </html>
