@@ -3,46 +3,167 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>NewEnergy - Login</title>
+  <title>NewEnergy | Secure Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  
   <style>
+    :root {
+      --bg-dark: #0b0f1b;
+      --card-bg: #161b2d;
+      --accent: #00d2ff;
+      --accent-hover: #0099cc;
+      --text-main: #ffffff;
+      --text-muted: #8fa3c6;
+      --glass: rgba(255, 255, 255, 0.03);
+      --error: #ff5722;
+    }
+
     body {
       margin: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #0b0f1b;
-      color: #fff;
+      font-family: 'Inter', 'Segoe UI', sans-serif;
+      background: var(--bg-dark);
+      background-image: radial-gradient(circle at 50% 50%, #1a233a 0%, #0b0f1b 100%);
+      color: var(--text-main);
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
+      overflow: hidden;
     }
 
     .card {
-      background: #1b1f33;
-      border-radius: 15px;
-      padding: 25px;
-      width: 350px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.7);
+      background: var(--card-bg);
+      border-radius: 24px;
+      padding: 40px;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.6);
+      border: 1px solid rgba(255,255,255,0.05);
       text-align: center;
+      backdrop-filter: blur(10px);
     }
 
-    h1 { color: #00bcd4; margin-bottom: 20px; }
-    input { width: 100%; padding: 10px; margin-bottom: 12px; border-radius: 8px; border: none; }
-    button { width: 100%; padding: 12px; border: none; border-radius: 12px; font-size: 16px; cursor: pointer; margin-bottom: 10px; }
-    .btn-login { background: #16a34a; color: #fff; }
-    #error { color: #ff4444; margin-bottom: 10px; }
+    .logo-badge {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 5px;
+      color: var(--accent);
+      margin-bottom: 10px;
+      font-weight: 800;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 800;
+      margin: 0 0 10px 0;
+      letter-spacing: -1px;
+    }
+
+    p {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-bottom: 30px;
+    }
+
+    .input-group {
+      margin-bottom: 15px;
+      text-align: left;
+    }
+
+    label {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-left: 5px;
+      font-weight: 600;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px 16px;
+      margin-top: 5px;
+      background: rgba(0,0,0,0.2);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      color: #fff;
+      font-size: 15px;
+      box-sizing: border-box;
+      transition: all 0.3s;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--accent);
+      background: rgba(0,210,255,0.05);
+      box-shadow: 0 0 15px rgba(0, 210, 255, 0.1);
+    }
+
+    button {
+      width: 100%;
+      padding: 16px;
+      background: var(--accent);
+      color: #0b0f1b;
+      border: none;
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    button:hover {
+      background: var(--accent-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(0, 210, 255, 0.2);
+    }
+
+    button:active { transform: translateY(0); }
+
+    #error {
+      font-size: 13px;
+      color: var(--error);
+      background: rgba(255, 87, 34, 0.1);
+      padding: 10px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      display: none; /* Escondido por padrão */
+    }
+
+    .footer-note {
+      margin-top: 30px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
   </style>
 
-  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 </head>
 <body>
+
   <div class="card">
-    <h1>Login NewEnergy</h1>
+    <div class="logo-badge">Security Portal</div>
+    <h1>NewEnergy</h1>
+    <p>Acesse o monitoramento industrial</p>
+
     <div id="error"></div>
-    <input type="email" id="email" placeholder="Email">
-    <input type="password" id="password" placeholder="Senha">
-    <button id="btnLogin" class="btn-login">Entrar</button>
+
+    <div class="input-group">
+      <label>E-mail Corporativo</label>
+      <input type="email" id="email" placeholder="nome@empresa.com">
+    </div>
+
+    <div class="input-group">
+      <label>Senha de Acesso</label>
+      <input type="password" id="password" placeholder="••••••••">
+    </div>
+
+    <button id="btnLogin">Autenticar Sistema</button>
+
+    <div class="footer-note">
+      Sistema Protegido • NewEnergy v2.0
+    </div>
   </div>
 
   <script>
@@ -51,11 +172,9 @@
       apiKey: "AIzaSyB5FnkQiFi3gn9Iup2KNcbrKxWd-0Jjo6Y",
       authDomain: "oficial-688e8.firebaseapp.com",
       databaseURL: "https://oficial-688e8-default-rtdb.firebaseio.com/",
-      projectId: "oficial-688e8",
-      storageBucket: "oficial-688e8.firebasestorage.app",
-      messagingSenderId: "547217835774",
-      appId: "1:547217835774:web:c7186da5bf6156590c47af"
+      projectId: "oficial-688e8"
     };
+    
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
 
@@ -64,16 +183,45 @@
     const btnLogin = document.getElementById("btnLogin");
     const errorEl = document.getElementById("error");
 
+    // Redireciona se já estiver logado
+    auth.onAuthStateChanged(user => {
+      if (user) window.location.href = "painel.html";
+    });
+
     // ===== LOGIN =====
     btnLogin.addEventListener("click", () => {
-      errorEl.textContent = "";
-      auth.signInWithEmailAndPassword(emailEl.value, passEl.value)
+      const email = emailEl.value;
+      const pass = passEl.value;
+
+      if(!email || !pass) {
+        showError("Preencha todos os campos.");
+        return;
+      }
+
+      btnLogin.innerText = "Verificando...";
+      btnLogin.disabled = true;
+      errorEl.style.display = "none";
+
+      auth.signInWithEmailAndPassword(email, pass)
         .then(() => {
           window.location.href = "painel.html";
         })
         .catch(err => { 
-          errorEl.textContent = "Erro: " + err.message; 
+          btnLogin.innerText = "Autenticar Sistema";
+          btnLogin.disabled = false;
+          showError("Credenciais inválidas ou erro de conexão."); 
+          console.error(err);
         });
+    });
+
+    function showError(msg) {
+      errorEl.textContent = msg;
+      errorEl.style.display = "block";
+    }
+
+    // Permitir login ao apertar "Enter"
+    document.addEventListener("keypress", (e) => {
+      if(e.key === "Enter") btnLogin.click();
     });
   </script>
 </body>
