@@ -6,55 +6,73 @@
 <title>NewEnergy - Histórico</title>
 
 <style>
-body{
-  margin:0;
-  background:#0b0f1b;
-  color:#fff;
-  font-family:Segoe UI,Tahoma,Verdana;
-  display:flex;
-  justify-content:center;
-  padding:15px;
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #0b0f1b;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 15px;
 }
-.card{
-  background:#1b1f33;
-  width:100%;
-  max-width:650px;
-  border-radius:15px;
-  padding:20px;
-  box-shadow:0 10px 25px rgba(0,0,0,.7);
+.card {
+  background: #1b1f33;
+  border-radius: 15px;
+  padding: 20px;
+  width: 100%;
+  max-width: 650px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.7);
 }
-h1{color:#00bcd4;text-align:center;margin-bottom:10px}
-.tabs{display:flex;flex-wrap:wrap;margin-bottom:10px}
-.tab{
-  flex:1;
-  text-align:center;
-  padding:8px;
-  background:#0c1424;
-  border-radius:8px 8px 0 0;
-  margin:2px;
-  cursor:pointer;
+h1 {
+  text-align: center;
+  color: #00bcd4;
+  margin-bottom: 12px;
 }
-.tab.active{background:#00bcd4;color:#000}
-#grafico-container{margin-bottom:10px}
-canvas{background:#fff;border-radius:10px;margin-bottom:10px}
-#lista{max-height:300px;overflow:auto;font-size:14px}
-.item{
-  background:#0c1424;
-  padding:8px;
-  border-radius:8px;
-  margin-bottom:6px;
+.tabs { display: flex; margin-bottom: 12px; flex-wrap: wrap; }
+.tab {
+  flex: 1;
+  padding: 8px;
+  text-align: center;
+  cursor: pointer;
+  border-radius: 10px 10px 0 0;
+  background: #0c1424;
+  margin-right: 2px;
+  margin-bottom: 2px;
+  font-size: 14px;
 }
-.data{color:#8fa3c6}
-.valor{color:#00bcd4;font-weight:bold}
-.btn-container{display:flex;gap:10px;margin-top:10px}
-.btn{
-  flex:1;
-  background:#ff5722;
-  border:none;
-  border-radius:10px;
-  padding:10px;
-  color:#fff;
-  cursor:pointer;
+.tab.active { background: #00bcd4; color: #0b0f1b; }
+
+#grafico-container { overflow-x: auto; margin-bottom: 12px; }
+#grafico-temp, #grafico-hum { min-width: 500px; height: 220px; margin-bottom: 10px; background:#fff; }
+
+#lista { overflow-y: auto; flex: 1; padding-right: 5px; font-size: 14px; max-height: 300px; }
+
+.item {
+  background: #0c1424;
+  padding: 8px;
+  border-radius: 10px;
+  margin-bottom: 6px;
+  box-shadow: inset 0 0 8px rgba(0,0,0,0.4);
+}
+.data { color: #8fa3c6; margin-bottom: 2px; }
+.valor { font-weight: bold; color: #00bcd4; }
+
+.btn-container { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+.btn {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 10px;
+  background: #ff5722;
+  font-size: 14px;
+  cursor: pointer;
+  color: white;
+}
+@media(max-width:480px){
+  #grafico-temp,#grafico-hum{ min-width: 300px; }
 }
 </style>
 
@@ -64,29 +82,29 @@ canvas{background:#fff;border-radius:10px;margin-bottom:10px}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
-
 <body>
+
 <div class="card">
-<h1>Histórico de Leituras</h1>
+  <h1>Histórico de Leituras</h1>
 
-<div class="tabs">
-  <div class="tab active" onclick="setTab('diario',this)">Diário</div>
-  <div class="tab" onclick="setTab('semanal',this)">Semanal</div>
-  <div class="tab" onclick="setTab('mensal',this)">Mensal</div>
-  <div class="tab" onclick="setTab('anual',this)">Anual</div>
-</div>
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('diario')">Diário</div>
+    <div class="tab" onclick="showTab('semanal')">Semanal</div>
+    <div class="tab" onclick="showTab('mensal')">Mensal</div>
+    <div class="tab" onclick="showTab('anual')">Anual</div>
+  </div>
 
-<div id="grafico-container">
-  <canvas id="graficoTemp"></canvas>
-  <canvas id="graficoHum"></canvas>
-</div>
+  <div id="grafico-container">
+    <canvas id="grafico-temp"></canvas>
+    <canvas id="grafico-hum"></canvas>
+  </div>
 
-<div id="lista"></div>
+  <div id="lista"></div>
 
-<div class="btn-container">
-  <button class="btn" onclick="exportPDF()">Exportar PDF</button>
-  <button class="btn" onclick="location.href='painel.html'">Voltar</button>
-</div>
+  <div class="btn-container">
+    <button class="btn" onclick="exportPDF()">Exportar PDF</button>
+    <button class="btn" onclick="window.location.href='painel.html'">Voltar</button>
+  </div>
 </div>
 
 <script>
@@ -99,103 +117,171 @@ const firebaseConfig = {
   messagingSenderId: "547217835774",
   appId: "1:547217835774:web:c7186da5bf6156590c47af"
 };
-
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-firebase.auth().onAuthStateChanged(u=>{
-  if(!u) location.href="index.html";
-});
+const auth = firebase.auth();
+auth.onAuthStateChanged(user => { if(!user) window.location.href="index.html"; });
 
-let periodo="diario";
-let chartT, chartH;
-let dadosPDF=[];
+let currentTab = 'diario';
+let chartTemp, chartHum;
 
-function setTab(p,el){
-  periodo=p;
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
-  carregar();
+function showTab(tab){
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
+  event.target.classList.add('active');
+  carregarHistorico(tab);
 }
 
-function carregar(){
-  document.getElementById("lista").innerHTML="Carregando...";
-  db.ref("historico").once("value").then(snap=>{
-    const dados=snap.val();
-    if(!dados){
-      document.getElementById("lista").innerHTML="Sem dados";
-      return;
+function carregarHistorico(tab){
+  const LISTA = document.getElementById("lista");
+  LISTA.innerHTML = "<p>Carregando...</p>";
+  const REF = db.ref("/historico/" + tab);
+
+  REF.on("value", snap=>{
+    const dados = snap.val();
+    if(!dados){ 
+      LISTA.innerHTML="<p>Nenhum registro encontrado.</p>"; 
+      if(chartTemp) chartTemp.destroy(); 
+      if(chartHum) chartHum.destroy(); 
+      return; 
     }
 
-    const agora=new Date();
-    const lista=[];
-    Object.keys(dados).forEach(ts=>{
-      const d=new Date(ts*1000);
-      const dias=(agora-d)/86400000;
-      if(
-        periodo==="diario"&&dias<=1||
-        periodo==="semanal"&&dias<=7||
-        periodo==="mensal"&&dias<=30||
-        periodo==="anual"&&dias<=365
-      ){
-        lista.push({data:d,...dados[ts]});
+    LISTA.innerHTML = "";
+    const labels=[], tempData=[], humData=[];
+
+    const chavesPeriodo = Object.keys(dados).sort((a,b)=>a.localeCompare(b)); // antigo em baixo
+    chavesPeriodo.reverse().forEach(periodo=>{
+      const registros = dados[periodo];
+      const timestamps = Object.keys(registros).sort((a,b)=>a-b);
+      timestamps.reverse().forEach(ts=>{
+        const item = registros[ts];
+        const date = new Date(parseInt(ts)*1000).toLocaleString("pt-BR");
+
+        LISTA.innerHTML += `<div class="item">
+          <div class="data">${date}</div>
+          <div class="valor">Temp: ${item.temperatura} °C</div>
+          <div class="valor">Umidade: ${item.umidade} %</div>
+        </div>`;
+
+        labels.push(date);
+        tempData.push(item.temperatura);
+        humData.push(item.umidade);
+      });
+    });
+
+    // Chart Temperatura
+    const ctxT = document.getElementById('grafico-temp').getContext('2d');
+    if(chartTemp) chartTemp.destroy();
+    chartTemp = new Chart(ctxT,{
+      type:'line',
+      data:{
+        labels:labels,
+        datasets:[{
+          label:'Temperatura (°C)',
+          data:tempData,
+          borderColor:'#ff9800',
+          backgroundColor:'rgba(255,152,0,0.2)',
+          fill:true,
+          pointRadius:3,
+          pointHoverRadius:5
+        }]
+      },
+      options:{
+        responsive:true,
+        plugins:{ legend:{ labels:{color:'#000'} } },
+        scales:{
+          x:{ ticks:{ color:'#000', maxRotation:45, minRotation:0 } },
+          y:{ ticks:{ color:'#000' } }
+        }
       }
     });
 
-    lista.sort((a,b)=>b.data-a.data);
-    render(lista);
+    // Chart Umidade
+    const ctxH = document.getElementById('grafico-hum').getContext('2d');
+    if(chartHum) chartHum.destroy();
+    chartHum = new Chart(ctxH,{
+      type:'line',
+      data:{
+        labels:labels,
+        datasets:[{
+          label:'Umidade (%)',
+          data:humData,
+          borderColor:'#00bcd4',
+          backgroundColor:'rgba(0,188,212,0.2)',
+          fill:true,
+          pointRadius:3,
+          pointHoverRadius:5
+        }]
+      },
+      options:{
+        responsive:true,
+        plugins:{ legend:{ labels:{color:'#000'} } },
+        scales:{
+          x:{ ticks:{ color:'#000', maxRotation:45, minRotation:0 } },
+          y:{ ticks:{ color:'#000' } }
+        }
+      }
+    });
   });
 }
 
-function render(lista){
-  dadosPDF=lista;
-  const div=document.getElementById("lista");
-  div.innerHTML="";
-  const labels=[],t=[],h=[];
-  lista.forEach(l=>{
-    const dt=l.data.toLocaleString("pt-BR");
-    div.innerHTML+=`
-      <div class="item">
-        <div class="data">${dt}</div>
-        <div class="valor">Temp: ${l.temperatura} °C</div>
-        <div class="valor">Umidade: ${l.umidade} %</div>
-      </div>`;
-    labels.push(dt);t.push(l.temperatura);h.push(l.umidade);
-  });
-
-  if(chartT)chartT.destroy();
-  if(chartH)chartH.destroy();
-
-  chartT=new Chart(graficoTemp,{type:'line',
-    data:{labels,datasets:[{label:'Temperatura (°C)',data:t,borderColor:'#ff9800',fill:true}]}
-  });
-  chartH=new Chart(graficoHum,{type:'line',
-    data:{labels,datasets:[{label:'Umidade (%)',data:h,borderColor:'#00bcd4',fill:true}]}
-  });
-}
-
+// Export PDF profissional
 function exportPDF(){
-  const {jsPDF}=window.jspdf;
-  const pdf=new jsPDF();
-  pdf.setFontSize(16);
-  pdf.text("NewEnergy Solutions",20,20);
-  pdf.setFontSize(12);
-  pdf.text(`Relatório ${periodo.toUpperCase()}`,20,35);
-  pdf.text(`Gerado: ${new Date().toLocaleString("pt-BR")}`,20,45);
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({orientation:'p', unit:'pt', format:'a4'});
+  const today = new Date();
+  doc.setFillColor(255,255,255);
+  doc.rect(0,0,595,842,'F'); // fundo branco
 
-  let y=60;
-  dadosPDF.forEach(d=>{
-    pdf.text(
-      `${d.data.toLocaleString("pt-BR")} | Temp:${d.temperatura}°C | Umid:${d.umidade}%`,
-      20,y
-    );
-    y+=10;
-    if(y>280){pdf.addPage();y=20;}
+  doc.setFontSize(16);
+  doc.setTextColor(0,0,0);
+  doc.text("NewEnergy - Histórico de Leituras",40,40);
+  doc.setFontSize(12);
+  doc.text(`Período: ${currentTab.charAt(0).toUpperCase()+currentTab.slice(1)}`,40,60);
+  doc.text(`Data de geração: ${today.toLocaleString("pt-BR")}`,40,75);
+
+  // Inserir gráfico Temperatura
+  const canvasT = document.getElementById('grafico-temp');
+  const imgT = canvasT.toDataURL("image/png");
+  doc.addImage(imgT,'PNG',40,90,515,200);
+
+  // Inserir gráfico Umidade
+  const canvasH = document.getElementById('grafico-hum');
+  const imgH = canvasH.toDataURL("image/png");
+  doc.addImage(imgH,'PNG',40,310,515,200);
+
+  // Tabela leituras
+  let y = 530;
+  doc.setFontSize(11);
+  const items = Array.from(document.querySelectorAll('#lista .item'));
+  doc.setFillColor(220,220,220);
+  doc.rect(40,y-10,515,20,'F');
+  doc.setTextColor(0);
+  doc.text("Data",45,y+5);
+  doc.text("Temperatura (°C)",220,y+5);
+  doc.text("Umidade (%)",400,y+5);
+  y+=20;
+
+  items.forEach((el,i)=>{
+    const date = el.querySelector('.data').innerText;
+    const temp = el.querySelectorAll('.valor')[0].innerText.replace("Temp: ","");
+    const hum = el.querySelectorAll('.valor')[1].innerText.replace("Umidade: ","");
+    if(i%2===0) doc.setFillColor(245,245,245);
+    else doc.setFillColor(255,255,255);
+    doc.rect(40,y-5,515,18,'F');
+    doc.setTextColor(0);
+    doc.text(date,45,y+7);
+    doc.text(temp,230,y+7);
+    doc.text(hum,410,y+7);
+    y+=18;
+    if(y>800){ doc.addPage(); y=40; }
   });
 
-  pdf.save(`relatorio_${periodo}.pdf`);
+  doc.save(`historico_${currentTab}.pdf`);
 }
 
-carregar();
+// Inicial
+showTab('diario');
 </script>
 </body>
 </html>
