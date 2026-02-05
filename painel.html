@@ -3,14 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>NewEnergy | Live Monitor</title>
+<title>NewEnergy | High Speed Monitor</title>
 
 <style>
   :root {
     --bg-dark: #0b0f1b;
     --card-bg: #161b2d;
     --accent: #00d2ff;
-    --accent-glow: rgba(0, 210, 255, 0.3);
     --text-main: #ffffff;
     --text-muted: #8fa3c6;
     --on: #00ff88;
@@ -18,132 +17,28 @@
     --glass: rgba(255, 255, 255, 0.03);
   }
 
-  body {
-    margin: 0;
-    font-family: 'Inter', 'Segoe UI', sans-serif;
-    background: var(--bg-dark);
-    color: var(--text-main);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    padding: 20px;
-  }
-
-  .card {
-    background: var(--card-bg);
-    border-radius: 24px;
-    padding: 35px;
-    width: 100%;
-    max-width: 450px;
-    box-shadow: 0 30px 60px rgba(0,0,0,0.6);
-    border: 1px solid rgba(255,255,255,0.05);
-    text-align: center;
-  }
-
-  .logo-top {
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 4px;
-    color: var(--accent);
-    margin-bottom: 8px;
-    font-weight: 700;
-  }
-
-  h1 {
-    font-size: 24px;
-    margin: 0 0 25px 0;
-    font-weight: 800;
-    letter-spacing: -1px;
-  }
-
-  .status-badge {
-    display: inline-block;
-    padding: 6px 16px;
-    border-radius: 50px;
-    font-size: 12px;
-    font-weight: 700;
-    background: var(--glass);
-    margin-bottom: 25px;
-    border: 1px solid rgba(255,255,255,0.1);
-  }
-
+  body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-dark); color: var(--text-main); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+  .card { background: var(--card-bg); border-radius: 24px; padding: 35px; width: 100%; max-width: 450px; box-shadow: 0 30px 60px rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.05); text-align: center; }
+  .logo-top { font-size: 11px; text-transform: uppercase; letter-spacing: 4px; color: var(--accent); margin-bottom: 8px; font-weight: 700; opacity: 0.8; }
+  h1 { font-size: 24px; margin: 0 0 25px 0; font-weight: 800; letter-spacing: -1px; }
+  .status-badge { display: inline-block; padding: 6px 16px; border-radius: 50px; font-size: 11px; font-weight: 700; background: var(--glass); margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.1); }
+  
   .btn-led {
-    width: 100%;
-    padding: 16px;
-    border: none;
-    border-radius: 16px;
-    font-size: 16px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    margin-bottom: 30px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    width: 100%; padding: 18px; border: none; border-radius: 16px; font-size: 16px; font-weight: 800; cursor: pointer;
+    transition: transform 0.1s, background 0.2s; margin-bottom: 30px; text-transform: uppercase; letter-spacing: 1px;
   }
+  .btn-led.on { background: var(--on); color: #052e16; box-shadow: 0 0 25px rgba(0, 255, 136, 0.2); }
+  .btn-led.off { background: var(--off); color: #ffffff; }
+  .btn-led:active { transform: scale(0.97); }
 
-  .btn-led.on { background: var(--on); color: #052e16; box-shadow: 0 0 20px rgba(0, 255, 136, 0.3); }
-  .btn-led.off { background: var(--off); color: #450a0a; }
-  .btn-led:active { transform: scale(0.96); }
-
-  .gauges-container {
-    display: flex;
-    gap: 20px;
-    margin-bottom: 25px;
-  }
-
-  .gauge-box {
-    flex: 1;
-    background: var(--glass);
-    padding: 20px 10px;
-    border-radius: 20px;
-    border: 1px solid rgba(255,255,255,0.05);
-    position: relative;
-  }
-
-  .g-title {
-    font-size: 11px;
-    color: var(--text-muted);
-    font-weight: 600;
-    text-transform: uppercase;
-    margin-bottom: 15px;
-  }
-
-  .g-value {
-    font-size: 20px;
-    font-weight: 800;
-    color: var(--accent);
-    margin-top: -10px;
-  }
-
-  #alertMessage {
-    min-height: 20px;
-    font-size: 13px;
-    color: #ffcc00;
-    margin-bottom: 20px;
-    font-weight: 500;
-  }
-
-  .btn-hist {
-    width: 100%;
-    padding: 14px;
-    background: transparent;
-    border: 2px solid var(--glass);
-    color: var(--text-muted);
-    border-radius: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: 0.3s;
-  }
-
-  .btn-hist:hover {
-    background: var(--glass);
-    color: var(--text-main);
-    border-color: var(--accent);
-  }
-
-  canvas { max-width: 100%; }
+  .gauges-container { display: flex; gap: 15px; margin-bottom: 25px; }
+  .gauge-box { flex: 1; background: var(--glass); padding: 15px 5px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); }
+  .g-title { font-size: 10px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; margin-bottom: 10px; }
+  .g-value { font-size: 19px; font-weight: 800; color: var(--accent); margin-top: -5px; }
+  
+  #alertMessage { min-height: 20px; font-size: 12px; color: #ffcc00; margin-bottom: 20px; }
+  .btn-hist { width: 100%; padding: 14px; background: transparent; border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); border-radius: 14px; font-weight: 600; cursor: pointer; }
+  canvas { max-width: 100%; height: auto !important; }
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -155,30 +50,24 @@
 
 <body>
 <div class="card">
-  <div class="logo-top">NewEnergy</div>
-  <h1>Painel de Controle</h1>
-
+  <div class="logo-top">NewEnergy RT</div>
+  <h1>Controle em Tempo Real</h1>
   <div id="status" class="status-badge">Sincronizando...</div>
-  
   <button id="btnLED" class="btn-led off">Conectando...</button>
-
   <div class="gauges-container">
     <div class="gauge-box">
       <div class="g-title">Temperatura</div>
       <canvas id="gTemp"></canvas>
       <div id="tempVal" class="g-value">-- °C</div>
     </div>
-    
     <div class="gauge-box">
       <div class="g-title">Umidade</div>
       <canvas id="gHum"></canvas>
       <div id="humVal" class="g-value">-- %</div>
     </div>
   </div>
-
   <div id="alertMessage"></div>
-
-  <button id="btnHistorico" class="btn-hist">Acessar Histórico</button>
+  <button id="btnHistorico" class="btn-hist" onclick="location.href='historico.html'">Histórico de Dados</button>
 </div>
 
 <script>
@@ -192,98 +81,57 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
 const db = firebase.database();
+const auth = firebase.auth();
 
-auth.onAuthStateChanged(user => {
-  if (!user) window.location.href = "index.html";
-  else iniciarPainel();
-});
+auth.onAuthStateChanged(user => { if (!user) location.href = "index.html"; else rodarPainel(); });
 
-function iniciarPainel() {
-  const LEDREF = db.ref("/led");
-  const TEMPREF = db.ref("/temp");
-  const HUMREF = db.ref("/hum");
-
-  const gaugeOpts = (color) => ({
-    angle: 0.15,
-    lineWidth: 0.2,
-    radiusScale: 1,
-    pointer: { length: 0.6, strokeWidth: 0.035, color: '#FFFFFF' },
-    limitMax: false,
-    limitMin: false,
-    colorStart: color,
-    colorStop: color,
-    strokeColor: '#1f2a44',
-    generateGradient: true,
-    highDpiSupport: true
+function rodarPainel() {
+  const LED_REF = db.ref("/led");
+  const TEMP_REF = db.ref("/temp");
+  const HUM_REF = db.ref("/hum");
+  
+  // Otimização de Gauge: Velocidade aumentada e frame rate estável
+  const gOpt = (col) => ({ 
+    angle: 0.2, lineWidth: 0.15, pointer: { length: 0.5, strokeWidth: 0.04, color: '#DDD' },
+    colorStart: col, colorStop: col, strokeColor: '#1b1f33', generateGradient: true, highDpiSupport: true 
   });
 
-  // GAUGE TEMPERATURA (-40 a 125)
-  const gTemp = new Gauge(document.getElementById("gTemp")).setOptions(gaugeOpts('#00d2ff'));
-  gTemp.maxValue = 125;
-  gTemp.setMinValue(-40);
-  gTemp.animationSpeed = 32;
+  const gT = new Gauge(document.getElementById("gTemp")).setOptions(gOpt('#00d2ff'));
+  gT.maxValue = 125; gT.setMinValue(-40); gT.animationSpeed = 128; // Velocidade Máxima
 
-  // GAUGE UMIDADE (0 a 100)
-  const gHum = new Gauge(document.getElementById("gHum")).setOptions(gaugeOpts('#00ff88'));
-  gHum.maxValue = 100;
-  gHum.setMinValue(0);
-  gHum.animationSpeed = 32;
+  const gH = new Gauge(document.getElementById("gHum")).setOptions(gOpt('#00ff88'));
+  gH.maxValue = 100; gH.setMinValue(0); gH.animationSpeed = 128;
 
-  let tAt = null, hAt = null, lastAlert = 0, canAlert = false;
+  let stLed = 0;
 
-  setTimeout(() => { canAlert = true; }, 60000);
-
-  /* LED */
-  LEDREF.on("value", snap => {
-    const on = snap.val() == 1;
-    document.getElementById("status").innerText = on ? "SISTEMA ATIVO" : "SISTEMA EM ESPERA";
-    document.getElementById("btnLED").innerText = on ? "Desligar Led" : "Ligar Led";
-    document.getElementById("btnLED").className = "btn-led " + (on ? "on" : "off");
+  // Listener Ultrarápido para o LED
+  LED_REF.on("value", snap => {
+    stLed = snap.val();
+    const isOff = stLed == 0;
+    document.getElementById("btnLED").innerText = isOff ? "Ligar Agora" : "Desligar Agora";
+    document.getElementById("btnLED").className = "btn-led " + (isOff ? "off" : "on");
+    document.getElementById("status").innerText = isOff ? "STBY" : "LIVE";
   });
 
-  document.getElementById("btnLED").onclick = async () => {
-    const s = await LEDREF.get();
-    LEDREF.set(s.val() == 1 ? 0 : 1);
+  // Gatilho de Comando Imediato (Sem await para não travar a UI)
+  document.getElementById("btnLED").onclick = () => {
+    const novoEstado = stLed == 1 ? 0 : 1;
+    LED_REF.set(novoEstado); // Atualização direta
   };
 
-  /* SENSORES */
-  TEMPREF.on("value", snap => {
-    const t = Number(snap.val());
-    tAt = t;
-    gTemp.set(t);
-    document.getElementById("tempVal").innerText = t.toFixed(1) + " °C";
-    check();
+  // Listeners de Sensores Otimizados
+  TEMP_REF.on("value", s => { 
+    const v = parseFloat(s.val()); 
+    gT.set(v); 
+    document.getElementById("tempVal").innerText = v.toFixed(1) + "°C"; 
   });
-
-  HUMREF.on("value", snap => {
-    const h = Number(snap.val());
-    hAt = h;
-    gHum.set(h);
-    document.getElementById("humVal").innerText = h.toFixed(1) + " %";
-    check();
+  
+  HUM_REF.on("value", s => { 
+    const v = parseFloat(s.val()); 
+    gH.set(v); 
+    document.getElementById("humVal").innerText = v.toFixed(1) + "%"; 
   });
-
-  function check() {
-    if (tAt === null || hAt === null || !canAlert) return;
-    if ((tAt < 18 || tAt > 25) || (hAt < 45 || hAt > 60)) {
-      if (Date.now() - lastAlert > 600000) {
-        emailjs.send("service_kx31f3s", "template_mqzi3at", {
-          equipamento: "NewEnergy Monitor",
-          tipo: "Anomalia Detectada",
-          valor: `T: ${tAt.toFixed(1)}°C | U: ${hAt.toFixed(1)}%`,
-          data: new Date().toLocaleString()
-        });
-        document.getElementById("alertMessage").innerText = "⚠️ Notificação de alerta enviada";
-        lastAlert = Date.now();
-      }
-    } else {
-      document.getElementById("alertMessage").innerText = "";
-    }
-  }
-
-  document.getElementById("btnHistorico").onclick = () => window.location.href = "historico.html";
 }
 </script>
 </body>
