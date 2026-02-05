@@ -1,209 +1,182 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>NewEnergy Monitor | Pro</title>
-<style>
-  :root { --bg: #0b0f1b; --card: #161b2d; --accent: #00d2ff; --text: #ffffff; --muted: #8fa3c6; --on: #00ff88; --off: #ff5722; }
-  body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 15px; }
-  .card { background: var(--card); border-radius: 20px; padding: 30px; width: 100%; max-width: 420px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); text-align: center; position: relative; }
-  
-  .logo-top { font-size: 26px; font-weight: 900; letter-spacing: 3px; text-transform: uppercase; background: linear-gradient(45deg, #00d2ff, #3a7bd5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 5px; cursor: pointer; }
-  .sub-logo { font-size: 10px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 25px; display: block; }
-  
-  .status-badge { display: inline-block; padding: 6px 15px; border-radius: 50px; font-size: 11px; font-weight: 800; margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.1); }
-  .st-online { color: var(--on); border-color: var(--on); background: rgba(0,255,136,0.1); }
-  .st-offline { color: var(--off); border-color: var(--off); background: rgba(255,87,34,0.1); }
-
-  .btn-led { width: 100%; padding: 18px; border: none; border-radius: 12px; font-size: 14px; font-weight: 800; cursor: pointer; transition: 0.3s; margin-bottom: 15px; text-transform: uppercase; }
-  .btn-led.on { background: var(--on); color: #052e16; box-shadow: 0 0 20px rgba(0,255,136,0.4); }
-  .btn-led.off { background: var(--off); color: #fff; box-shadow: 0 0 20px rgba(255,87,34,0.3); }
-
-  .gauges { display: flex; gap: 15px; margin-bottom: 20px; }
-  .g-box { flex: 1; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px; }
-  .g-val { font-size: 20px; font-weight: 900; color: var(--accent); }
-  canvas { width: 100% !important; max-width: 140px; }
-
-  #adminPanel { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #111628; border-radius: 20px; padding: 25px; z-index: 100; flex-direction: column; text-align: left; overflow-y: auto; }
-  .admin-input { background: #0b0f1b; border: 1px solid #3d4455; color: white; padding: 10px; border-radius: 8px; width: 100%; margin-bottom: 12px; box-sizing: border-box; }
-  label { font-size: 10px; color: var(--muted); text-transform: uppercase; font-weight: 700; }
-</style>
-
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/gaugeJS/dist/gauge.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-</head>
-
-<body>
-<div class="card">
-  <div id="adminPanel">
-    <h2 style="color:var(--accent); text-align: center;">Configurações</h2>
-    <label>E-mail para Alertas</label>
-    <input type="email" id="cfgEmail" class="admin-input" placeholder="seu@email.com">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>NewEnergy Monitor Pro</title>
     
-    <div style="display: flex; gap: 10px;">
-      <div><label>Temp Mín</label><input type="number" id="tMin" class="admin-input"></div>
-      <div><label>Temp Máx</label><input type="number" id="tMax" class="admin-input"></div>
-    </div>
-    <div style="display: flex; gap: 10px;">
-      <div><label>Hum Mín</label><input type="number" id="hMin" class="admin-input"></div>
-      <div><label>Hum Máx</label><input type="number" id="hMax" class="admin-input"></div>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gaugeJS/dist/gauge.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+    <style>
+        :root { --bg: #0b0f1b; --card: #161b2d; --accent: #00d2ff; --text: #ffffff; --muted: #8fa3c6; --on: #00ff88; --off: #ff5722; }
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 15px; }
+        
+        .card { background: var(--card); border-radius: 20px; padding: 30px; width: 100%; max-width: 420px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); text-align: center; position: relative; border: 1px solid rgba(255,255,255,0.05); }
+        
+        /* Cabeçalho Centralizado */
+        .header-area { margin-bottom: 25px; }
+        .logo-main { font-size: 30px; font-weight: 900; letter-spacing: 3px; text-transform: uppercase; background: linear-gradient(45deg, #00d2ff, #3a7bd5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; cursor: pointer; display: block; }
+        .sub-logo { font-size: 10px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+
+        .status-badge { display: inline-block; padding: 6px 16px; border-radius: 50px; font-size: 11px; font-weight: 800; margin: 15px 0; border: 1px solid rgba(255,255,255,0.1); }
+        .st-online { color: var(--on); background: rgba(0,255,136,0.1); border-color: var(--on); }
+        .st-offline { color: var(--off); background: rgba(255,87,34,0.1); border-color: var(--off); }
+
+        .btn-led { width: 100%; padding: 18px; border: none; border-radius: 12px; font-size: 14px; font-weight: 800; cursor: pointer; transition: 0.3s; margin-bottom: 20px; text-transform: uppercase; }
+        .btn-on { background: var(--on); color: #052e16; box-shadow: 0 5px 15px rgba(0,255,136,0.3); }
+        .btn-off { background: var(--off); color: #fff; box-shadow: 0 5px 15px rgba(255,87,34,0.2); }
+
+        .gauges-grid { display: flex; gap: 15px; margin-bottom: 20px; }
+        .g-box { flex: 1; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.05); }
+        .g-val { font-size: 22px; font-weight: 900; color: var(--accent); margin-top: 5px; }
+        canvas { width: 100% !important; height: auto !important; }
+
+        /* Admin Oculto */
+        #adminPanel { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #111628; border-radius: 20px; padding: 25px; z-index: 100; flex-direction: column; text-align: left; box-sizing: border-box; }
+        .admin-input { background: #0b0f1b; border: 1px solid #3d4455; color: white; padding: 12px; border-radius: 8px; width: 100%; margin-bottom: 10px; box-sizing: border-box; }
+        #alertMsg { color: var(--off); font-weight: 800; font-size: 12px; margin-top: 10px; min-height: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div id="adminPanel">
+        <h2 style="color:var(--accent); margin-top:0">Ajustes de Alerta</h2>
+        <label style="font-size:10px; color:var(--muted)">E-MAIL DE DESTINO</label>
+        <input type="email" id="cfgEmail" class="admin-input">
+        
+        <div style="display:flex; gap:10px">
+            <div style="flex:1"><label style="font-size:10px; color:var(--muted)">TEMP MÁX (°C)</label>
+            <input type="number" id="tMax" class="admin-input"></div>
+            <div style="flex:1"><label style="font-size:10px; color:var(--muted)">HUM MÁX (%)</label>
+            <input type="number" id="hMax" class="admin-input"></div>
+        </div>
+
+        <button class="btn-led btn-on" onclick="salvarConfig()">SALVAR</button>
+        <button class="btn-led" style="background:transparent; color:var(--muted)" onclick="fecharAdmin()">FECHAR</button>
     </div>
 
-    <button class="btn-led on" onclick="salvarConfig()">SALVAR ALTERAÇÕES</button>
-    <button class="btn-led" style="background:transparent; border: 1px solid #3d4455; color: var(--muted);" onclick="fecharAdmin()">VOLTAR</button>
-  </div>
-
-  <div class="logo-top" id="logoAdmin">NewEnergy</div>
-  <span class="sub-logo">Monitoramento Profissional</span>
-  
-  <div id="status" class="status-badge st-online">SISTEMA ONLINE</div>
-  
-  <button id="btnLED" class="btn-led off">CARREGANDO LED...</button>
-
-  <div class="gauges">
-    <div class="g-box">
-        <canvas id="gTemp"></canvas>
-        <div id="tV" class="g-val">--°C</div>
+    <div class="header-area">
+        <span class="logo-main" id="logoAdmin">NewEnergy</span>
+        <span class="sub-logo">Monitoramento Inteligente</span>
     </div>
-    <div class="g-box">
-        <canvas id="gHum"></canvas>
-        <div id="hV" class="g-val">--%</div>
-    </div>
-  </div>
 
-  <div id="alertMsg" style="color:var(--off); font-weight:800; min-height:20px; font-size: 13px;"></div>
+    <div id="status" class="status-badge st-offline">CONECTANDO...</div>
+
+    <button id="btnLED" class="btn-led btn-off">CARREGANDO...</button>
+
+    <div class="gauges-grid">
+        <div class="g-box">
+            <canvas id="cTemp"></canvas>
+            <div id="vTemp" class="g-val">--°C</div>
+            <div style="font-size:9px; color:var(--muted)">TEMPERATURA</div>
+        </div>
+        <div class="g-box">
+            <canvas id="cHum"></canvas>
+            <div id="vHum" class="g-val">--%</div>
+            <div style="font-size:9px; color:var(--muted)">UMIDADE</div>
+        </div>
+    </div>
+
+    <div id="alertMsg"></div>
 </div>
 
 <script>
-// ID do seu EmailJS
-emailjs.init("W2__8f2fBoqRPX9hX");
+    // 1. Inicialização
+    emailjs.init("W2__8f2fBoqRPX9hX");
+    const firebaseConfig = { databaseURL: "https://oficial-688e8-default-rtdb.firebaseio.com/" };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-firebase.initializeApp({ databaseURL: "https://oficial-688e8-default-rtdb.firebaseio.com/" });
-const db = firebase.database();
+    let config = { tMax: 40, hMax: 80, emailDestino: "" };
+    let ultimaVezAlertado = 0;
 
-let config = { tMin: 15, tMax: 35, hMin: 30, hMax: 80, emailDestino: "" };
-let ultimaVezAlertado = 0;
-const INTERVALO_EMAIL = 10 * 60 * 1000; // 10 minutos entre e-mails
+    // 2. Configuração Visual (Gauges)
+    const gOpt = (col) => ({ angle: 0.15, lineWidth: 0.1, pointer: { length: 0.6, color: '#fff' }, colorStart: col, colorStop: col, strokeColor: '#1b1f33' });
+    const gT = new Gauge(document.getElementById('cTemp')).setOptions(gOpt('#00d2ff'));
+    const gH = new Gauge(document.getElementById('cHum')).setOptions(gOpt('#00ff88'));
+    gT.maxValue = 60; gT.setMinValue(-10); gT.set(0);
+    gH.maxValue = 100; gH.setMinValue(0); gH.set(0);
 
-// Configurações dos Gauges
-const gOpt = (col) => ({ angle: 0.2, lineWidth: 0.15, pointer: { length: 0.5, color: '#DDD' }, colorStart: col, colorStop: col, strokeColor: '#1b1f33' });
-const gT = new Gauge(document.getElementById("gTemp")).setOptions(gOpt('#00d2ff'));
-const gH = new Gauge(document.getElementById("gHum")).setOptions(gOpt('#00ff88'));
-gT.maxValue = 60; gT.setMinValue(-10);
-gH.maxValue = 100; gH.setMinValue(0);
+    // 3. Recebimento de Dados (Anti-Travamento)
+    db.ref("/").on("value", snapshot => {
+        const data = snapshot.val();
+        if(!data) return;
 
-// Sincronizar Configurações do Firebase
-db.ref("/config_alertas").on("value", s => {
-  if(s.val()) {
-    config = s.val();
-    // Atualiza campos do admin se estiver aberto
-    document.getElementById("cfgEmail").value = config.emailDestino || "";
-    document.getElementById("tMin").value = config.tMin;
-    document.getElementById("tMax").value = config.tMax;
-    document.getElementById("hMin").value = config.hMin;
-    document.getElementById("hMax").value = config.hMax;
-  }
-});
+        document.getElementById('status').innerText = "SISTEMA ONLINE";
+        document.getElementById('status').className = "status-badge st-online";
 
-// Listener do LED
-db.ref("/led").on("value", s => {
-  const on = s.val() == 1;
-  document.getElementById("btnLED").innerText = on ? "APAGAR LUZ" : "ACENDER LUZ";
-  document.getElementById("btnLED").className = "btn-led " + (on ? "on" : "off");
-});
+        // Temperatura
+        if(data.temp !== undefined) {
+            const t = parseFloat(data.temp);
+            gT.set(t);
+            document.getElementById('vTemp').innerText = t.toFixed(1) + "°C";
+        }
 
-document.getElementById("btnLED").onclick = () => {
-  db.ref("/led").get().then(s => db.ref("/led").set(s.val() == 1 ? 0 : 1));
-};
+        // Umidade
+        if(data.hum !== undefined) {
+            const h = parseFloat(data.hum);
+            gH.set(h);
+            document.getElementById('vHum').innerText = h.toFixed(1) + "%";
+        }
 
-// Listeners de Sensores
-db.ref("/temp").on("value", s => { 
-  let v = parseFloat(s.val()); 
-  gT.set(v); 
-  document.getElementById("tV").innerText = v.toFixed(1) + "°C"; 
-  analisarSensores();
-});
+        // LED
+        const ledBtn = document.getElementById('btnLED');
+        if(data.led == 1) {
+            ledBtn.innerText = "APAGAR LUZ";
+            ledBtn.className = "btn-led btn-on";
+        } else {
+            ledBtn.innerText = "ACENDER LUZ";
+            ledBtn.className = "btn-led btn-off";
+        }
 
-db.ref("/hum").on("value", s => { 
-  let v = parseFloat(s.val()); 
-  gH.set(v); 
-  document.getElementById("hV").innerText = v.toFixed(1) + "%"; 
-  analisarSensores();
-});
+        verificarAlertas(data.temp, data.hum);
+    });
 
-function analisarSensores() {
-  const t = parseFloat(document.getElementById("tV").innerText);
-  const h = parseFloat(document.getElementById("hV").innerText);
-  if (isNaN(t) || isNaN(h)) return;
+    // 4. Lógica de Alerta e E-mail
+    db.ref("/config_alertas").on("value", s => { if(s.val()) config = s.val(); });
 
-  const msgDiv = document.getElementById("alertMsg");
-  let erroT = (t > config.tMax || t < config.tMin);
-  let erroH = (h > config.hMax || h < config.hMin);
-  
-  let tituloEmail = "";
-  let mensagemCorpo = "";
+    function verificarAlertas(t, h) {
+        const msg = document.getElementById('alertMsg');
+        let erroT = t > config.tMax;
+        let erroH = h > config.hMax;
+        let msgTexto = "";
 
-  if (erroT && erroH) {
-    tituloEmail = "🚨 CRÍTICO: TEMPERATURA E UMIDADE FORA!";
-    mensagemCorpo = `Ambos os sensores detectaram valores anormais: Temp ${t}°C | Hum ${h}%`;
-  } else if (erroT) {
-    tituloEmail = "⚠️ ALERTA: TEMPERATURA FORA DO LIMITE!";
-    mensagemCorpo = `A temperatura atingiu ${t}°C. Limites: ${config.tMin}°C - ${config.tMax}°C.`;
-  } else if (erroH) {
-    tituloEmail = "⚠️ ALERTA: UMIDADE FORA DO LIMITE!";
-    mensagemCorpo = `A umidade atingiu ${h}%. Limites: ${config.hMin}% - ${config.hMax}%.`;
-  }
+        if(erroT && erroH) msgTexto = "🚨 CRÍTICO: TEMP E HUM ALTAS!";
+        else if(erroT) msgTexto = "⚠️ ALERTA: TEMPERATURA ALTA!";
+        else if(erroH) msgTexto = "⚠️ ALERTA: UMIDADE ALTA!";
 
-  msgDiv.innerText = tituloEmail;
+        msg.innerText = msgTexto;
 
-  // Lógica de envio de e-mail (Rate limited)
-  if ((erroT || erroH) && (Date.now() - ultimaVezAlertado > INTERVALO_EMAIL)) {
-    if (config.emailDestino) {
-      emailjs.send("service_kx31f3s", "template_mqzi3at", {
-        subject: tituloEmail,
-        message: mensagemCorpo,
-        para_email: config.emailDestino,
-        data_hora: new Date().toLocaleString("pt-BR")
-      }).then(() => {
-        console.log("E-mail de alerta enviado!");
-        ultimaVezAlertado = Date.now();
-      });
+        if((erroT || erroH) && (Date.now() - ultimaVezAlertado > 600000)) { // 10 min
+            if(config.emailDestino) {
+                emailjs.send("service_kx31f3s", "template_mqzi3at", {
+                    subject: msgTexto,
+                    message: `Valores atuais: ${t}°C e ${h}% umidade.`,
+                    para_email: config.emailDestino
+                });
+                ultimaVezAlertado = Date.now();
+            }
+        }
     }
-  } else if (!erroT && !erroH) {
-    msgDiv.innerText = ""; // Limpa mensagem se estiver tudo OK
-  }
-}
 
-// Lógica Painel Admin (5 cliques no logo)
-let cliques = 0;
-document.getElementById("logoAdmin").onclick = () => {
-  if(++cliques >= 5) {
-    document.getElementById("adminPanel").style.display = "flex";
-    cliques = 0;
-  }
-};
+    // 5. Interações
+    document.getElementById('btnLED').onclick = () => {
+        db.ref("led").once("value", s => db.ref("led").set(s.val() == 1 ? 0 : 1));
+    };
 
-function fecharAdmin() { document.getElementById("adminPanel").style.display = "none"; }
-
-function salvarConfig() {
-  const novosDados = {
-    emailDestino: document.getElementById("cfgEmail").value,
-    tMin: parseFloat(document.getElementById("tMin").value),
-    tMax: parseFloat(document.getElementById("tMax").value),
-    hMin: parseFloat(document.getElementById("hMin").value),
-    hMax: parseFloat(document.getElementById("hMax").value),
-    intervalo: config.intervalo || 2000,
-    registros_dia: config.registros_dia || 144
-  };
-
-  db.ref("/config_alertas").set(novosDados).then(() => {
-    alert("Configurações salvas com sucesso!");
-    fecharAdmin();
-  });
-}
+    let c = 0;
+    document.getElementById('logoAdmin').onclick = () => { if(++c >= 5) { document.getElementById('adminPanel').style.display='flex'; c=0; }};
+    function fecharAdmin() { document.getElementById('adminPanel').style.display='none'; }
+    function salvarConfig() {
+        config.emailDestino = document.getElementById('cfgEmail').value;
+        config.tMax = document.getElementById('tMax').value;
+        config.hMax = document.getElementById('hMax').value;
+        db.ref("/config_alertas").update(config).then(() => fecharAdmin());
+    }
 </script>
 </body>
 </html>
