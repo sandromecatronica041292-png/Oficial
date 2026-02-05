@@ -10,9 +10,9 @@
   
   .card { background: var(--card-bg); border-radius: 20px; padding: 25px; width: 100%; max-width: 400px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.05); text-align: center; position: relative; overflow: hidden; }
   .logo-top { font-size: 10px; text-transform: uppercase; letter-spacing: 3px; color: var(--accent); margin-bottom: 5px; cursor: pointer; user-select: none; font-weight: 700; }
-  h1 { font-size: 20px; margin: 0 0 15px 0; font-weight: 800; }
+  h1 { font-size: 20px; margin: 0 0 15px 0; font-weight: 800; letter-spacing: -0.5px; }
   
-  .status-badge { display: inline-block; padding: 4px 12px; border-radius: 50px; font-size: 10px; font-weight: 700; background: var(--glass); margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); transition: 0.3s; }
+  .status-badge { display: inline-block; padding: 4px 12px; border-radius: 50px; font-size: 10px; font-weight: 700; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); transition: 0.3s; }
   .st-online { color: var(--on); border-color: var(--on); background: rgba(0, 255, 136, 0.1); }
   .st-offline { color: var(--off); border-color: var(--off); background: rgba(255, 87, 34, 0.1); }
   
@@ -24,12 +24,13 @@
   .gauge-box { flex: 1; background: var(--glass); padding: 12px 5px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); }
   .g-title { font-size: 9px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 5px; }
   .g-value { font-size: 18px; font-weight: 800; color: var(--accent); margin-top: -5px; }
-  canvas { width: 100% !important; height: auto !important; max-width: 140px; margin: 0 auto; }
+  canvas { width: 100% !important; height: auto !important; max-width: 130px; margin: 0 auto; }
 
-  #adminPanel { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--card-bg); border-radius: 20px; padding: 20px; box-sizing: border-box; z-index: 10; flex-direction: column; overflow-y: auto; }
-  .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: left; margin-bottom: 15px; }
-  .admin-grid label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; }
-  .admin-input { background: #0b0f1b; border: 1px solid #333; color: white; padding: 8px; border-radius: 6px; width: 100%; box-sizing: border-box; font-size: 12px; }
+  /* Painel Administrativo */
+  #adminPanel { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--card-bg); border-radius: 20px; padding: 20px; box-sizing: border-box; z-index: 10; flex-direction: column; overflow-y: auto; text-align: left; }
+  .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+  .admin-grid label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 4px; }
+  .admin-input { background: #0b0f1b; border: 1px solid #333; color: white; padding: 8px; border-radius: 6px; width: 100%; box-sizing: border-box; font-size: 12px; margin-bottom: 10px; }
   
   .btn-hist { width: 100%; padding: 12px; background: transparent; border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); border-radius: 10px; cursor: pointer; font-size: 11px; margin-top: 5px; }
   .btn-test { background: rgba(0, 210, 255, 0.1); color: var(--accent); border: 1px solid var(--accent); margin-bottom: 10px; }
@@ -52,16 +53,20 @@
       <div><label>Hum Mín (%)</label><input type="number" id="hMin" class="admin-input"></div>
       <div><label>Hum Máx (%)</label><input type="number" id="hMax" class="admin-input"></div>
     </div>
-    <button class="btn-led on" onclick="salvarConfig()">Salvar Limites</button>
-    <button class="btn-led btn-test" onclick="testeRapidoEmail()">Testar E-mail agora</button>
-    <button class="btn-hist" onclick="fecharAdmin()">Voltar ao Painel</button>
+    
+    <label style="font-size: 9px; color: var(--text-muted); text-transform: uppercase;">E-mail Destinatário:</label>
+    <input type="email" id="cfgEmail" class="admin-input" placeholder="cliente@email.com">
+
+    <button class="btn-led on" onclick="salvarConfig()">Salvar Configurações</button>
+    <button class="btn-led btn-test" onclick="testeRapidoEmail()">Testar E-mail</button>
+    <button class="btn-hist" onclick="fecharAdmin()">Fechar</button>
   </div>
 
   <div class="logo-top" id="logoAdmin">NewEnergy RT</div>
-  <h1>Status do Sistema</h1>
+  <h1>Status em Tempo Real</h1>
   <div id="status" class="status-badge st-online">Sincronizando...</div>
   
-  <button id="btnLED" class="btn-led off">Conectando...</button>
+  <button id="btnLED" class="btn-led off">Aguardando...</button>
 
   <div class="gauges-container">
     <div class="gauge-box">
@@ -77,7 +82,7 @@
   </div>
 
   <div id="alertMessage" style="color:var(--warn); min-height:15px; font-size:11px; margin-bottom:15px; font-weight:700;"></div>
-  <button class="btn-hist" onclick="location.href='historico.html'">Ver Histórico Completo</button>
+  <button class="btn-hist" onclick="location.href='historico.html'">Histórico Completo</button>
 </div>
 
 <script>
@@ -94,7 +99,7 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const auth = firebase.auth();
 
-let config = { tMin: 15, tMax: 35, hMin: 30, hMax: 80 };
+let config = { tMin: 15, tMax: 35, hMin: 30, hMax: 80, emailDestino: "" };
 
 auth.onAuthStateChanged(user => { 
   if (!user) location.href = "index.html"; 
@@ -111,11 +116,11 @@ function rodarPainel() {
   const gH = new Gauge(document.getElementById("gHum")).setOptions(gOpt('#00ff88'));
   gH.maxValue = 100; gH.setMinValue(0); gH.animationSpeed = 100;
 
-  // Lógica de Status Online/Offline (Heartbeat)
+  // Monitoramento de Conexão (Heartbeat)
   db.ref("/last_seen").on("value", snap => {
     const last = snap.val() * 1000;
     const check = () => {
-      const isOff = (Date.now() - last) > 90000;
+      const isOff = (Date.now() - last) > 95000;
       const st = document.getElementById("status");
       st.innerText = isOff ? "DISPOSITIVO OFFLINE" : "DISPOSITIVO ONLINE";
       st.className = "status-badge " + (isOff ? "st-offline" : "st-online");
@@ -125,6 +130,7 @@ function rodarPainel() {
     window.iv = setInterval(check, 10000);
   });
 
+  // Controle do LED
   db.ref("/led").on("value", snap => {
     const on = snap.val() == 1;
     document.getElementById("btnLED").innerText = on ? "Desligar LED" : "Ligar LED";
@@ -135,6 +141,7 @@ function rodarPainel() {
     db.ref("/led").get().then(s => db.ref("/led").set(s.val() == 1 ? 0 : 1));
   };
 
+  // Leitura de Sensores
   db.ref("/temp").on("value", s => { 
     const v = parseFloat(s.val()); gT.set(v); 
     document.getElementById("tempVal").innerText = v.toFixed(1) + "°C";
@@ -155,15 +162,15 @@ function processarAlertas(t, h) {
   let erroH = (h > config.hMax || h < config.hMin);
   let txt = "";
 
-  if (erroT && erroH) txt = "🚨 ALERTA: TEMPERATURA E UMIDADE FORA!";
+  if (erroT && erroH) txt = "🚨 CRÍTICO: TEMP E HUM FORA!";
   else if (erroT) txt = "🚨 ALERTA: TEMPERATURA FORA DO LIMITE!";
   else if (erroH) txt = "🚨 ALERTA: UMIDADE FORA DO LIMITE!";
 
   msg.innerText = txt;
-  if(txt !== "") enviarEmail(txt, `Temp: ${t}°C | Hum: ${h}%`);
+  if(txt !== "") enviarEmail(txt, `Temp Atual: ${t}°C | Hum Atual: ${h}%`);
 }
 
-// ADMIN OCULTO
+// LOGICA ADMIN OCULTO (5 cliques na logo)
 let cliques = 0;
 document.getElementById("logoAdmin").onclick = () => {
   if(++cliques >= 5) {
@@ -172,30 +179,46 @@ document.getElementById("logoAdmin").onclick = () => {
     document.getElementById("tMax").value = config.tMax;
     document.getElementById("hMin").value = config.hMin;
     document.getElementById("hMax").value = config.hMax;
+    document.getElementById("cfgEmail").value = config.emailDestino || "";
     cliques = 0;
   }
 };
 
 function salvarConfig() {
-  config = {
+  const novosValores = {
     tMin: parseFloat(document.getElementById("tMin").value),
     tMax: parseFloat(document.getElementById("tMax").value),
     hMin: parseFloat(document.getElementById("hMin").value),
-    hMax: parseFloat(document.getElementById("hMax").value)
+    hMax: parseFloat(document.getElementById("hMax").value),
+    emailDestino: document.getElementById("cfgEmail").value
   };
-  db.ref("/config_alertas").set(config).then(() => fecharAdmin());
+  db.ref("/config_alertas").set(novosValores).then(() => {
+    alert("Salvo com sucesso!");
+    fecharAdmin();
+  });
 }
+
 function fecharAdmin() { document.getElementById("adminPanel").style.display = "none"; }
 
 function testeRapidoEmail() {
-  enviarEmail("TESTE DE CONEXÃO", "O sistema de e-mail está configurado corretamente!");
-  alert("Comando de teste enviado! Verifique sua caixa de entrada.");
+  const mail = document.getElementById("cfgEmail").value;
+  if(!mail) return alert("Insira um e-mail primeiro!");
+  enviarEmail("TESTE DE SISTEMA", "Seu sistema de alertas está funcionando perfeitamente.");
+  alert("Teste enviado!");
 }
 
 function enviarEmail(tipo, valor) {
+  if (!config.emailDestino) return;
+  // Cooldown de 10 minutos por alerta
   if (window.lastAlert && Date.now() - window.lastAlert < 600000) return;
   window.lastAlert = Date.now();
-  emailjs.send("service_kx31f3s", "template_mqzi3at", { tipo: tipo, valor: valor, data: new Date().toLocaleString() });
+  
+  emailjs.send("service_kx31f3s", "template_mqzi3at", { 
+    tipo: tipo, 
+    valor: valor, 
+    para_email: config.emailDestino, 
+    data: new Date().toLocaleString() 
+  });
 }
 </script>
 </body>
