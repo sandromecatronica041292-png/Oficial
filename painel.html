@@ -3,58 +3,102 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>NewEnergy | Monitor Pro</title>
+<title>NewEnergy | Monitor Pro Intelligence</title>
 <style>
   :root { 
-    --bg-dark: #0b0f1b; --card-bg: #161b2d; --accent: #00d2ff; 
-    --text-main: #ffffff; --text-muted: #8fa3c6; --on: #00ff88; 
-    --off: #ff5722; --warn: #ffcc00; --glass: rgba(255, 255, 255, 0.05); 
+    --bg-dark: #070a13; --card-bg: #101625; --accent: #00d2ff; 
+    --text-main: #f0f4f8; --text-muted: #64748b; --on: #00ff88; 
+    --off: #f43f5e; --warn: #fbbf24; --glass: rgba(255, 255, 255, 0.03); 
   }
   
-  body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-dark); color: var(--text-main); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 15px; }
+  body { 
+    margin: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+    background: var(--bg-dark); color: var(--text-main); 
+    display: flex; justify-content: center; align-items: center; 
+    min-height: 100vh; padding: 15px; overflow-x: hidden;
+  }
   
+  /* Efeito de Vidro Profissional */
   .card { 
-    background: var(--card-bg); border-radius: 20px; padding: 25px; width: 100%; 
-    max-width: 420px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.05); 
-    text-align: center; position: relative; overflow: hidden; 
+    background: var(--card-bg); border-radius: 28px; padding: 30px; width: 100%; 
+    max-width: 420px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7); 
+    border: 1px solid rgba(255,255,255,0.08); text-align: center; 
+    position: relative; backdrop-filter: blur(10px);
   }
 
-  /* Header */
-  .header-main { position: relative; margin-bottom: 25px; padding-top: 10px; }
+  /* Header e Logout */
+  .header-main { position: relative; margin-bottom: 30px; }
   .logo-principal { 
-    font-size: 22px; text-transform: uppercase; letter-spacing: 4px; font-weight: 900; 
-    background: linear-gradient(to right, #00d2ff, #3a7bd5); -webkit-background-clip: text; 
-    -webkit-text-fill-color: transparent; cursor: pointer; display: block; margin: 0 auto; 
+    font-size: 20px; text-transform: uppercase; letter-spacing: 5px; font-weight: 900; 
+    background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%); 
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
+    cursor: pointer; transition: 0.3s;
   }
-  .btn-logout { position: absolute; top: 0; right: 0; background: rgba(255, 87, 34, 0.1); border: 1px solid rgba(255,87,34,0.3); color: var(--off); padding: 4px 8px; border-radius: 6px; font-size: 9px; cursor: pointer; font-weight: 700; }
-
-  h1 { font-size: 14px; color: var(--text-muted); margin: 0 0 15px 0; font-weight: 400; text-transform: uppercase; letter-spacing: 1px; }
-
-  /* Status e Botões */
-  .status-badge { display: inline-block; padding: 6px 16px; border-radius: 50px; font-size: 10px; font-weight: 800; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); }
-  .st-online { color: var(--on); border-color: var(--on); background: rgba(0, 255, 136, 0.1); }
-  .st-offline { color: var(--off); border-color: var(--off); background: rgba(255, 87, 34, 0.1); }
+  .logo-principal:hover { transform: scale(1.05); filter: brightness(1.2); }
   
-  .btn-led { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 14px; font-weight: 800; cursor: pointer; transition: 0.3s; margin-bottom: 12px; text-transform: uppercase; }
-  .btn-led.on { background: var(--on); color: #052e16; box-shadow: 0 0 20px rgba(0, 255, 136, 0.2); }
-  .btn-led.off { background: var(--off); color: #fff; box-shadow: 0 0 20px rgba(255, 87, 34, 0.1); }
-
-  /* GAUGES CORRIGIDOS */
-  .gauges-container { display: flex; gap: 12px; margin: 10px 0 25px 0; justify-content: center; }
-  .gauge-box { 
-    flex: 1; background: var(--glass); padding: 15px 5px; border-radius: 18px; 
-    border: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; align-items: center;
-    max-width: 180px;
+  .btn-logout { 
+    position: absolute; top: -10px; right: -10px; background: rgba(244, 63, 94, 0.1); 
+    border: 1px solid rgba(244, 63, 94, 0.2); color: var(--off); 
+    padding: 6px 12px; border-radius: 10px; font-size: 10px; cursor: pointer; font-weight: 700; 
   }
-  .gauge-box canvas { width: 140px !important; height: 80px !important; }
-  .g-title { font-size: 9px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 5px; }
-  .g-value { font-size: 18px; font-weight: 900; color: var(--accent); margin-top: -5px; }
 
-  /* Admin Panel */
-  #adminPanel { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #111628; border-radius: 20px; padding: 25px; box-sizing: border-box; z-index: 100; flex-direction: column; overflow-y: auto; text-align: left; }
-  .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
-  .admin-input { background: #0b0f1b; border: 1px solid #3d4455; color: white; padding: 10px; border-radius: 8px; width: 100%; box-sizing: border-box; font-size: 13px; outline: none; }
-  label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 4px; }
+  /* Status com Animação de Pulso */
+  .status-container { margin-bottom: 25px; }
+  .status-badge { 
+    display: inline-flex; align-items: center; gap: 8px; 
+    padding: 8px 20px; border-radius: 50px; font-size: 11px; 
+    font-weight: 800; letter-spacing: 1px; border: 1px solid rgba(255,255,255,0.05); 
+  }
+  
+  .dot { width: 8px; height: 8px; border-radius: 50%; position: relative; }
+  .st-online .dot { background: var(--on); box-shadow: 0 0 10px var(--on); animation: pulse 1.5s infinite; }
+  .st-offline .dot { background: var(--off); }
+  
+  @keyframes pulse {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(0, 255, 136, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); }
+  }
+
+  .st-online { color: var(--on); background: rgba(0, 255, 136, 0.05); }
+  .st-offline { color: var(--off); background: rgba(244, 63, 94, 0.05); }
+
+  /* Gauges Design */
+  .gauges-container { display: flex; gap: 15px; margin-bottom: 30px; }
+  .gauge-box { 
+    flex: 1; background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0) 100%); 
+    padding: 20px 10px; border-radius: 22px; border: 1px solid rgba(255,255,255,0.05); 
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .gauge-box canvas { width: 140px !important; height: 85px !important; }
+  .g-title { font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 8px; }
+  .g-value { font-size: 22px; font-weight: 900; letter-spacing: -1px; }
+
+  /* Botões e Interação */
+  .btn-action { 
+    width: 100%; padding: 18px; border: none; border-radius: 16px; 
+    font-size: 13px; font-weight: 800; cursor: pointer; transition: 0.3s; 
+    margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;
+  }
+  .btn-led.on { background: var(--on); color: #052e16; box-shadow: 0 10px 20px -5px rgba(0, 255, 136, 0.3); }
+  .btn-led.off { background: #1e293b; color: var(--text-muted); border: 1px solid rgba(255,255,255,0.1); }
+  
+  .btn-history { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+  .btn-history:hover { background: var(--accent); color: #000; }
+
+  /* Admin Panel overlay */
+  #adminPanel { 
+    display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+    background: #0f172a; border-radius: 28px; padding: 30px; box-sizing: border-box; 
+    z-index: 100; flex-direction: column; overflow-y: auto; text-align: left;
+  }
+  .admin-input { 
+    background: #070a13; border: 1px solid #334155; color: white; 
+    padding: 12px; border-radius: 10px; width: 100%; box-sizing: border-box; 
+    font-size: 14px; margin-bottom: 15px; outline: none; transition: 0.3s;
+  }
+  .admin-input:focus { border-color: var(--accent); }
+  label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 5px; display: block; }
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -67,61 +111,55 @@
 <body>
 <div class="card">
   <div id="adminPanel">
-    <div class="logo-principal" style="font-size: 16px; margin-bottom: 20px;">Configurações</div>
-    <div class="admin-grid">
-      <div><label>Temp Mín (°C)</label><input type="number" id="tMin" class="admin-input"></div>
-      <div><label>Temp Máx (°C)</label><input type="number" id="tMax" class="admin-input"></div>
-      <div><label>Hum Mín (%)</label><input type="number" id="hMin" class="admin-input"></div>
-      <div><label>Hum Máx (%)</label><input type="number" id="hMax" class="admin-input"></div>
-      <div><label>Tempo Real (s)</label><input type="number" id="cfgIntervalo" class="admin-input"></div>
-      <div><label>Registros/24h</label><input type="number" id="cfgRegDia" class="admin-input"></div>
+    <div class="logo-principal" style="font-size: 14px; margin-bottom: 25px;">Engine Configuration</div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+      <div><label>Temp Mín</label><input type="number" id="tMin" class="admin-input"></div>
+      <div><label>Temp Máx</label><input type="number" id="tMax" class="admin-input"></div>
+      <div><label>Hum Mín</label><input type="number" id="hMin" class="admin-input"></div>
+      <div><label>Hum Máx</label><input type="number" id="hMax" class="admin-input"></div>
     </div>
-    <div style="margin-bottom:15px;">
-      <label>E-mail para Alertas</label>
-      <input type="email" id="cfgEmail" class="admin-input" placeholder="seu@email.com">
-    </div>
-    <div style="margin-bottom:15px;">
-      <label>Alerta a cada (Minutos)</label>
-      <input type="number" id="cfgTempoEmail" class="admin-input">
+    <label>E-mail de Alerta</label>
+    <input type="email" id="cfgEmail" class="admin-input">
+    
+    <div style="background: rgba(0,210,255,0.05); padding: 15px; border-radius: 12px; border: 1px solid rgba(0,210,255,0.1); margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 11px; font-weight: bold;">DISPAROS NO MÊS: <span id="countEmailDisplay" style="color:var(--accent)">0</span></span>
+            <button onclick="resetarContador()" style="background:var(--off); color:white; border:none; padding:4px 8px; border-radius:5px; font-size:9px; cursor:pointer;">RESET</button>
+        </div>
     </div>
 
-    <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 8px; margin-bottom: 20px; border: 1px dashed #3d4455;">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <span style="font-size: 10px; color: var(--text-muted); font-weight: bold;">E-MAILS/MÊS: <span id="countEmailDisplay" style="color: var(--accent);">0</span></span>
-        <button onclick="resetarContador()" style="background: none; border: 1px solid var(--off); color: var(--off); font-size: 8px; padding: 2px 5px; border-radius: 4px; cursor: pointer;">ZERAR</button>
-      </div>
-      <div id="mesReferencia" style="font-size: 8px; color: #555; margin-top: 4px;">Ref: --/--</div>
-    </div>
-    
-    <button id="btnSalvar" class="btn-led on" onclick="salvarConfig()">Salvar Alterações</button>
-    <button class="btn-led" style="background:transparent; border:1px solid #3d4455; color:#888" onclick="fecharAdmin()">Sair</button>
+    <button id="btnSalvar" class="btn-action" style="background:var(--accent); color:#000;" onclick="salvarConfig()">Salvar Configurações</button>
+    <button class="btn-action" style="background:transparent; color:var(--text-muted); border:1px solid #334155" onclick="fecharAdmin()">Cancelar</button>
   </div>
 
   <div class="header-main">
     <div class="logo-principal" id="logoAdmin">NewEnergy</div>
-    <button class="btn-logout" onclick="fazerLogout()">Sair</button>
+    <button class="btn-logout" onclick="fazerLogout()">Logout</button>
   </div>
   
-  <h1>Monitoramento Pro</h1>
-  <div id="status" class="status-badge st-online">CONECTANDO...</div>
-  
+  <div class="status-container">
+    <div id="status" class="status-badge st-online">
+      <div class="dot"></div> <span>CONECTANDO...</span>
+    </div>
+  </div>
+
   <div class="gauges-container">
     <div class="gauge-box">
       <div class="g-title">Temperatura</div>
       <canvas id="gTemp"></canvas>
-      <div id="tempVal" class="g-value">--°C</div>
+      <div id="tempVal" class="g-value" style="color:var(--off)">--°C</div>
     </div>
     <div class="gauge-box">
       <div class="g-title">Umidade</div>
       <canvas id="gHum"></canvas>
-      <div id="humVal" class="g-value">--%</div>
+      <div id="humVal" class="g-value" style="color:var(--accent)">--%</div>
     </div>
   </div>
 
-  <div id="alertMessage" style="color:var(--warn); min-height:18px; font-size:11px; margin-bottom:15px; font-weight:800;"></div>
-  
-  <button id="btnLED" class="btn-led off">CARREGANDO LED...</button>
-  <button class="btn-led" style="background: var(--glass); color: var(--accent); border: 1px solid var(--accent); margin-bottom: 0;" onclick="location.href='historico.html'">Relatórios & Histórico</button>
+  <div id="alertMessage" style="color:var(--warn); min-height:20px; font-size:11px; margin-bottom:20px; font-weight:bold; letter-spacing: 0.5px;"></div>
+
+  <button id="btnLED" class="btn-action btn-led off">Sincronizando LED...</button>
+  <button class="btn-action btn-history" onclick="location.href='historico.html'">Relatórios Avançados</button>
 </div>
 
 <script>
@@ -136,30 +174,29 @@ firebase.initializeApp({
 const db = firebase.database();
 const auth = firebase.auth();
 
-let config = { tMin: 15, tMax: 35, hMin: 30, hMax: 80, intervalo: 2000, registros_dia: 144, emailDestino: "", tempoEmail: 600000, contadorAlertas: 0 };
+let config = { tMin: 15, tMax: 35, hMin: 30, hMax: 80, intervalo: 2000, emailDestino: "", tempoEmail: 600000, contadorAlertas: 0 };
 let gT, gH, ultimaVezAlertado = 0;
 
 function rodarDashboard() {
   const gOpt = (col) => ({
-    angle: 0.15, lineWidth: 0.2, radiusScale: 1,
-    pointer: { length: 0.6, strokeWidth: 0.04, color: '#DDD' },
-    colorStart: col, colorStop: col, strokeColor: '#1b1f33',
-    highDpiSupport: true
+    angle: 0.15, lineWidth: 0.22, radiusScale: 1,
+    pointer: { length: 0.6, strokeWidth: 0.04, color: '#f0f4f8' },
+    colorStart: col, colorStop: col, strokeColor: '#1e293b',
+    highDpiSupport: true, generateGradient: true
   });
 
-  gT = new Gauge(document.getElementById("gTemp")).setOptions(gOpt('#ff5722'));
+  gT = new Gauge(document.getElementById("gTemp")).setOptions(gOpt('#f43f5e'));
   gT.maxValue = 60; gT.setMinValue(-10); gT.set(0);
 
   gH = new Gauge(document.getElementById("gHum")).setOptions(gOpt('#00d2ff'));
   gH.maxValue = 100; gH.setMinValue(0); gH.set(0);
 
-  // Listeners Firebase
+  // Sistema de Online/Offline
   db.ref("/last_seen").on("value", snap => {
-    const last = snap.val() * 1000;
     const check = () => {
-      const isOff = (Date.now() - last) > (config.intervalo + 15000);
+      const isOff = (Date.now() - (snap.val() * 1000)) > (config.intervalo + 15000);
       const st = document.getElementById("status");
-      st.innerText = isOff ? "SISTEMA OFFLINE" : "SISTEMA ONLINE";
+      st.innerHTML = isOff ? '<div class="dot"></div> OFFLINE' : '<div class="dot"></div> SISTEMA ATIVO';
       st.className = "status-badge " + (isOff ? "st-offline" : "st-online");
     };
     check();
@@ -168,8 +205,8 @@ function rodarDashboard() {
   db.ref("/led").on("value", s => {
     const on = s.val() == 1;
     const b = document.getElementById("btnLED");
-    b.innerText = on ? "APAGAR LUZ" : "ACENDER LUZ";
-    b.className = "btn-led " + (on ? "on" : "off");
+    b.innerText = on ? "DESATIVAR ILUMINAÇÃO" : "ATIVAR ILUMINAÇÃO";
+    b.className = "btn-action btn-led " + (on ? "on" : "off");
   });
 
   db.ref("/temp").on("value", s => { 
@@ -189,23 +226,20 @@ function analisarAlertas() {
   const t = parseFloat(document.getElementById("tempVal").innerText);
   const h = parseFloat(document.getElementById("humVal").innerText);
   const msg = document.getElementById("alertMessage");
-  let erroT = (t > config.tMax || t < config.tMin);
-  let erroH = (h > config.hMax || h < config.hMin);
+  let erro = (t > config.tMax || t < config.tMin || h > config.hMax || h < config.hMin);
+  msg.innerText = erro ? "⚠️ ATENÇÃO: PARÂMETROS FORA DA ZONA DE SEGURANÇA" : "";
   
-  msg.innerText = (erroT || erroH) ? "🚨 ALERTA: PARÂMETROS FORA DA MARGEM!" : "";
-
-  const agora = Date.now();
-  if ((erroT || erroH) && (agora - ultimaVezAlertado > config.tempoEmail)) {
-    enviarEmailAlert(t, h);
+  if (erro && (Date.now() - ultimaVezAlertado > config.tempoEmail)) {
+    enviarAlertaEmail(t, h);
   }
 }
 
-function enviarEmailAlert(t, h) {
+function enviarAlertaEmail(t, h) {
   if (!config.emailDestino) return;
   emailjs.send("service_kx31f3s", "template_mqzi3at", {
-    equipamento: "Monitor Pro",
-    tipo: "Alerta de Limites",
-    valor: `T: ${t}°C | H: ${h}%`,
+    equipamento: "NewEnergy Monitor Pro",
+    tipo: "Anomalia Detectada",
+    valor: `Temp: ${t}°C | Hum: ${h}%`,
     data: new Date().toLocaleString(),
     para_email: config.emailDestino
   }).then(() => {
@@ -214,7 +248,7 @@ function enviarEmailAlert(t, h) {
   });
 }
 
-// Admin Logic
+// Interação Logo-Admin (5 cliques)
 let cliques = 0;
 document.getElementById("logoAdmin").onclick = () => {
   if(++cliques >= 5) {
@@ -223,35 +257,26 @@ document.getElementById("logoAdmin").onclick = () => {
     document.getElementById("tMax").value = config.tMax;
     document.getElementById("hMin").value = config.hMin;
     document.getElementById("hMax").value = config.hMax;
-    document.getElementById("cfgIntervalo").value = (config.intervalo / 1000);
-    document.getElementById("cfgRegDia").value = config.registros_dia;
     document.getElementById("cfgEmail").value = config.emailDestino;
-    document.getElementById("cfgTempoEmail").value = (config.tempoEmail / 60000);
     cliques = 0;
   }
 };
 
 function salvarConfig() {
-  const btn = document.getElementById("btnSalvar");
   const updates = {
     tMin: parseFloat(document.getElementById("tMin").value),
     tMax: parseFloat(document.getElementById("tMax").value),
     hMin: parseFloat(document.getElementById("hMin").value),
     hMax: parseFloat(document.getElementById("hMax").value),
-    intervalo: parseInt(document.getElementById("cfgIntervalo").value) * 1000,
-    registros_dia: parseInt(document.getElementById("cfgRegDia").value),
-    emailDestino: document.getElementById("cfgEmail").value,
-    tempoEmail: parseInt(document.getElementById("cfgTempoEmail").value) * 60000
+    emailDestino: document.getElementById("cfgEmail").value
   };
-  btn.innerText = "SALVANDO...";
   db.ref("/config_alertas").update(updates).then(() => {
-    btn.innerText = "SALVO!";
-    setTimeout(() => { fecharAdmin(); btn.innerText = "Salvar Alterações"; }, 800);
+    fecharAdmin();
   });
 }
 
 function fecharAdmin() { document.getElementById("adminPanel").style.display = "none"; }
-function resetarContador() { if(confirm("Zerar contador?")) db.ref("/config_alertas/contadorAlertas").set(0); }
+function resetarContador() { if(confirm("Zerar estatísticas de alertas?")) db.ref("/config_alertas/contadorAlertas").set(0); }
 function fazerLogout() { auth.signOut().then(() => window.location.replace("index.html")); }
 document.getElementById("btnLED").onclick = () => { db.ref("/led").get().then(s => db.ref("/led").set(s.val() == 1 ? 0 : 1)); };
 
@@ -262,7 +287,6 @@ auth.onAuthStateChanged(user => {
       if(s.val()) {
         config = s.val();
         document.getElementById("countEmailDisplay").innerText = config.contadorAlertas || 0;
-        document.getElementById("mesReferencia").innerText = "Ref: " + (config.ultimoMesReset || "--/--");
       }
     });
     rodarDashboard(); 
@@ -271,4 +295,3 @@ auth.onAuthStateChanged(user => {
 </script>
 </body>
 </html>
-
