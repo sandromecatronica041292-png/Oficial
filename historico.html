@@ -23,7 +23,7 @@
         #lista { max-height: 400px; overflow-y: auto; padding-right: 5px; }
         
         .item { background: rgba(255,255,255,0.03); padding: 12px 20px; border-radius: 12px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.02); }
-        .item.alerta { border-left: 4px solid var(--danger); background: rgba(255, 71, 87, 0.05); }
+        .item.alerta { border-left: 4px solid var(--danger); background: rgba(255, 71, 87, 0.08); }
         
         .data-divider { color: var(--accent-hum); font-size: 10px; font-weight: 900; margin: 25px 0 10px; display: flex; align-items: center; text-transform: uppercase; }
         .data-divider::after { content: ""; flex: 1; height: 1px; background: var(--border); margin-left: 10px; }
@@ -33,7 +33,7 @@
         .btn-pdf { background: var(--accent-hum); color: #000; box-shadow: 0 10px 20px rgba(0, 210, 255, 0.2); }
         .btn-back { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
 
-        .valor-critico { color: var(--danger) !important; font-weight: 900; }
+        .valor-critico { color: var(--danger) !important; font-weight: 900; text-decoration: underline; }
     </style>
     
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -47,7 +47,7 @@
 <div class="card">
     <header style="border-left: 4px solid var(--accent-hum); padding-left: 20px; margin-bottom: 25px;">
         <h1 style="margin:0; font-size:24px;">Advanced Intelligence</h1>
-        <p style="margin:0; color:var(--text-muted); font-size:12px;">Monitoramento de Riscos e Performance Técnica</p>
+        <p style="margin:0; color:var(--text-muted); font-size:12px;">Relatório Analítico Sincronizado com Painel de Controle</p>
     </header>
 
     <div class="tabs">
@@ -70,9 +70,7 @@
 </div>
 
 <script>
-// CONFIGURAÇÃO LIMITES (Ajuste aqui seus valores críticos)
-const LIMITES = { tMax: 30, tMin: 15, hMax: 70, hMin: 30 };
-
+// Firebase Config
 firebase.initializeApp({
     apiKey: "AIzaSyB5FnkQiFi3gn9Iup2KNcbrKxWd-0Jjo6Y",
     authDomain: "oficial-688e8.firebaseapp.com",
@@ -81,6 +79,24 @@ firebase.initializeApp({
 });
 const db = firebase.database();
 let myChart = null, globalData = [];
+let limitesConfig = { tMax: 100, tMin: 0, hMax: 100, hMin: 0 }; // Default caso falhe a leitura
+
+// 1. BUSCAR LIMITES DO PAINEL (Configuração Invisível)
+async function carregarLimites() {
+    try {
+        const snap = await db.ref("/configuracoes").once("value");
+        const configs = snap.val();
+        if(configs) {
+            limitesConfig = {
+                tMax: parseFloat(configs.tempMax || 100),
+                tMin: parseFloat(configs.tempMin || 0),
+                hMax: parseFloat(configs.umidMax || 100),
+                hMin: parseFloat(configs.umidMin || 0)
+            };
+            console.log("Limites Sincronizados:", limitesConfig);
+        }
+    } catch (e) { console.error("Erro ao ler limites:", e); }
+}
 
 document.querySelectorAll('.tab').forEach(tab => {
     tab.addEventListener('click', function() {
@@ -91,6 +107,8 @@ document.querySelectorAll('.tab').forEach(tab => {
 });
 
 async function fetchData(periodo) {
+    await carregarLimites(); // Garante que os limites estão atualizados antes de filtrar
+    
     const listaDiv = document.getElementById("lista");
     listaDiv.innerHTML = "<p style='text-align:center; padding:50px;'>Processando indicadores...</p>";
     globalData = []; 
@@ -151,18 +169,20 @@ function renderUI() {
             ultimaData = d.data;
         }
 
-        const isCritico = d.temp > LIMITES.tMax || d.temp < LIMITES.tMin || d.hum > LIMITES.hMax || d.hum < LIMITES.hMin;
+        // VERIFICAÇÃO DE ALERTA BASEADA NO PAINEL
+        const tAlerta = d.temp > limitesConfig.tMax || d.temp < limitesConfig.tMin;
+        const hAlerta = d.hum > limitesConfig.hMax || d.hum < limitesConfig.hMin;
         
         const item = document.createElement('div');
-        item.className = `item ${isCritico ? 'alerta' : ''}`;
+        item.className = `item ${(tAlerta || hAlerta) ? 'alerta' : ''}`;
         item.innerHTML = `
             <div><b>${d.hora}</b><br><small style="color:var(--text-muted)">REG: ${d.ts}</small></div>
             <div style="display:flex; gap:20px; text-align:right;">
                 <div><small style="display:block; font-size:8px;">TEMPERATURA</small>
-                    <span class="${d.temp > LIMITES.tMax ? 'valor-critico' : ''}" style="color:var(--accent-temp); font-weight:800;">${d.temp.toFixed(2)}°C</span>
+                    <span class="${tAlerta ? 'valor-critico' : ''}" style="color:var(--accent-temp); font-weight:800;">${d.temp.toFixed(2)}°C</span>
                 </div>
                 <div><small style="display:block; font-size:8px;">UMIDADE</small>
-                    <span class="${d.hum < LIMITES.hMin ? 'valor-critico' : ''}" style="color:var(--accent-hum); font-weight:800;">${d.hum.toFixed(2)}%</span>
+                    <span class="${hAlerta ? 'valor-critico' : ''}" style="color:var(--accent-hum); font-weight:800;">${d.hum.toFixed(2)}%</span>
                 </div>
             </div>`;
         listaDiv.appendChild(item);
@@ -191,12 +211,12 @@ async function exportarPDF() {
     const doc = new jsPDF();
     const aba = document.querySelector('.tab.active').innerText;
     
-    // Cálculos de Resumo
+    // Dados de Resumo
     const mediaT = globalData.reduce((a, b) => a + b.temp, 0) / globalData.length;
     const maxT = Math.max(...globalData.map(d => d.temp));
     const minH = Math.min(...globalData.map(d => d.hum));
 
-    // Cabeçalho Profissional
+    // Cabeçalho
     doc.setFillColor(16, 22, 37);
     doc.rect(0, 0, 210, 45, 'F');
     doc.setTextColor(255, 255, 255);
@@ -204,44 +224,25 @@ async function exportarPDF() {
     doc.text("NEWENERGY", 15, 20);
     doc.setFontSize(9);
     doc.setTextColor(0, 210, 255);
-    doc.text("RELATÓRIO DE MONITORAMENTO E ANÁLISE DE RISCO", 15, 28);
+    doc.text("RELATÓRIO DE MONITORAMENTO - SINCRONIZAÇÃO DE LIMITES", 15, 28);
     
-    // Info Box
-    doc.setFillColor(255, 255, 255, 0.05);
-    doc.rect(130, 10, 70, 25, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.text(`GERADO: ${new Date().toLocaleString()}`, 135, 17);
-    doc.text(`PERÍODO: ${aba.toUpperCase()}`, 135, 22);
-    doc.text(`STATUS: DOC. CONTROLADO`, 135, 27);
-
-    // DASHBOARD DE RESUMO (NOVO)
-    doc.setTextColor(16, 22, 37);
-    doc.setFontSize(11);
-    doc.text("1. RESUMO EXECUTIVO DE PERFORMANCE", 15, 55);
-    
+    // Dashboard Resumo
     doc.setFillColor(245, 247, 250);
-    doc.rect(15, 58, 180, 20, 'F');
-    doc.setFontSize(8);
-    doc.setTextColor(100);
-    doc.text("MÉDIA TEMP.", 25, 65);
-    doc.text("PICO MÁXIMO", 85, 65);
-    doc.text("UMID. MÍNIMA", 145, 65);
+    doc.rect(15, 55, 180, 20, 'F');
+    doc.setTextColor(100); doc.setFontSize(7);
+    doc.text(`CONFIG. ATUAL: T[${limitesConfig.tMin}-${limitesConfig.tMax}] H[${limitesConfig.hMin}-${limitesConfig.hMax}]`, 140, 52);
     
-    doc.setTextColor(16, 22, 37);
-    doc.setFontSize(12);
-    doc.text(`${mediaT.toFixed(2)}°C`, 25, 73);
-    doc.text(`${maxT.toFixed(2)}°C`, 85, 73);
-    doc.text(`${minH.toFixed(2)}%`, 145, 73);
+    doc.setTextColor(16, 22, 37); doc.setFontSize(10);
+    doc.text(`Média T: ${mediaT.toFixed(2)}C  |  Pico T: ${maxT.toFixed(2)}C  |  Min H: ${minH.toFixed(2)}%`, 25, 67);
 
     // Gráfico
     const imgData = document.getElementById('mainChart').toDataURL("image/png", 1.0);
-    doc.setFontSize(11);
-    doc.text("2. TENDÊNCIA TEMPORAL", 15, 90);
-    doc.addImage(imgData, 'PNG', 15, 95, 180, 60);
+    doc.addImage(imgData, 'PNG', 15, 80, 180, 60);
 
-    // Tabela Zebra com Alertas
-    let py = 165;
-    doc.text("3. LOG DETALHADO (IDENTIFICAÇÃO DE DESVIOS)", 15, py);
+    // Tabela Zebra
+    let py = 150;
+    doc.setFontSize(10);
+    doc.text("LOG DE REGISTROS (DETECÇÃO DE ANOMALIAS)", 15, py);
     py += 8;
     
     doc.setFillColor(230, 235, 245);
@@ -250,23 +251,23 @@ async function exportarPDF() {
     doc.text("DATA/HORA", 20, py + 5.5);
     doc.text("TEMP", 80, py + 5.5);
     doc.text("UMID", 120, py + 5.5);
-    doc.text("AVALIAÇÃO TÉCNICA", 160, py + 5.5);
+    doc.text("STATUS TÉCNICO", 160, py + 5.5);
     py += 8;
 
     globalData.forEach((d, i) => {
         if (py > 270) { doc.addPage(); py = 20; }
         if (i % 2 === 0) { doc.setFillColor(248, 250, 255); doc.rect(15, py, 180, 7, 'F'); }
         
-        const critico = d.temp > LIMITES.tMax || d.hum < LIMITES.hMin;
+        const tErro = d.temp > limitesConfig.tMax || d.temp < limitesConfig.tMin;
+        const hErro = d.hum > limitesConfig.hMax || d.hum < limitesConfig.hMin;
         
-        doc.setTextColor(critico ? 200 : 80, critico ? 0 : 80, critico ? 0 : 80);
+        doc.setTextColor((tErro || hErro) ? 200 : 80, 0, 0);
         doc.text(`${d.data} ${d.hora}`, 20, py + 5);
         doc.text(`${d.temp.toFixed(2)}°C`, 80, py + 5);
         doc.text(`${d.hum.toFixed(2)}%`, 120, py + 5);
-        doc.setFontSize(7);
-        doc.text(critico ? "FORA DO PADRÃO" : "ESTÁVEL", 160, py + 5);
-        doc.setFontSize(8);
+        doc.text((tErro || hErro) ? "FORA DOS LIMITES" : "NORMAL", 160, py + 5);
         py += 7;
+        doc.setTextColor(80);
     });
 
     // Assinatura
@@ -276,7 +277,7 @@ async function exportarPDF() {
     doc.line(60, py + 10, 150, py + 10);
     doc.text("RESPONSÁVEL TÉCNICO", 105, py + 15, {align: "center"});
 
-    doc.save(`Relatorio_Performance_NewEnergy.pdf`);
+    doc.save(`Relatorio_Sincronizado_NewEnergy.pdf`);
 }
 
 firebase.auth().onAuthStateChanged(u => { if(u) fetchData('diario'); else location.href='index.html'; });
