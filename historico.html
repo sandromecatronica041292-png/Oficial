@@ -14,30 +14,19 @@
         body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-dark); color: var(--text-main); display: flex; justify-content: center; padding: 20px; }
         .card { background: var(--card-bg); border-radius: 28px; padding: 30px; width: 100%; max-width: 900px; border: 1px solid var(--border); box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
         
-        header { border-left: 4px solid var(--accent-hum); padding-left: 20px; margin-bottom: 25px; }
-        header h1 { margin:0; font-size:22px; text-transform:uppercase; }
-        header p { margin:0; color:var(--text-muted); font-size:12px; }
-
         .tabs { display: flex; background: #070a13; padding: 5px; border-radius: 14px; margin-bottom: 20px; gap: 4px; border: 1px solid var(--border); }
         .tab { flex: 1; padding: 12px; text-align: center; border-radius: 10px; cursor: pointer; font-size: 11px; font-weight: 700; color: var(--text-muted); transition: 0.3s; text-transform: uppercase; }
         .tab.active { background: var(--card-bg); color: var(--accent-hum); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
 
         .chart-container { background: rgba(0,0,0,0.2); border-radius: 20px; padding: 15px; margin-bottom: 25px; border: 1px solid var(--border); height: 350px; }
-        
-        #lista { max-height: 400px; overflow-y: auto; padding-right: 10px; }
-        #lista::-webkit-scrollbar { width: 4px; }
-        #lista::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
-
-        .item { background: rgba(255,255,255,0.03); padding: 15px 20px; border-radius: 15px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid transparent; transition: 0.2s; }
-        .item:hover { border-color: var(--accent-hum); background: rgba(0, 210, 255, 0.05); }
-
-        .data-divider { color: var(--accent-hum); font-size: 10px; font-weight: 900; margin: 25px 0 10px; display: flex; align-items: center; text-transform: uppercase; }
+        #lista { max-height: 400px; overflow-y: auto; padding-right: 5px; }
+        .item { background: rgba(255,255,255,0.03); padding: 15px 20px; border-radius: 15px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .data-divider { color: var(--accent-hum); font-size: 10px; font-weight: 900; margin: 25px 0 10px; display: flex; align-items: center; }
         .data-divider::after { content: ""; flex: 1; height: 1px; background: var(--border); margin-left: 10px; }
         
         .btn-group { display: flex; gap: 10px; margin-top: 20px; }
-        .btn { flex: 1; padding: 16px; border: none; border-radius: 14px; font-weight: 800; cursor: pointer; font-size: 12px; text-transform: uppercase; transition: 0.3s; font-family: inherit; }
+        .btn { flex: 1; padding: 16px; border: none; border-radius: 14px; font-weight: 800; cursor: pointer; font-size: 12px; text-transform: uppercase; }
         .btn-pdf { background: var(--accent-hum); color: #000; }
-        .btn-pdf:hover { transform: translateY(-2px); filter: brightness(1.1); }
         .btn-back { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
     </style>
     
@@ -50,16 +39,16 @@
 <body>
 
 <div class="card">
-    <header>
-        <h1>Business Intelligence</h1>
-        <p>Monitoramento Analítico NewEnergy</p>
+    <header style="border-left: 4px solid var(--accent-hum); padding-left: 20px; margin-bottom: 25px;">
+        <h1 style="margin:0; font-size:22px;">Business Intelligence</h1>
+        <p style="margin:0; color:var(--text-muted); font-size:12px;">Relatório de Performance NewEnergy</p>
     </header>
 
     <div class="tabs">
-        <div class="tab active" onclick="mudarAba('diario', this)">Diário</div>
-        <div class="tab" onclick="mudarAba('semanal', this)">Semanal</div>
-        <div class="tab" onclick="mudarAba('mensal', this)">Mensal</div>
-        <div class="tab" onclick="mudarAba('anual', this)">Anual</div>
+        <div class="tab active" data-periodo="diario">Diário</div>
+        <div class="tab" data-periodo="semanal">Semanal</div>
+        <div class="tab" data-periodo="mensal">Mensal</div>
+        <div class="tab" data-periodo="anual">Anual</div>
     </div>
 
     <div class="chart-container">
@@ -69,226 +58,161 @@
     <div id="lista"></div>
 
     <div class="btn-group">
-        <button class="btn btn-pdf" onclick="exportarPDF()">Gerar PDF Oficial</button>
+        <button class="btn btn-pdf" onclick="exportarPDF()">Exportar PDF</button>
         <button class="btn btn-back" onclick="location.href='painel.html'">Voltar</button>
     </div>
 </div>
 
 <script>
-/* CONFIGURAÇÃO FIREBASE */
-const firebaseConfig = {
+firebase.initializeApp({
     apiKey:"AIzaSyB5FnkQiFi3gn9Iup2KNcbrKxWd-0Jjo6Y",
     authDomain:"oficial-688e8.firebaseapp.com",
     databaseURL:"https://oficial-688e8-default-rtdb.firebaseio.com/",
     projectId:"oficial-688e8"
-};
-firebase.initializeApp(firebaseConfig);
+});
 const db = firebase.database();
-
-let abaAtual = "diario";
 let myChart = null;
-let dadosFiltrados = [];
+let globalData = []; // Única fonte de verdade
 
-function mudarAba(aba, el) {
-    abaAtual = aba;
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    el.classList.add('active');
-    carregarDados();
-}
+// Gerenciador de Abas
+document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        const p = this.getAttribute('data-periodo');
+        fetchData(p);
+    });
+});
 
-function carregarDados() {
+async function fetchData(periodo) {
     const listaDiv = document.getElementById("lista");
-    listaDiv.innerHTML = "<p style='text-align:center; padding:50px; color:#64748b;'>Sincronizando registros únicos...</p>";
+    listaDiv.innerHTML = "<p style='text-align:center; padding:50px;'>Sincronizando registros de " + periodo + "...</p>";
     
-    // 1. LIMPEZA TOTAL antes de carregar nova aba (Evita mistura)
-    dadosFiltrados = [];
-    if(myChart) myChart.destroy();
+    // RESET TOTAL: Limpa o array global antes de qualquer coisa
+    globalData = [];
 
-    // 2. BUSCA NO FIREBASE
-    db.ref("/historico/" + abaAtual).once("value").then(snap => {
-        const pastas = snap.val();
-        if (!pastas) {
-            listaDiv.innerHTML = "<p style='text-align:center; padding:40px;'>Nenhum dado encontrado para " + abaAtual + ".</p>";
+    try {
+        const snapshot = await db.ref("/historico/" + periodo).once("value");
+        const base = snapshot.val();
+
+        if (!base) {
+            listaDiv.innerHTML = "<p style='text-align:center; padding:40px;'>Nenhum registro para este período.</p>";
+            if(myChart) myChart.destroy();
             return;
         }
 
-        let tempArray = [];
-        const hoje = new Date();
-
-        // 3. FILTRAGEM POR ESCOPO (O Segredo para não misturar)
-        Object.keys(pastas).forEach(dataPasta => {
-            const registros = pastas[dataPasta];
-            
+        // Processamento Seguro
+        Object.keys(base).forEach(dataPasta => {
+            const registros = base[dataPasta];
             Object.keys(registros).forEach(ts => {
-                const itemTS = parseInt(ts);
-                const dataItem = new Date(itemTS * 1000);
-                let incluir = false;
-
-                // Lógica de tempo real para cada aba
-                const diffDias = (hoje - dataItem) / (1000 * 60 * 60 * 24);
-
-                if (abaAtual === 'diario' && diffDias < 1.5) incluir = true;
-                else if (abaAtual === 'semanal' && diffDias < 8) incluir = true;
-                else if (abaAtual === 'mensal' && diffDias < 32) incluir = true;
-                else if (abaAtual === 'anual') incluir = true;
-
-                if (incluir) {
-                    tempArray.push({
-                        ts: itemTS,
-                        temp: parseFloat(registros[ts].temp || 0),
-                        hum: parseFloat(registros[ts].hum || 0)
-                    });
-                }
+                globalData.push({
+                    ts: parseInt(ts),
+                    temp: parseFloat(registros[ts].temp || 0),
+                    hum: parseFloat(registros[ts].hum || 0),
+                    dataStr: new Date(parseInt(ts) * 1000).toLocaleDateString('pt-BR'),
+                    horaStr: new Date(parseInt(ts) * 1000).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})
+                });
             });
         });
 
-        // 4. ORDENAÇÃO E EXIBIÇÃO
-        tempArray.sort((a, b) => b.ts - a.ts); // Mais recentes primeiro na lista
-        dadosFiltrados = tempArray;
+        // Ordenar por Tempo (Mais novos primeiro para a lista)
+        globalData.sort((a, b) => b.ts - a.ts);
 
-        listaDiv.innerHTML = "";
-        let dataRef = "";
+        renderUI();
+        renderChart();
 
-        dadosFiltrados.forEach(item => {
-            const dt = new Date(item.ts * 1000).toLocaleString("pt-BR");
-            const [data, hora] = dt.split(', ');
+    } catch (error) {
+        console.error("Erro ao buscar dados:", error);
+    }
+}
 
-            if (data !== dataRef) {
-                const div = document.createElement('div');
-                div.className = 'data-divider';
-                div.innerHTML = `📅 ${data}`;
-                listaDiv.appendChild(div);
-                dataRef = data;
-            }
+function renderUI() {
+    const listaDiv = document.getElementById("lista");
+    listaDiv.innerHTML = "";
+    let lastDate = "";
 
-            const divItem = document.createElement('div');
-            divItem.className = 'item';
-            divItem.innerHTML = `
-                <div style="line-height:1.2;">
-                    <span style="font-weight:800; font-size:15px; display:block;">${hora}</span>
-                    <small style="color:var(--text-muted); font-size:10px;">${data}</small>
-                </div>
-                <div style="display:flex; gap:20px;">
-                    <div style="text-align:right;"><small style="display:block; font-size:8px; color:var(--text-muted); text-transform:uppercase;">Temp</small><span style="color:var(--accent-temp); font-weight:900; font-size:16px;">${item.temp}°C</span></div>
-                    <div style="text-align:right;"><small style="display:block; font-size:8px; color:var(--text-muted); text-transform:uppercase;">Umid</small><span style="color:var(--accent-hum); font-weight:900; font-size:16px;">${item.hum}%</span></div>
-                </div>`;
-            listaDiv.appendChild(divItem);
-        });
+    globalData.forEach(item => {
+        if (item.dataStr !== lastDate) {
+            const divider = document.createElement('div');
+            divider.className = 'data-divider';
+            divider.innerHTML = `📅 ${item.dataStr}`;
+            listaDiv.appendChild(divider);
+            lastDate = item.dataStr;
+        }
 
-        desenharGrafico();
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.innerHTML = `
+            <div><b style="font-size:16px;">${item.horaStr}</b><br><small style="color:var(--text-muted)">${item.dataStr}</small></div>
+            <div style="display:flex; gap:15px;">
+                <div style="text-align:right"><small style="display:block; font-size:9px;">TEMP</small><span style="color:var(--accent-temp); font-weight:900;">${item.temp}°C</span></div>
+                <div style="text-align:right"><small style="display:block; font-size:9px;">UMID</small><span style="color:var(--accent-hum); font-weight:900;">${item.hum}%</span></div>
+            </div>`;
+        listaDiv.appendChild(div);
     });
 }
 
-function desenharGrafico() {
-    // Ordenar do mais antigo para o novo para o gráfico (Esquerda -> Direita)
-    const dadosGrafico = [...dadosFiltrados].sort((a, b) => a.ts - b.ts);
-    
+function renderChart() {
+    if (myChart) myChart.destroy();
+
+    // No gráfico, mostramos do antigo para o novo
+    const chartData = [...globalData].sort((a, b) => a.ts - b.ts);
     const ctx = document.getElementById('mainChart').getContext('2d');
+
     myChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: dadosGrafico.map(d => {
-                const dt = new Date(d.ts * 1000);
-                return abaAtual === 'diario' ? dt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : dt.toLocaleDateString([], {day:'2-digit', month:'2-digit'});
-            }),
+            labels: chartData.map(d => chartData.length > 20 ? d.dataStr : d.horaStr),
             datasets: [
-                {
-                    label: 'Temperatura (°C)',
-                    data: dadosGrafico.map(d => d.temp),
-                    borderColor: '#f43f5e',
-                    backgroundColor: 'rgba(244, 63, 94, 0.1)',
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 2,
-                    pointHoverRadius: 6,
-                    borderWidth: 2
-                },
-                {
-                    label: 'Umidade (%)',
-                    data: dadosGrafico.map(d => d.hum),
-                    borderColor: '#00d2ff',
-                    backgroundColor: 'rgba(0, 210, 255, 0.1)',
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 2,
-                    pointHoverRadius: 6,
-                    borderWidth: 2
-                }
+                { label: 'Temperatura', data: chartData.map(d => d.temp), borderColor: '#f43f5e', tension: 0.4, pointRadius: 3, borderWidth: 2 },
+                { label: 'Umidade', data: chartData.map(d => d.hum), borderColor: '#00d2ff', tension: 0.4, pointRadius: 3, borderWidth: 2 }
             ]
         },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
+            responsive: true, maintainAspectRatio: false,
             interaction: { mode: 'index', intersect: false },
-            plugins: {
+            plugins: { 
                 legend: { display: false },
                 tooltip: {
                     backgroundColor: '#101625',
-                    titleColor: '#00d2ff',
-                    borderColor: 'rgba(255,255,255,0.1)',
-                    borderWidth: 1,
                     padding: 12,
-                    displayColors: true,
                     callbacks: {
-                        label: (context) => ` ${context.dataset.label}: ${context.raw}${context.datasetIndex === 0 ? '°C' : '%'}`
+                        title: (c) => `Data/Hora: ${chartData[c[0].dataIndex].dataStr} ${chartData[c[0].dataIndex].horaStr}`
                     }
                 }
             },
             scales: {
-                x: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { display: false } },
+                x: { ticks: { color: '#64748b', font: {size: 10} }, grid: { display: false } },
                 y: { ticks: { color: '#64748b' }, grid: { color: 'rgba(255,255,255,0.03)' } }
             }
         }
     });
 }
 
-async function exportarPDF() {
+function exportarPDF() {
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF("p", "mm", "a4");
-    
-    // Design do Cabeçalho PDF
+    const doc = new jsPDF();
+    const activeTab = document.querySelector('.tab.active').innerText;
+
     doc.setFillColor(7, 10, 19);
-    doc.rect(0, 0, 210, 40, 'F');
+    doc.rect(0, 0, 210, 30, 'F');
     doc.setTextColor(0, 210, 255);
-    doc.setFontSize(18);
-    doc.text("NEWENERGY - BUSINESS INTELLIGENCE", 15, 18);
-    doc.setFontSize(10);
-    doc.setTextColor(150);
-    doc.text(`RELATÓRIO: ${abaAtual.toUpperCase()} | EMITIDO EM: ${new Date().toLocaleString()}`, 15, 28);
-    
-    // Imagem do Gráfico
-    const chartImg = document.getElementById('mainChart').toDataURL("image/png", 1.0);
-    doc.addImage(chartImg, 'PNG', 10, 45, 190, 70);
+    doc.text(`RELATÓRIO NEWENERGY - ${activeTab}`, 15, 20);
 
-    let py = 125;
-    doc.setTextColor(0);
-    doc.setFont(undefined, 'bold');
-    doc.text("HISTÓRICO DE REGISTROS", 15, py);
-    py += 10;
-
-    doc.setFont(undefined, 'normal');
-    doc.setFontSize(9);
-    
-    // Tabela Simples no PDF
-    dadosFiltrados.forEach((d, i) => {
+    let py = 40;
+    globalData.forEach((d, i) => {
         if (py > 280) { doc.addPage(); py = 20; }
-        const dataStr = new Date(d.ts * 1000).toLocaleString("pt-BR");
-        
-        doc.setTextColor(100);
-        doc.text(`${dataStr}`, 15, py);
-        doc.setTextColor(0);
-        doc.text(`Temp: ${d.temp}°C`, 80, py);
-        doc.text(`Umid: ${d.hum}%`, 130, py);
-        
-        doc.setDrawColor(230);
-        doc.line(15, py+2, 195, py+2);
-        py += 8;
+        doc.setFontSize(10);
+        doc.setTextColor(50);
+        doc.text(`${d.dataStr} ${d.horaStr} | Temp: ${d.temp}C | Hum: ${d.hum}%`, 15, py);
+        py += 7;
     });
 
-    doc.save(`Relatorio_NewEnergy_${abaAtual}.pdf`);
+    doc.save(`Relatorio_${activeTab}.pdf`);
 }
 
-firebase.auth().onAuthStateChanged(u => { if(u) carregarDados(); else location.href="index.html"; });
+// Inicialização segura
+firebase.auth().onAuthStateChanged(u => { if(u) fetchData('diario'); else location.href='index.html'; });
 </script>
 </body>
 </html>
