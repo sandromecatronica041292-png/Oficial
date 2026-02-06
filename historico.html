@@ -33,7 +33,7 @@
         .btn-pdf { background: var(--accent-hum); color: #000; box-shadow: 0 10px 20px rgba(0, 210, 255, 0.2); }
         .btn-back { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
 
-        .valor-critico { color: var(--danger) !important; font-weight: 900; text-decoration: underline; }
+        .valor-critico { color: var(--danger) !important; font-weight: 900; }
     </style>
     
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -47,7 +47,7 @@
 <div class="card">
     <header style="border-left: 4px solid var(--accent-hum); padding-left: 20px; margin-bottom: 25px;">
         <h1 style="margin:0; font-size:24px;">Advanced Intelligence</h1>
-        <p style="margin:0; color:var(--text-muted); font-size:12px;">Sincronização em Tempo Real com Painel de Controle</p>
+        <p style="margin:0; color:var(--text-muted); font-size:12px;">Relatório de Performance Técnica</p>
     </header>
 
     <div class="tabs">
@@ -64,13 +64,12 @@
     <div id="lista"></div>
 
     <div class="btn-group">
-        <button class="btn btn-pdf" onclick="exportarPDF()">Gerar Relatório Analítico</button>
+        <button class="btn btn-pdf" onclick="exportarPDF()">Exportar Relatório Analítico</button>
         <button class="btn btn-back" onclick="location.href='painel.html'">Voltar</button>
     </div>
 </div>
 
 <script>
-// Firebase Config
 firebase.initializeApp({
     apiKey: "AIzaSyB5FnkQiFi3gn9Iup2KNcbrKxWd-0Jjo6Y",
     authDomain: "oficial-688e8.firebaseapp.com",
@@ -79,39 +78,37 @@ firebase.initializeApp({
 });
 const db = firebase.database();
 let myChart = null, globalData = [];
-let limites = { tempMax: 100, tempMin: 0, umidMax: 100, umidMin: 0 };
 
-// 1. MONITORAMENTO CONTÍNUO DOS LIMITES DO PAINEL
-function iniciarSincronizacaoLimites() {
-    db.ref("/configuracoes").on("value", (snap) => {
-        const data = snap.val();
-        if (data) {
-            limites = {
-                tempMax: parseFloat(data.tempMax),
-                tempMin: parseFloat(data.tempMin),
-                umidMax: parseFloat(data.umidMax),
-                umidMin: parseFloat(data.umidMin)
-            };
-            console.log("Limites Atualizados do Painel:", limites);
-            // Re-renderiza a lista e gráfico para aplicar novas cores imediatamente
-            if (globalData.length > 0) {
-                renderUI();
-            }
+// OBJETIVO: SINCRONIZAR COM OS LIMITES DO SEU PAINEL
+let limitesAtivos = { tMin: 0, tMax: 100, hMin: 0, hMax: 100 };
+
+function sincronizarConfiguracoes() {
+    // Apontando para o nó correto do seu código do painel: /config_alertas
+    db.ref("/config_alertas").on("value", (snap) => {
+        const val = snap.val();
+        if (val) {
+            limitesAtivos.tMin = parseFloat(val.tMin);
+            limitesAtivos.tMax = parseFloat(val.tMax);
+            limitesAtivos.hMin = parseFloat(val.hMin);
+            limitesAtivos.hMax = parseFloat(val.hMax);
+            console.log("Limites Sincronizados do Painel:", limitesAtivos);
+            
+            // Se já houver dados na tela, atualiza as cores imediatamente
+            if (globalData.length > 0) renderUI();
         }
     });
 }
 
-// 2. BUSCA DE DADOS DO HISTÓRICO
 async function fetchData(periodo) {
     const listaDiv = document.getElementById("lista");
-    listaDiv.innerHTML = "<p style='text-align:center; padding:50px;'>Acessando Base de Dados...</p>";
+    listaDiv.innerHTML = "<p style='text-align:center; padding:50px;'>Sincronizando registros...</p>";
     globalData = []; 
 
     try {
         const snapshot = await db.ref("/historico/" + periodo).once("value");
         const base = snapshot.val();
         if (!base) {
-            listaDiv.innerHTML = "<p style='text-align:center; padding:40px;'>Sem registros.</p>";
+            listaDiv.innerHTML = "<p style='text-align:center; padding:40px;'>Nenhum dado encontrado.</p>";
             if(myChart) myChart.destroy();
             return;
         }
@@ -163,20 +160,20 @@ function renderUI() {
             ultimaData = d.data;
         }
 
-        // VERIFICAÇÃO CONTRA OS LIMITES DO PAINEL
-        const tErro = (d.temp > limites.tempMax || d.temp < limites.tempMin);
-        const hErro = (d.hum > limites.umidMax || d.hum < limites.umidMin);
+        // VERIFICAÇÃO CONTRA OS LIMITES DO PAINEL (tMin, tMax, hMin, hMax)
+        const erroT = (d.temp > limitesAtivos.tMax || d.temp < limitesAtivos.tMin);
+        const erroH = (d.hum > limitesAtivos.hMax || d.hum < limitesAtivos.hMin);
         
         const item = document.createElement('div');
-        item.className = `item ${(tErro || hErro) ? 'alerta' : ''}`;
+        item.className = `item ${(erroT || erroH) ? 'alerta' : ''}`;
         item.innerHTML = `
             <div><b>${d.hora}</b><br><small style="color:var(--text-muted)">ID: ${d.ts}</small></div>
             <div style="display:flex; gap:20px; text-align:right;">
                 <div><small style="display:block; font-size:8px;">TEMPERATURA</small>
-                    <span class="${tErro ? 'valor-critico' : ''}" style="color:var(--accent-temp); font-weight:800;">${d.temp.toFixed(2)}°C</span>
+                    <span class="${erroT ? 'valor-critico' : ''}" style="color:var(--accent-temp); font-weight:800;">${d.temp.toFixed(2)}°C</span>
                 </div>
                 <div><small style="display:block; font-size:8px;">UMIDADE</small>
-                    <span class="${hErro ? 'valor-critico' : ''}" style="color:var(--accent-hum); font-weight:800;">${d.hum.toFixed(2)}%</span>
+                    <span class="${erroH ? 'valor-critico' : ''}" style="color:var(--accent-hum); font-weight:800;">${d.hum.toFixed(2)}%</span>
                 </div>
             </div>`;
         listaDiv.appendChild(item);
@@ -205,10 +202,6 @@ async function exportarPDF() {
     const doc = new jsPDF();
     const aba = document.querySelector('.tab.active').innerText;
     
-    // Cálculos
-    const mediaT = globalData.length ? (globalData.reduce((a, b) => a + b.temp, 0) / globalData.length) : 0;
-    const maxT = globalData.length ? Math.max(...globalData.map(d => d.temp)) : 0;
-
     // Header Dark
     doc.setFillColor(16, 22, 37);
     doc.rect(0, 0, 210, 45, 'F');
@@ -217,29 +210,28 @@ async function exportarPDF() {
     doc.text("NEWENERGY", 15, 20);
     doc.setFontSize(9);
     doc.setTextColor(0, 210, 255);
-    doc.text("RELATÓRIO TÉCNICO - LIMITES SINCRONIZADOS COM PAINEL", 15, 28);
+    doc.text("RELATÓRIO DE MONITORAMENTO - PARÂMETROS DE CONTROLE", 15, 28);
     
-    // Resumo com os Limites Atuais do Painel
+    // Dashboard Resumo
     doc.setFillColor(245, 247, 250);
-    doc.rect(15, 55, 180, 20, 'F');
-    doc.setTextColor(16, 22, 37); doc.setFontSize(9);
-    doc.text(`Limites no momento da geração: Temp[${limites.tempMin}-${limites.tempMax}] | Umid[${limites.umidMin}-${limites.umidMax}]`, 20, 62);
-    doc.text(`Média Temperatura: ${mediaT.toFixed(2)}°C  |  Pico: ${maxT.toFixed(2)}°C`, 20, 70);
+    doc.rect(15, 55, 180, 15, 'F');
+    doc.setTextColor(100); doc.setFontSize(8);
+    doc.text(`Limites Configurados no Painel: Temp [${limitesAtivos.tMin}-${limitesAtivos.tMax}] | Hum [${limitesAtivos.hMin}-${limitesAtivos.hMax}]`, 20, 65);
 
     // Gráfico
     const imgData = document.getElementById('mainChart').toDataURL("image/png", 1.0);
-    doc.addImage(imgData, 'PNG', 15, 85, 180, 60);
+    doc.addImage(imgData, 'PNG', 15, 80, 180, 60);
 
     // Tabela
-    let py = 155;
-    doc.setFontSize(10); doc.text("LOG DE REGISTROS TÉCNICOS", 15, py); py += 8;
+    let py = 150;
+    doc.setTextColor(0); doc.setFontSize(10); doc.text("LOG DE REGISTROS TÉCNICOS", 15, py); py += 8;
     
     doc.setFillColor(230, 235, 245);
     doc.rect(15, py, 180, 8, 'F');
     doc.setFontSize(8);
     doc.text("DATA/HORA", 20, py + 5.5);
-    doc.text("TEMP", 80, py + 5.5);
-    doc.text("UMID", 120, py + 5.5);
+    doc.text("TEMPERATURA", 80, py + 5.5);
+    doc.text("UMIDADE", 120, py + 5.5);
     doc.text("STATUS", 165, py + 5.5);
     py += 8;
 
@@ -247,25 +239,24 @@ async function exportarPDF() {
         if (py > 270) { doc.addPage(); py = 20; }
         if (i % 2 === 0) { doc.setFillColor(248, 250, 255); doc.rect(15, py, 180, 7, 'F'); }
         
-        const tErro = (d.temp > limites.tempMax || d.temp < limites.tempMin);
-        const hErro = (d.hum > limites.umidMax || d.hum < limites.umidMin);
+        const tErr = (d.temp > limitesAtivos.tMax || d.temp < limitesAtivos.tMin);
+        const hErr = (d.hum > limitesAtivos.hMax || d.hum < limitesAtivos.hMin);
         
-        if (tErro || hErro) doc.setTextColor(200, 0, 0); else doc.setTextColor(80);
+        if (tErr || hErr) doc.setTextColor(200, 0, 0); else doc.setTextColor(80);
         
         doc.text(`${d.data} ${d.hora}`, 20, py + 5);
         doc.text(`${d.temp.toFixed(2)}°C`, 80, py + 5);
         doc.text(`${d.hum.toFixed(2)}%`, 120, py + 5);
-        doc.text((tErro || hErro) ? "ALERTA" : "NORMAL", 165, py + 5);
+        doc.text((tErr || hErr) ? "ALERTA" : "NORMAL", 165, py + 5);
         py += 7;
     });
 
-    doc.save(`Relatorio_Sincronizado_${aba}.pdf`);
+    doc.save(`Relatorio_Performance_${aba}.pdf`);
 }
 
-// Inicialização
 firebase.auth().onAuthStateChanged(u => { 
     if(u) {
-        iniciarSincronizacaoLimites(); // Começa a ouvir o painel imediatamente
+        sincronizarConfiguracoes(); // Começa a ouvir os limites do Painel
         fetchData('diario'); 
     } else {
         location.href='index.html'; 
