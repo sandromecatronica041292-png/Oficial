@@ -3,94 +3,53 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>NewEnergy | Business Intelligence Pro</title>
-    
+    <title>NewEnergy | Business Intelligence</title>
     <style>
         :root {
             --bg-dark: #070a13; --card-bg: #101625;
-            --accent-temp: #f43f5e; --accent-hum: #00d2ff;
+            --accent-hum: #00d2ff; --accent-temp: #f43f5e;
             --text-main: #f0f4f8; --text-muted: #64748b;
-            --glass: rgba(255, 255, 255, 0.03); --border: rgba(255, 255, 255, 0.08);
+            --border: rgba(255, 255, 255, 0.08);
         }
-
-        body { 
-            margin: 0; font-family: 'Inter', sans-serif; 
-            background: var(--bg-dark); color: var(--text-main); 
-            display: flex; justify-content: center; padding: 20px;
-        }
-
-        .card { 
-            background: var(--card-bg); border-radius: 28px; padding: 30px; 
-            width: 100%; max-width: 900px; box-shadow: 0 25px 50px rgba(0,0,0,0.5); 
-            border: 1px solid var(--border); backdrop-filter: blur(10px);
-        }
-
-        header { border-left: 4px solid var(--accent-hum); padding-left: 20px; margin-bottom: 25px; }
-        header h1 { margin: 0; font-size: 22px; text-transform: uppercase; font-weight: 900; }
-
-        /* Tabs */
-        .tabs { 
-            display: flex; background: #070a13; padding: 5px; 
-            border-radius: 14px; margin-bottom: 20px; gap: 4px;
-        }
-        .tab { 
-            flex: 1; padding: 12px; text-align: center; border-radius: 10px; 
-            cursor: pointer; font-size: 11px; font-weight: 700; 
-            color: var(--text-muted); transition: 0.3s; text-transform: uppercase;
-        }
+        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-dark); color: var(--text-main); display: flex; justify-content: center; padding: 20px; }
+        .card { background: var(--card-bg); border-radius: 28px; padding: 30px; width: 100%; max-width: 900px; border: 1px solid var(--border); box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
+        
+        /* Tabs Estilizadas */
+        .tabs { display: flex; background: #070a13; padding: 5px; border-radius: 14px; margin-bottom: 20px; gap: 4px; border: 1px solid var(--border); }
+        .tab { flex: 1; padding: 12px; text-align: center; border-radius: 10px; cursor: pointer; font-size: 11px; font-weight: 700; color: var(--text-muted); transition: 0.3s; text-transform: uppercase; }
         .tab.active { background: var(--card-bg); color: var(--accent-hum); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
 
-        /* Gráfico */
-        .chart-container { 
-            background: rgba(0,0,0,0.2); border-radius: 20px; padding: 15px; 
-            margin-bottom: 25px; border: 1px solid var(--border); height: 350px;
-        }
-
-        /* Lista */
+        .chart-container { background: rgba(0,0,0,0.2); border-radius: 20px; padding: 15px; margin-bottom: 25px; border: 1px solid var(--border); height: 350px; }
         #lista { max-height: 400px; overflow-y: auto; }
-        .data-divider { 
-            display: flex; align-items: center; margin: 25px 0 10px; 
-            color: var(--accent-hum); font-size: 10px; font-weight: 900; letter-spacing: 1px;
-        }
+        .item { background: rgba(255,255,255,0.03); padding: 15px 20px; border-radius: 15px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid transparent; }
+        .data-divider { color: var(--accent-hum); font-size: 10px; font-weight: 900; margin: 25px 0 10px; display: flex; align-items: center; }
         .data-divider::after { content: ""; flex: 1; height: 1px; background: var(--border); margin-left: 10px; }
-
-        .item { 
-            background: var(--glass); padding: 15px 20px; border-radius: 15px; 
-            margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;
-        }
-        .time-box .h { font-size: 16px; font-weight: 800; display: block; }
-        .time-box .d { font-size: 10px; color: var(--text-muted); }
-
-        .metrics { display: flex; gap: 20px; }
-        .metric-unit { text-align: right; }
-        .metric-unit label { font-size: 8px; color: var(--text-muted); text-transform: uppercase; display: block; }
-        .metric-unit span { font-weight: 900; font-size: 16px; }
-
+        
         .btn-group { display: flex; gap: 10px; margin-top: 20px; }
-        .btn { flex: 1; padding: 16px; border: none; border-radius: 14px; font-weight: 800; cursor: pointer; font-size: 12px; text-transform: uppercase; }
+        .btn { flex: 1; padding: 16px; border: none; border-radius: 14px; font-weight: 800; cursor: pointer; font-size: 12px; text-transform: uppercase; transition: 0.3s; }
         .btn-pdf { background: var(--accent-hum); color: #000; }
         .btn-back { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
     </style>
-
+    
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
-
 <body>
+
 <div class="card">
-    <header>
-        <h1>Business Intelligence</h1>
-        <p style="margin:0; font-size:12px; color:var(--text-muted)">Relatórios de Performance de Ativos</p>
+    <header style="border-left: 4px solid var(--accent-hum); padding-left: 20px; margin-bottom: 25px;">
+        <h1 style="margin:0; font-size:22px; text-transform:uppercase;">Business Intelligence</h1>
+        <p style="margin:0; color:var(--text-muted); font-size:12px;">Relatório de Ativos de Última Geração</p>
     </header>
 
     <div class="tabs">
-        <div class="tab active" data-aba="diario">Diário</div>
-        <div class="tab" data-aba="semanal">Semanal</div>
-        <div class="tab" data-aba="mensal">Mensal</div>
-        <div class="tab" data-aba="anual">Anual</div>
+        <div class="tab active" onclick="mudarAba('diario', this)">Diário</div>
+        <div class="tab" onclick="mudarAba('semanal', this)">Semanal</div>
+        <div class="tab" onclick="mudarAba('mensal', this)">Mensal</div>
+        <div class="tab" onclick="mudarAba('anual', this)">Anual</div>
     </div>
 
     <div class="chart-container">
@@ -100,8 +59,8 @@
     <div id="lista"></div>
 
     <div class="btn-group">
-        <button class="btn btn-pdf" onclick="exportarPDF()">Exportar PDF Profissional</button>
-        <button class="btn btn-back" onclick="location.href='painel.html'">Voltar</button>
+        <button class="btn btn-pdf" onclick="exportarPDF()">Gerar PDF Oficial</button>
+        <button class="btn btn-back" onclick="location.href='painel.html'">Voltar ao Painel</button>
     </div>
 </div>
 
@@ -115,121 +74,112 @@ firebase.initializeApp({
 const db = firebase.database();
 let abaAtual = "diario";
 let myChart = null;
-let dadosLimpos = [];
+let dadosParaGrafico = [];
 
-// Gerenciar troca de abas corretamente
-document.querySelectorAll('.tab').forEach(tab => {
-    tab.onclick = function() {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        this.classList.add('active');
-        abaAtual = this.getAttribute('data-aba');
-        carregarHistorico();
-    };
-});
+function mudarAba(aba, el) {
+    abaAtual = aba;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    carregarDados();
+}
 
-function carregarHistorico() {
-    const lista = document.getElementById("lista");
-    lista.innerHTML = "<p style='text-align:center; padding:50px; color:var(--text-muted)'>Filtrando base de dados...</p>";
-    dadosLimpos = [];
+function carregarDados() {
+    const listaDiv = document.getElementById("lista");
+    listaDiv.innerHTML = "<p style='text-align:center; padding:50px;'>Filtrando registros...</p>";
+    
+    // IMPORTANTE: Limpamos o array para não misturar dados de abas diferentes
+    dadosParaGrafico = [];
 
-    // Lógica Corrigida: Buscar apenas na pasta da aba selecionada
-    db.ref("/historico/" + abaAtual).limitToLast(10).once("value").then(snap => {
+    db.ref("/historico/" + abaAtual).once("value").then(snap => {
         const pastas = snap.val();
         if (!pastas) {
-            lista.innerHTML = "<p style='text-align:center; padding:40px;'>Sem registros nesta categoria.</p>";
-            renderizarGrafico([]);
+            listaDiv.innerHTML = "<p style='text-align:center; padding:40px;'>Nenhum registro encontrado nesta categoria.</p>";
+            if(myChart) myChart.destroy();
             return;
         }
 
-        lista.innerHTML = "";
-        let dataRef = "";
-        const keysOrdenadas = Object.keys(pastas).sort().reverse();
+        let listaTemporaria = [];
 
-        keysOrdenadas.forEach(dataPasta => {
+        // 1. Extrair todos os dados de todas as subpastas de data
+        Object.keys(pastas).forEach(dataPasta => {
             const registros = pastas[dataPasta];
-            const timestamps = Object.keys(registros).sort().reverse();
-
-            timestamps.forEach(ts => {
-                const r = registros[ts];
-                const dt = new Date(ts * 1000).toLocaleString("pt-BR");
-                const [data, hora] = dt.split(', ');
-
-                if (data !== dataRef) {
-                    const div = document.createElement('div');
-                    div.className = 'data-divider';
-                    div.innerHTML = `📅 ${data}`;
-                    lista.appendChild(div);
-                    dataRef = data;
-                }
-
-                dadosLimpos.push({ data, hora, temp: r.temp, hum: r.hum, ts });
-
-                const item = document.createElement('div');
-                item.className = 'item';
-                item.innerHTML = `
-                    <div class="time-box"><span class="h">${hora}</span><span class="d">${data}</span></div>
-                    <div class="metrics">
-                        <div class="metric-unit"><label>Temp</label><span style="color:var(--accent-temp)">${r.temp}°C</span></div>
-                        <div class="metric-unit"><label>Hum</label><span style="color:var(--accent-hum)">${r.hum}%</span></div>
-                    </div>`;
-                lista.appendChild(item);
+            Object.keys(registros).forEach(ts => {
+                listaTemporaria.push({
+                    timestamp: parseInt(ts),
+                    temp: registros[ts].temp,
+                    hum: registros[ts].hum
+                });
             });
         });
-        renderizarGrafico(dadosLimpos);
+
+        // 2. ORDENAÇÃO CRONOLÓGICA (Garante que não misture)
+        listaTemporaria.sort((a, b) => b.timestamp - a.timestamp); // Do mais novo para o antigo para a lista
+
+        // 3. Renderizar a Lista e preparar Gráfico
+        listaDiv.innerHTML = "";
+        let dataRef = "";
+        
+        listaTemporaria.forEach(item => {
+            const dt = new Date(item.timestamp * 1000).toLocaleString("pt-BR");
+            const [data, hora] = dt.split(', ');
+
+            if (data !== dataRef) {
+                const div = document.createElement('div');
+                div.className = 'data-divider';
+                div.innerHTML = `📅 ${data}`;
+                listaDiv.appendChild(div);
+                dataRef = data;
+            }
+
+            const divItem = document.createElement('div');
+            divItem.className = 'item';
+            divItem.innerHTML = `
+                <div style="font-weight:800;">${hora} <small style="display:block; font-weight:400; color:#64748b;">${data}</small></div>
+                <div style="display:flex; gap:20px;">
+                    <div style="text-align:right;"><small style="display:block; font-size:9px; color:#64748b;">TEMP</small><span style="color:var(--accent-temp); font-weight:900;">${item.temp}°C</span></div>
+                    <div style="text-align:right;"><small style="display:block; font-size:9px; color:#64748b;">UMID</small><span style="color:var(--accent-hum); font-weight:900;">${item.hum}%</span></div>
+                </div>`;
+            listaDiv.appendChild(divItem);
+            
+            // Adiciona ao gráfico na ordem correta
+            dadosParaGrafico.push({ hora, data, temp: item.temp, hum: item.hum, ts: item.timestamp });
+        });
+
+        desenharGrafico();
     });
 }
 
-function renderizarGrafico(dados) {
+function desenharGrafico() {
     if (myChart) myChart.destroy();
-    const raw = [...dados].reverse(); // Inverte para o gráfico ler do mais antigo para o novo
+    
+    // Invertemos para o gráfico mostrar do antigo -> novo (esquerda para direita)
+    const dadosOrdenados = [...dadosParaGrafico].sort((a, b) => a.ts - b.ts);
 
     const ctx = document.getElementById('mainChart').getContext('2d');
-    
     myChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: raw.map(d => d.hora),
-            datasets: [{
-                label: 'Temperatura °C',
-                data: raw.map(d => d.temp),
-                borderColor: '#f43f5e',
-                backgroundColor: 'rgba(244, 63, 94, 0.1)',
-                fill: true,
-                tension: 0.4,
-                pointRadius: 4,
-                pointHoverRadius: 8
-            }, {
-                label: 'Umidade %',
-                data: raw.map(d => d.hum),
-                borderColor: '#00d2ff',
-                fill: false,
-                tension: 0.4,
-                pointRadius: 4,
-                pointHoverRadius: 8
-            }]
+            labels: dadosOrdenados.map(d => abaAtual === 'diario' ? d.hora : d.data),
+            datasets: [
+                { label: 'Temperatura', data: dadosOrdenados.map(d => d.temp), borderColor: '#f43f5e', tension: 0.4, pointRadius: 4 },
+                { label: 'Umidade', data: dadosOrdenados.map(d => d.hum), borderColor: '#00d2ff', tension: 0.4, pointRadius: 4 }
+            ]
         },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false }, // Mostra os dois dados ao passar o mouse perto
-            plugins: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { 
                 legend: { display: false },
                 tooltip: {
-                    backgroundColor: '#101625',
-                    titleColor: '#00d2ff',
-                    bodyColor: '#fff',
-                    borderColor: 'rgba(255,255,255,0.1)',
-                    borderWidth: 1,
-                    padding: 12,
-                    displayColors: true,
+                    padding: 15,
                     callbacks: {
-                        title: (items) => `Horário: ${items[0].label}`,
-                        label: (item) => ` ${item.dataset.label}: ${item.raw}`
+                        title: (c) => `Registro: ${c[0].label}`,
+                        label: (c) => ` ${c.dataset.label}: ${c.raw}${c.datasetIndex === 0 ? '°C' : '%'}`
                     }
                 }
             },
             scales: {
-                x: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { display: false } },
+                x: { ticks: { color: '#64748b' }, grid: { display: false } },
                 y: { ticks: { color: '#64748b' }, grid: { color: 'rgba(255,255,255,0.03)' } }
             }
         }
@@ -240,48 +190,30 @@ async function exportarPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF("p", "mm", "a4");
     
-    // Header do PDF
     doc.setFillColor(7, 10, 19);
     doc.rect(0, 0, 210, 40, 'F');
     doc.setTextColor(0, 210, 255);
     doc.setFontSize(20);
-    doc.text("NEWENERGY BUSINESS INTELLIGENCE", 15, 20);
-    doc.setFontSize(10);
-    doc.setTextColor(150);
-    doc.text(`RELATÓRIO: ${abaAtual.toUpperCase()} | EMISSÃO: ${new Date().toLocaleString()}`, 15, 30);
-
-    // Capturar gráfico como imagem
+    doc.text("NEWENERGY SOLUTIONS - RELATÓRIO BI", 15, 20);
+    
     const chartImg = document.getElementById('mainChart').toDataURL("image/png", 1.0);
     doc.addImage(chartImg, 'PNG', 10, 50, 190, 80);
 
     let py = 145;
-    let dataRef = "";
-
-    // Tabela organizada
-    dadosLimpos.forEach((d) => {
-        if (py > 270) { doc.addPage(); py = 20; }
-
-        if (d.data !== dataRef) {
-            doc.setFillColor(230, 230, 230);
-            doc.rect(10, py, 190, 8, 'F');
-            doc.setTextColor(0);
-            doc.setFont(undefined, 'bold');
-            doc.text(`DATA: ${d.data}`, 15, py + 5.5);
-            dataRef = d.data;
-            py += 15;
-        }
-
-        doc.setFont(undefined, 'normal');
+    // O PDF segue a ordem da lista (Mais novo primeiro)
+    dadosParaGrafico.forEach(d => {
+        if (py > 280) { doc.addPage(); py = 20; }
+        doc.setFontSize(9);
         doc.setTextColor(50);
-        doc.text(`${d.hora}  |  Temp: ${d.temp}°C  |  Hum: ${d.hum}%`, 20, py);
+        doc.text(`${d.data} às ${d.hora}  |  Temp: ${d.temp}°C  |  Umidade: ${d.hum}%`, 15, py);
         py += 7;
     });
 
     doc.save(`NewEnergy_BI_${abaAtual}.pdf`);
 }
 
-// Iniciar
-firebase.auth().onAuthStateChanged(u => { if(u) carregarHistorico(); else location.href="index.html"; });
+// Iniciar ao carregar
+firebase.auth().onAuthStateChanged(u => { if(u) carregarDados(); else location.href="index.html"; });
 </script>
 </body>
 </html>
