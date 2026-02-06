@@ -55,9 +55,17 @@
       <label style="font-size:9px; color:var(--text-muted); text-transform:uppercase;">E-mail para Alertas</label>
       <input type="email" id="cfgEmail" class="admin-input" placeholder="seu@email.com">
     </div>
-    <div style="margin-bottom:20px;">
+    <div style="margin-bottom:15px;">
       <label style="font-size:9px; color:var(--text-muted); text-transform:uppercase;">Alerta a cada (Minutos)</label>
-      <input type="number" id="cfgTempoEmail" class="admin-input" placeholder="Ex: 10">
+      <input type="number" id="cfgTempoEmail" class="admin-input">
+    </div>
+
+    <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 8px; margin-bottom: 20px; border: 1px dashed #3d4455; display: flex; flex-direction: column; gap: 5px;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 10px; color: var(--text-muted); font-weight: bold; text-transform: uppercase;">E-mails neste mês: <span id="countEmailDisplay" style="color: var(--accent); font-size: 12px;">0</span></span>
+        <button onclick="resetarContador()" style="background: none; border: 1px solid var(--off); color: var(--off); font-size: 8px; padding: 2px 5px; border-radius: 4px; cursor: pointer; font-weight: bold;">ZERAR</button>
+      </div>
+      <div id="mesReferencia" style="font-size: 8px; color: #555; text-align: left;">Referência: --/--</div>
     </div>
     
     <button id="btnTesteEmail" class="btn-led" style="background: #3a7bd5; color: white; margin-bottom: 10px; font-size: 11px;" onclick="testeEmail()">Enviar E-mail de Teste</button>
@@ -105,18 +113,36 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const auth = firebase.auth();
 
-let config = { tMin: 15, tMax: 35, hMin: 30, hMax: 80, intervalo: 2000, registros_dia: 144, emailDestino: "", tempoEmail: 600000 };
+let config = { tMin: 15, tMax: 35, hMin: 30, hMax: 80, intervalo: 2000, registros_dia: 144, emailDestino: "", tempoEmail: 600000, contadorAlertas: 0, ultimoMesReset: "" };
 let ultimaVezAlertado = 0;
 
 auth.onAuthStateChanged(user => { 
   if (!user) window.location.replace("index.html"); 
   else {
-    db.ref("/config_alertas").on("value", s => { if(s.val()) config = s.val(); });
+    db.ref("/config_alertas").on("value", s => { 
+      if(s.val()) {
+        config = s.val();
+        verificarResetMensal();
+        document.getElementById("countEmailDisplay").innerText = config.contadorAlertas || 0;
+        document.getElementById("mesReferencia").innerText = "Referência: " + (config.ultimoMesReset || "--/--");
+      }
+    });
     rodarDashboard(); 
   }
 });
 
-function fazerLogout() { if(confirm("Deseja encerrar a sessão?")) auth.signOut().then(() => window.location.replace("index.html")); }
+function verificarResetMensal() {
+  const dataAtual = new Date();
+  const mesAnoAtual = (dataAtual.getMonth() + 1).toString().padStart(2, '0') + "/" + dataAtual.getFullYear();
+  
+  if (config.ultimoMesReset !== mesAnoAtual) {
+    db.ref("/config_alertas").update({
+      contadorAlertas: 0,
+      ultimoMesReset: mesAnoAtual
+    });
+    console.log("Contador resetado para o novo mês: " + mesAnoAtual);
+  }
+}
 
 function rodarDashboard() {
   const gOpt = (col) => ({ angle: 0.2, lineWidth: 0.15, pointer: { length: 0.5, color: '#DDD' }, colorStart: col, colorStop: col, strokeColor: '#1b1f33', highDpiSupport: true });
@@ -206,7 +232,8 @@ function enviarEmail(tipo, valor) {
         para_email: config.emailDestino
       }).then(() => {
         ultimaVezAlertado = Date.now();
-        console.log("Alerta enviado.");
+        let novoTotal = (config.contadorAlertas || 0) + 1;
+        db.ref("/config_alertas/contadorAlertas").set(novoTotal);
       });
     }
 }
@@ -215,7 +242,6 @@ function testeEmail() {
     const btn = document.getElementById("btnTesteEmail");
     const email = document.getElementById("cfgEmail").value;
     if(!email) return alert("Insira um e-mail!");
-    
     btn.innerText = "ENVIANDO...";
     emailjs.send("service_kx31f3s", "template_mqzi3at", {
         equipamento: "NewEnergy (TESTE)",
@@ -228,6 +254,14 @@ function testeEmail() {
         btn.innerText = "TESTE OK!";
     }).catch(err => alert("Erro: " + err.text));
 }
+
+function resetarContador() {
+    if(confirm("Deseja zerar o contador manual?")) {
+        db.ref("/config_alertas/contadorAlertas").set(0);
+    }
+}
+
+function fazerLogout() { if(confirm("Deseja encerrar a sessão?")) auth.signOut().then(() => window.location.replace("index.html")); }
 
 let cliques = 0;
 document.getElementById("logoAdmin").onclick = () => {
@@ -258,7 +292,7 @@ function salvarConfig() {
     tempoEmail: parseInt(document.getElementById("cfgTempoEmail").value) * 60000
   };
   btn.innerText = "SALVANDO...";
-  db.ref("/config_alertas").set(novosValores).then(() => {
+  db.ref("/config_alertas").update(novosValores).then(() => {
     btn.innerText = "SALVO!";
     setTimeout(() => { fecharAdmin(); btn.innerText = "Salvar Alterações"; }, 1000);
   });
