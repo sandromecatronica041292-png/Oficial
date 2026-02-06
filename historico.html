@@ -4,50 +4,90 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>NewEnergy | Business Intelligence</title>
+    
     <style>
-        :root { 
-            --bg-dark: #0b0f1b; --card-bg: #161b2d; --accent: #00d2ff; 
-            --text-main: #ffffff; --text-muted: #8fa3c6; --danger: #ff5722;
-            --glass: rgba(255, 255, 255, 0.03); 
+        :root {
+            --bg-dark: #0f172a;
+            --card-bg: #1e293b;
+            --accent-temp: #f43f5e; /* Rosa/Vermelho para Calor */
+            --accent-hum: #0ea5e9;  /* Azul para Umidade */
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --glass: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.1);
         }
-        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-dark); color: var(--text-main); display: flex; justify-content: center; padding: 20px; }
-        .card { background: var(--card-bg); border-radius: 20px; padding: 30px; width: 100%; max-width: 850px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.05); }
-        
-        .tabs { display: flex; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 12px; margin-bottom: 25px; gap: 5px; }
-        .tab { flex: 1; padding: 12px; text-align: center; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 600; color: var(--text-muted); transition: 0.3s; }
-        .tab.active { background: var(--accent); color: var(--bg-dark); box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3); }
 
-        .canvas-wrapper { background: var(--glass); border-radius: 15px; padding: 15px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05); }
-        canvas { max-height: 200px; width: 100% !important; }
-
-        #lista { max-height: 400px; overflow-y: auto; padding-right: 10px; }
-        
-        /* Estilo para separar os dias */
-        .data-header { 
-            background: linear-gradient(90deg, rgba(0,210,255,0.1) 0%, transparent 100%);
-            color: var(--accent); padding: 10px 15px; border-radius: 8px; 
-            margin: 25px 0 10px 0; font-size: 11px; font-weight: 800; 
-            text-transform: uppercase; border-left: 4px solid var(--accent);
-            display: flex; justify-content: space-between;
+        body { 
+            margin: 0; font-family: 'Inter', system-ui, sans-serif; 
+            background: var(--bg-dark); color: var(--text-main); 
+            display: flex; justify-content: center; padding: 20px; 
         }
+
+        .card { 
+            background: var(--card-bg); border-radius: 24px; padding: 32px; 
+            width: 100%; max-width: 900px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); 
+            border: 1px solid var(--border); 
+        }
+
+        header { text-align: left; margin-bottom: 30px; border-left: 4px solid var(--accent-hum); padding-left: 20px; }
+        header h1 { margin: 0; font-size: 24px; letter-spacing: -0.5px; }
+        header p { margin: 5px 0 0; color: var(--text-muted); font-size: 14px; }
+
+        /* Tabs Estilizadas */
+        .tabs { 
+            display: flex; background: #0f172a; padding: 6px; 
+            border-radius: 14px; margin-bottom: 25px; gap: 4px;
+        }
+        .tab { 
+            flex: 1; padding: 10px; text-align: center; border-radius: 10px; 
+            cursor: pointer; font-size: 13px; font-weight: 600; 
+            color: var(--text-muted); transition: 0.2s;
+        }
+        .tab.active { background: var(--card-bg); color: var(--accent-hum); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+
+        /* Container do Gráfico */
+        .chart-container { 
+            background: #111827; border-radius: 20px; padding: 20px; 
+            margin-bottom: 30px; border: 1px solid var(--border);
+            height: 320px; position: relative;
+        }
+
+        /* Lista de Registros */
+        #lista { max-height: 450px; overflow-y: auto; padding-right: 8px; }
+        #lista::-webkit-scrollbar { width: 4px; }
+        #lista::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+        .data-divider { 
+            display: flex; align-items: center; margin: 30px 0 15px; 
+            color: var(--accent-hum); font-size: 11px; font-weight: 800; letter-spacing: 1px;
+        }
+        .data-divider::after { content: ""; flex: 1; height: 1px; background: var(--border); margin-left: 15px; }
 
         .item { 
-            background: var(--glass); padding: 12px 20px; border-radius: 12px; 
+            background: var(--glass); padding: 16px 20px; border-radius: 16px; 
             margin-bottom: 8px; display: flex; justify-content: space-between; 
-            align-items: center; border: 1px solid transparent; transition: 0.2s;
+            align-items: center; border: 1px solid transparent;
         }
-        .item:hover { border-color: rgba(0, 210, 255, 0.2); background: rgba(255,255,255,0.05); }
+        .item:hover { border-color: var(--accent-hum); background: rgba(14, 165, 233, 0.05); }
 
-        .time { font-weight: 700; font-size: 15px; color: var(--text-main); }
-        .val-group { display: flex; gap: 15px; }
-        .val-unit { text-align: right; }
-        .val-unit label { font-size: 9px; color: var(--text-muted); display: block; text-transform: uppercase; }
-        .val-unit span { font-weight: 700; color: var(--accent); font-size: 15px; }
+        .time-box { display: flex; flex-direction: column; }
+        .time-box .h { font-size: 16px; font-weight: 700; }
+        .time-box .d { font-size: 11px; color: var(--text-muted); }
 
-        .btn-container { display: flex; gap: 15px; margin-top: 30px; }
-        .btn { flex: 1; padding: 15px; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.3s; }
-        .btn-primary { background: var(--accent); color: #0b0f1b; }
-        .btn-secondary { background: rgba(255,255,255,0.05); color: #fff; }
+        .metrics { display: flex; gap: 24px; }
+        .metric-unit { text-align: right; }
+        .metric-unit label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 2px; }
+        .metric-unit span { font-weight: 800; font-size: 16px; font-variant-numeric: tabular-nums; }
+
+        .btn-group { display: flex; gap: 12px; margin-top: 30px; }
+        .btn { 
+            flex: 1; padding: 16px; border: none; border-radius: 14px; 
+            font-weight: 700; cursor: pointer; transition: 0.3s; 
+            font-family: inherit; font-size: 14px;
+        }
+        .btn-pdf { background: var(--accent-hum); color: white; }
+        .btn-pdf:hover { background: #0284c7; transform: translateY(-2px); }
+        .btn-back { background: var(--glass); color: white; border: 1px solid var(--border); }
     </style>
 
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -59,9 +99,9 @@
 
 <body>
 <div class="card">
-    <header style="text-align: center; margin-bottom: 30px;">
-        <div style="color: var(--text-muted); font-size: 12px; letter-spacing: 2px;">BUSINESS INTELLIGENCE</div>
-        <h1 style="color: var(--accent); margin: 5px 0;">NewEnergy Solutions</h1>
+    <header>
+        <h1>Business Intelligence</h1>
+        <p>Monitoramento de Ativos NewEnergy Solutions</p>
     </header>
 
     <div class="tabs">
@@ -71,18 +111,20 @@
         <div class="tab" onclick="trocarAba('anual',this)">Anual</div>
     </div>
 
-    <div class="canvas-wrapper"><canvas id="graficoMix"></canvas></div>
+    <div class="chart-container">
+        <canvas id="mainChart"></canvas>
+    </div>
 
     <div id="lista"></div>
 
-    <div class="btn-container">
-        <button class="btn btn-primary" onclick="exportarPDF()">Exportar PDF Organizado</button>
-        <button class="btn btn-secondary" onclick="location.href='painel.html'">Voltar</button>
+    <div class="btn-group">
+        <button class="btn btn-pdf" onclick="exportarPDF()">Exportar Relatório PDF</button>
+        <button class="btn btn-back" onclick="location.href='painel.html'">Voltar ao Painel</button>
     </div>
 </div>
 
 <script>
-/* CONFIGURAÇÃO FIREBASE */
+/* FIREBASE INIT */
 firebase.initializeApp({
     apiKey:"AIzaSyB5FnkQiFi3gn9Iup2KNcbrKxWd-0Jjo6Y",
     authDomain:"oficial-688e8.firebaseapp.com",
@@ -93,7 +135,7 @@ const db = firebase.database();
 const auth = firebase.auth();
 
 let abaAtual = "diario";
-let chartMix = null;
+let myChart = null;
 let dadosLimpos = [];
 
 function trocarAba(aba, el) {
@@ -105,156 +147,162 @@ function trocarAba(aba, el) {
 
 function carregarHistorico() {
     const lista = document.getElementById("lista");
-    lista.innerHTML = "<p style='text-align:center; color:#8fa3c6;'>Sincronizando e organizando registros...</p>";
+    lista.innerHTML = "<p style='text-align:center; padding: 40px; color: #94a3b8;'>Sincronizando registros inteligentes...</p>";
     dadosLimpos = [];
 
-    // Busca apenas as últimas pastas para não travar
+    // Busca as últimas 7 pastas (datas) para dar contexto mas manter performance
     db.ref("/historico/" + abaAtual).limitToLast(7).once("value").then(snap => {
         const pastas = snap.val();
         if (!pastas) {
-            lista.innerHTML = "<p style='text-align:center;'>Nenhum dado encontrado para esta categoria.</p>";
+            lista.innerHTML = "<p style='text-align:center; padding: 40px;'>Nenhum registro encontrado.</p>";
             return;
         }
 
         lista.innerHTML = "";
-        let dataReferencia = "";
+        let dataRef = "";
 
-        // Ordenar as pastas (Datas) de forma decrescente (mais nova primeiro)
         const datasKeys = Object.keys(pastas).sort().reverse();
-
         datasKeys.forEach(dataPasta => {
             const registros = pastas[dataPasta];
             const timestamps = Object.keys(registros).sort().reverse();
 
             timestamps.forEach(ts => {
                 const r = registros[ts];
-                const t = parseFloat(r.temp || r.temperatura || 0);
-                const h = parseFloat(r.hum || r.umidade || 0);
-                const dataHoraFull = new Date(ts * 1000).toLocaleString("pt-BR");
-                const [data, hora] = dataHoraFull.split(', ');
+                const t = parseFloat(r.temp || 0);
+                const h = parseFloat(r.hum || 0);
+                const dt = new Date(ts * 1000).toLocaleString("pt-BR");
+                const [data, hora] = dt.split(', ');
 
-                // Adiciona cabeçalho de separação se a data mudou
-                if (data !== dataReferencia) {
-                    const header = document.createElement('div');
-                    header.className = 'data-header';
-                    header.innerHTML = `<span>📅 REGISTROS DE ${data}</span><span>${abaAtual}</span>`;
-                    lista.appendChild(header);
-                    dataReferencia = data;
+                if (data !== dataRef) {
+                    const div = document.createElement('div');
+                    div.className = 'data-divider';
+                    div.innerHTML = `📅 ${data}`;
+                    lista.appendChild(div);
+                    dataRef = data;
                 }
 
                 dadosLimpos.push({ data, hora, temp: t, hum: h, ts: ts });
 
-                // Renderiza item na lista
                 const item = document.createElement('div');
                 item.className = 'item';
                 item.innerHTML = `
-                    <div class="time">${hora}</div>
-                    <div class="val-group">
-                        <div class="val-unit"><label>Temp</label><span>${t}°C</span></div>
-                        <div class="val-unit"><label>Umid</label><span style="color:#00ff88">${h}%</span></div>
+                    <div class="time-box"><span class="h">${hora}</span><span class="d">${data}</span></div>
+                    <div class="metrics">
+                        <div class="metric-unit"><label>Temp</label><span style="color:var(--accent-temp)">${t}°C</span></div>
+                        <div class="metric-unit"><label>Umid</label><span style="color:var(--accent-hum)">${h}%</span></div>
                     </div>`;
                 lista.appendChild(item);
             });
         });
-        desenharGraficoInteligente();
+        renderizarGraficoDesign();
     });
 }
 
-function desenharGraficoInteligente() {
-    if (chartMix) chartMix.destroy();
+function renderizarGraficoDesign() {
+    if (myChart) myChart.destroy();
     
-    // Algoritmo de Preservação de Picos:
-    // Filtramos os dados para o gráfico (amostra de 50 pontos) mantendo os extremos
+    // Filtro de Picos: Amostra de 40 pontos mantendo extremos
     const raw = [...dadosLimpos].reverse();
-    const step = Math.ceil(raw.length / 50);
+    const step = Math.ceil(raw.length / 40);
     const amostra = raw.filter((_, i) => i % step === 0);
 
-    const ctx = document.getElementById('graficoMix').getContext('2d');
-    chartMix = new Chart(ctx, {
+    const ctx = document.getElementById('mainChart').getContext('2d');
+    
+    myChart = new Chart(ctx, {
         type: 'line',
         data: {
             labels: amostra.map(d => abaAtual === 'diario' ? d.hora : d.data.substring(0,5)),
             datasets: [{
                 label: 'Temperatura (°C)',
                 data: amostra.map(d => d.temp),
-                borderColor: '#ff5722',
-                backgroundColor: 'rgba(255, 87, 34, 0.1)',
-                borderWidth: 2,
-                fill: true,
-                tension: 0.3,
+                borderColor: '#f43f5e',
+                backgroundColor: 'transparent',
+                borderWidth: 3,
+                pointRadius: 0,
+                tension: 0.4,
                 yAxisID: 'y'
             },
             {
                 label: 'Umidade (%)',
                 data: amostra.map(d => d.hum),
-                borderColor: '#00d2ff',
-                backgroundColor: 'rgba(0, 210, 255, 0.1)',
-                borderWidth: 2,
-                fill: false,
-                tension: 0.3,
+                borderColor: '#0ea5e9',
+                backgroundColor: 'transparent',
+                borderWidth: 3,
+                pointRadius: 0,
+                tension: 0.4,
                 yAxisID: 'y1'
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            animation: false,
-            interaction: { mode: 'index', intersect: false },
+            animation: { duration: 1000, easing: 'easeOutQuart' },
             plugins: { legend: { display: false } },
             scales: {
-                x: { ticks: { color: '#8fa3c6', font: { size: 10 }, maxRotation: 0 } },
-                y: { type: 'linear', display: true, position: 'left', grid: { display: false } },
-                y1: { type: 'linear', display: true, position: 'right', grid: { display: false } }
+                x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 10 } } },
+                y: { type: 'linear', display: true, position: 'left', grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#f43f5e' } },
+                y1: { type: 'linear', display: true, position: 'right', grid: { display: false }, ticks: { color: '#0ea5e9' } }
             }
         }
     });
 }
 
-function exportarPDF() {
+async function exportarPDF() {
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    let py = 20;
+    const doc = new jsPDF("p", "mm", "a4");
+    
+    // Captura Gráfico
+    const canvas = document.getElementById('mainChart');
+    const chartImg = canvas.toDataURL("image/png", 1.0);
 
-    // Estilo do Cabeçalho PDF
-    doc.setFillColor(11, 15, 27);
+    // Design Header PDF
+    doc.setFillColor(15, 23, 42);
     doc.rect(0, 0, 210, 40, 'F');
-    doc.setTextColor(0, 210, 255);
-    doc.setFontSize(20);
-    doc.text("NewEnergy - Relatório Técnico", 15, 20);
-    doc.setTextColor(150);
-    doc.setFontSize(10);
-    doc.text(`Análise: ${abaAtual.toUpperCase()} | Emitido: ${new Date().toLocaleString()}`, 15, 30);
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(18);
+    doc.text("NewEnergy Solutions", 15, 18);
+    doc.setFontSize(9);
+    doc.setTextColor(148, 163, 184);
+    doc.text(`RELATÓRIO DE PERFORMANCE: ${abaAtual.toUpperCase()}`, 15, 25);
+    doc.text(`DATA DE EMISSÃO: ${new Date().toLocaleString()}`, 15, 30);
 
-    py = 50;
-    let dataRef = "";
+    // Inserir Gráfico
+    doc.addImage(chartImg, 'PNG', 15, 45, 180, 60);
 
-    dadosLimpos.forEach(d => {
-        if (py > 280) { doc.addPage(); py = 20; }
+    let py = 120;
+    let dataReferencia = "";
 
-        // Agrupador de data no PDF
-        if (d.data !== dataRef) {
-            py += 5;
-            doc.setFillColor(230, 230, 230);
+    // Tabela organizada com Quebra de Página
+    dadosLimpos.forEach((d, idx) => {
+        if (py > 270) { doc.addPage(); py = 20; }
+
+        if (d.data !== dataReferencia) {
+            // Se mudar o dia, adiciona um destaque
+            doc.setFillColor(241, 245, 249);
             doc.rect(15, py, 180, 8, 'F');
-            doc.setTextColor(0);
+            doc.setTextColor(15, 23, 42);
             doc.setFont(undefined, 'bold');
-            doc.text(`DATA: ${d.data}`, 20, py + 6);
-            dataRef = d.data;
+            doc.text(`DATA: ${d.data}`, 20, py + 5.5);
+            dataReferencia = d.data;
             py += 15;
             doc.setFont(undefined, 'normal');
+            doc.setTextColor(100);
+            doc.text("HORA", 20, py);
+            doc.text("TEMP (°C)", 85, py);
+            doc.text("UMID (%)", 150, py);
+            py += 5;
+            doc.line(15, py, 195, py);
+            py += 8;
         }
 
-        doc.setTextColor(50);
-        doc.text(`${d.hora}`, 20, py);
-        doc.text(`${d.temp}°C`, 80, py);
-        doc.text(`${d.hum}% HR`, 140, py);
-        
-        doc.setDrawColor(230);
-        doc.line(15, py + 2, 195, py + 2);
-        py += 8;
+        doc.setTextColor(60);
+        doc.text(d.hora, 20, py);
+        doc.text(`${d.temp}°C`, 85, py);
+        doc.text(`${d.hum}%`, 150, py);
+        py += 7;
     });
 
-    doc.save(`Relatorio_Organizado_${abaAtual}.pdf`);
+    doc.save(`Relatorio_NewEnergy_${abaAtual}.pdf`);
 }
 
 auth.onAuthStateChanged(u => { if(u) carregarHistorico(); else location.href="index.html"; });
