@@ -3,91 +3,73 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>NewEnergy | Business Intelligence</title>
+    <title>NewEnergy | Business Intelligence Pro</title>
     
     <style>
         :root {
-            --bg-dark: #0f172a;
-            --card-bg: #1e293b;
-            --accent-temp: #f43f5e; /* Rosa/Vermelho para Calor */
-            --accent-hum: #0ea5e9;  /* Azul para Umidade */
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --glass: rgba(255, 255, 255, 0.03);
-            --border: rgba(255, 255, 255, 0.1);
+            --bg-dark: #070a13; --card-bg: #101625;
+            --accent-temp: #f43f5e; --accent-hum: #00d2ff;
+            --text-main: #f0f4f8; --text-muted: #64748b;
+            --glass: rgba(255, 255, 255, 0.03); --border: rgba(255, 255, 255, 0.08);
         }
 
         body { 
-            margin: 0; font-family: 'Inter', system-ui, sans-serif; 
+            margin: 0; font-family: 'Inter', sans-serif; 
             background: var(--bg-dark); color: var(--text-main); 
-            display: flex; justify-content: center; padding: 20px; 
+            display: flex; justify-content: center; padding: 20px;
         }
 
         .card { 
-            background: var(--card-bg); border-radius: 24px; padding: 32px; 
-            width: 100%; max-width: 900px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); 
-            border: 1px solid var(--border); 
+            background: var(--card-bg); border-radius: 28px; padding: 30px; 
+            width: 100%; max-width: 900px; box-shadow: 0 25px 50px rgba(0,0,0,0.5); 
+            border: 1px solid var(--border); backdrop-filter: blur(10px);
         }
 
-        header { text-align: left; margin-bottom: 30px; border-left: 4px solid var(--accent-hum); padding-left: 20px; }
-        header h1 { margin: 0; font-size: 24px; letter-spacing: -0.5px; }
-        header p { margin: 5px 0 0; color: var(--text-muted); font-size: 14px; }
+        header { border-left: 4px solid var(--accent-hum); padding-left: 20px; margin-bottom: 25px; }
+        header h1 { margin: 0; font-size: 22px; text-transform: uppercase; font-weight: 900; }
 
-        /* Tabs Estilizadas */
+        /* Tabs */
         .tabs { 
-            display: flex; background: #0f172a; padding: 6px; 
-            border-radius: 14px; margin-bottom: 25px; gap: 4px;
+            display: flex; background: #070a13; padding: 5px; 
+            border-radius: 14px; margin-bottom: 20px; gap: 4px;
         }
         .tab { 
-            flex: 1; padding: 10px; text-align: center; border-radius: 10px; 
-            cursor: pointer; font-size: 13px; font-weight: 600; 
-            color: var(--text-muted); transition: 0.2s;
+            flex: 1; padding: 12px; text-align: center; border-radius: 10px; 
+            cursor: pointer; font-size: 11px; font-weight: 700; 
+            color: var(--text-muted); transition: 0.3s; text-transform: uppercase;
         }
-        .tab.active { background: var(--card-bg); color: var(--accent-hum); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        .tab.active { background: var(--card-bg); color: var(--accent-hum); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
 
-        /* Container do Gráfico */
+        /* Gráfico */
         .chart-container { 
-            background: #111827; border-radius: 20px; padding: 20px; 
-            margin-bottom: 30px; border: 1px solid var(--border);
-            height: 320px; position: relative;
+            background: rgba(0,0,0,0.2); border-radius: 20px; padding: 15px; 
+            margin-bottom: 25px; border: 1px solid var(--border); height: 350px;
         }
 
-        /* Lista de Registros */
-        #lista { max-height: 450px; overflow-y: auto; padding-right: 8px; }
-        #lista::-webkit-scrollbar { width: 4px; }
-        #lista::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
-
+        /* Lista */
+        #lista { max-height: 400px; overflow-y: auto; }
         .data-divider { 
-            display: flex; align-items: center; margin: 30px 0 15px; 
-            color: var(--accent-hum); font-size: 11px; font-weight: 800; letter-spacing: 1px;
+            display: flex; align-items: center; margin: 25px 0 10px; 
+            color: var(--accent-hum); font-size: 10px; font-weight: 900; letter-spacing: 1px;
         }
-        .data-divider::after { content: ""; flex: 1; height: 1px; background: var(--border); margin-left: 15px; }
+        .data-divider::after { content: ""; flex: 1; height: 1px; background: var(--border); margin-left: 10px; }
 
         .item { 
-            background: var(--glass); padding: 16px 20px; border-radius: 16px; 
-            margin-bottom: 8px; display: flex; justify-content: space-between; 
-            align-items: center; border: 1px solid transparent;
+            background: var(--glass); padding: 15px 20px; border-radius: 15px; 
+            margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;
         }
-        .item:hover { border-color: var(--accent-hum); background: rgba(14, 165, 233, 0.05); }
+        .time-box .h { font-size: 16px; font-weight: 800; display: block; }
+        .time-box .d { font-size: 10px; color: var(--text-muted); }
 
-        .time-box { display: flex; flex-direction: column; }
-        .time-box .h { font-size: 16px; font-weight: 700; }
-        .time-box .d { font-size: 11px; color: var(--text-muted); }
-
-        .metrics { display: flex; gap: 24px; }
+        .metrics { display: flex; gap: 20px; }
         .metric-unit { text-align: right; }
-        .metric-unit label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 2px; }
-        .metric-unit span { font-weight: 800; font-size: 16px; font-variant-numeric: tabular-nums; }
+        .metric-unit label { font-size: 8px; color: var(--text-muted); text-transform: uppercase; display: block; }
+        .metric-unit span { font-weight: 900; font-size: 16px; }
 
-        .btn-group { display: flex; gap: 12px; margin-top: 30px; }
-        .btn { 
-            flex: 1; padding: 16px; border: none; border-radius: 14px; 
-            font-weight: 700; cursor: pointer; transition: 0.3s; 
-            font-family: inherit; font-size: 14px;
-        }
-        .btn-pdf { background: var(--accent-hum); color: white; }
-        .btn-pdf:hover { background: #0284c7; transform: translateY(-2px); }
-        .btn-back { background: var(--glass); color: white; border: 1px solid var(--border); }
+        .btn-group { display: flex; gap: 10px; margin-top: 20px; }
+        .btn { flex: 1; padding: 16px; border: none; border-radius: 14px; font-weight: 800; cursor: pointer; font-size: 12px; text-transform: uppercase; }
+        .btn-pdf { background: var(--accent-hum); color: #000; }
+        .btn-back { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
     </style>
 
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -101,14 +83,14 @@
 <div class="card">
     <header>
         <h1>Business Intelligence</h1>
-        <p>Monitoramento de Ativos NewEnergy Solutions</p>
+        <p style="margin:0; font-size:12px; color:var(--text-muted)">Relatórios de Performance de Ativos</p>
     </header>
 
     <div class="tabs">
-        <div class="tab active" onclick="trocarAba('diario',this)">Diário</div>
-        <div class="tab" onclick="trocarAba('semanal',this)">Semanal</div>
-        <div class="tab" onclick="trocarAba('mensal',this)">Mensal</div>
-        <div class="tab" onclick="trocarAba('anual',this)">Anual</div>
+        <div class="tab active" data-aba="diario">Diário</div>
+        <div class="tab" data-aba="semanal">Semanal</div>
+        <div class="tab" data-aba="mensal">Mensal</div>
+        <div class="tab" data-aba="anual">Anual</div>
     </div>
 
     <div class="chart-container">
@@ -118,13 +100,12 @@
     <div id="lista"></div>
 
     <div class="btn-group">
-        <button class="btn btn-pdf" onclick="exportarPDF()">Exportar Relatório PDF</button>
-        <button class="btn btn-back" onclick="location.href='painel.html'">Voltar ao Painel</button>
+        <button class="btn btn-pdf" onclick="exportarPDF()">Exportar PDF Profissional</button>
+        <button class="btn btn-back" onclick="location.href='painel.html'">Voltar</button>
     </div>
 </div>
 
 <script>
-/* FIREBASE INIT */
 firebase.initializeApp({
     apiKey:"AIzaSyB5FnkQiFi3gn9Iup2KNcbrKxWd-0Jjo6Y",
     authDomain:"oficial-688e8.firebaseapp.com",
@@ -132,44 +113,44 @@ firebase.initializeApp({
     projectId:"oficial-688e8"
 });
 const db = firebase.database();
-const auth = firebase.auth();
-
 let abaAtual = "diario";
 let myChart = null;
 let dadosLimpos = [];
 
-function trocarAba(aba, el) {
-    abaAtual = aba;
-    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-    el.classList.add("active");
-    carregarHistorico();
-}
+// Gerenciar troca de abas corretamente
+document.querySelectorAll('.tab').forEach(tab => {
+    tab.onclick = function() {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        abaAtual = this.getAttribute('data-aba');
+        carregarHistorico();
+    };
+});
 
 function carregarHistorico() {
     const lista = document.getElementById("lista");
-    lista.innerHTML = "<p style='text-align:center; padding: 40px; color: #94a3b8;'>Sincronizando registros inteligentes...</p>";
+    lista.innerHTML = "<p style='text-align:center; padding:50px; color:var(--text-muted)'>Filtrando base de dados...</p>";
     dadosLimpos = [];
 
-    // Busca as últimas 7 pastas (datas) para dar contexto mas manter performance
-    db.ref("/historico/" + abaAtual).limitToLast(7).once("value").then(snap => {
+    // Lógica Corrigida: Buscar apenas na pasta da aba selecionada
+    db.ref("/historico/" + abaAtual).limitToLast(10).once("value").then(snap => {
         const pastas = snap.val();
         if (!pastas) {
-            lista.innerHTML = "<p style='text-align:center; padding: 40px;'>Nenhum registro encontrado.</p>";
+            lista.innerHTML = "<p style='text-align:center; padding:40px;'>Sem registros nesta categoria.</p>";
+            renderizarGrafico([]);
             return;
         }
 
         lista.innerHTML = "";
         let dataRef = "";
+        const keysOrdenadas = Object.keys(pastas).sort().reverse();
 
-        const datasKeys = Object.keys(pastas).sort().reverse();
-        datasKeys.forEach(dataPasta => {
+        keysOrdenadas.forEach(dataPasta => {
             const registros = pastas[dataPasta];
             const timestamps = Object.keys(registros).sort().reverse();
 
             timestamps.forEach(ts => {
                 const r = registros[ts];
-                const t = parseFloat(r.temp || 0);
-                const h = parseFloat(r.hum || 0);
                 const dt = new Date(ts * 1000).toLocaleString("pt-BR");
                 const [data, hora] = dt.split(', ');
 
@@ -181,67 +162,75 @@ function carregarHistorico() {
                     dataRef = data;
                 }
 
-                dadosLimpos.push({ data, hora, temp: t, hum: h, ts: ts });
+                dadosLimpos.push({ data, hora, temp: r.temp, hum: r.hum, ts });
 
                 const item = document.createElement('div');
                 item.className = 'item';
                 item.innerHTML = `
                     <div class="time-box"><span class="h">${hora}</span><span class="d">${data}</span></div>
                     <div class="metrics">
-                        <div class="metric-unit"><label>Temp</label><span style="color:var(--accent-temp)">${t}°C</span></div>
-                        <div class="metric-unit"><label>Umid</label><span style="color:var(--accent-hum)">${h}%</span></div>
+                        <div class="metric-unit"><label>Temp</label><span style="color:var(--accent-temp)">${r.temp}°C</span></div>
+                        <div class="metric-unit"><label>Hum</label><span style="color:var(--accent-hum)">${r.hum}%</span></div>
                     </div>`;
                 lista.appendChild(item);
             });
         });
-        renderizarGraficoDesign();
+        renderizarGrafico(dadosLimpos);
     });
 }
 
-function renderizarGraficoDesign() {
+function renderizarGrafico(dados) {
     if (myChart) myChart.destroy();
-    
-    // Filtro de Picos: Amostra de 40 pontos mantendo extremos
-    const raw = [...dadosLimpos].reverse();
-    const step = Math.ceil(raw.length / 40);
-    const amostra = raw.filter((_, i) => i % step === 0);
+    const raw = [...dados].reverse(); // Inverte para o gráfico ler do mais antigo para o novo
 
     const ctx = document.getElementById('mainChart').getContext('2d');
     
     myChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: amostra.map(d => abaAtual === 'diario' ? d.hora : d.data.substring(0,5)),
+            labels: raw.map(d => d.hora),
             datasets: [{
-                label: 'Temperatura (°C)',
-                data: amostra.map(d => d.temp),
+                label: 'Temperatura °C',
+                data: raw.map(d => d.temp),
                 borderColor: '#f43f5e',
-                backgroundColor: 'transparent',
-                borderWidth: 3,
-                pointRadius: 0,
+                backgroundColor: 'rgba(244, 63, 94, 0.1)',
+                fill: true,
                 tension: 0.4,
-                yAxisID: 'y'
-            },
-            {
-                label: 'Umidade (%)',
-                data: amostra.map(d => d.hum),
-                borderColor: '#0ea5e9',
-                backgroundColor: 'transparent',
-                borderWidth: 3,
-                pointRadius: 0,
+                pointRadius: 4,
+                pointHoverRadius: 8
+            }, {
+                label: 'Umidade %',
+                data: raw.map(d => d.hum),
+                borderColor: '#00d2ff',
+                fill: false,
                 tension: 0.4,
-                yAxisID: 'y1'
+                pointRadius: 4,
+                pointHoverRadius: 8
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            animation: { duration: 1000, easing: 'easeOutQuart' },
-            plugins: { legend: { display: false } },
+            interaction: { mode: 'index', intersect: false }, // Mostra os dois dados ao passar o mouse perto
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#101625',
+                    titleColor: '#00d2ff',
+                    bodyColor: '#fff',
+                    borderColor: 'rgba(255,255,255,0.1)',
+                    borderWidth: 1,
+                    padding: 12,
+                    displayColors: true,
+                    callbacks: {
+                        title: (items) => `Horário: ${items[0].label}`,
+                        label: (item) => ` ${item.dataset.label}: ${item.raw}`
+                    }
+                }
+            },
             scales: {
-                x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 10 } } },
-                y: { type: 'linear', display: true, position: 'left', grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#f43f5e' } },
-                y1: { type: 'linear', display: true, position: 'right', grid: { display: false }, ticks: { color: '#0ea5e9' } }
+                x: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { display: false } },
+                y: { ticks: { color: '#64748b' }, grid: { color: 'rgba(255,255,255,0.03)' } }
             }
         }
     });
@@ -251,61 +240,48 @@ async function exportarPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF("p", "mm", "a4");
     
-    // Captura Gráfico
-    const canvas = document.getElementById('mainChart');
-    const chartImg = canvas.toDataURL("image/png", 1.0);
-
-    // Design Header PDF
-    doc.setFillColor(15, 23, 42);
+    // Header do PDF
+    doc.setFillColor(7, 10, 19);
     doc.rect(0, 0, 210, 40, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(18);
-    doc.text("NewEnergy Solutions", 15, 18);
-    doc.setFontSize(9);
-    doc.setTextColor(148, 163, 184);
-    doc.text(`RELATÓRIO DE PERFORMANCE: ${abaAtual.toUpperCase()}`, 15, 25);
-    doc.text(`DATA DE EMISSÃO: ${new Date().toLocaleString()}`, 15, 30);
+    doc.setTextColor(0, 210, 255);
+    doc.setFontSize(20);
+    doc.text("NEWENERGY BUSINESS INTELLIGENCE", 15, 20);
+    doc.setFontSize(10);
+    doc.setTextColor(150);
+    doc.text(`RELATÓRIO: ${abaAtual.toUpperCase()} | EMISSÃO: ${new Date().toLocaleString()}`, 15, 30);
 
-    // Inserir Gráfico
-    doc.addImage(chartImg, 'PNG', 15, 45, 180, 60);
+    // Capturar gráfico como imagem
+    const chartImg = document.getElementById('mainChart').toDataURL("image/png", 1.0);
+    doc.addImage(chartImg, 'PNG', 10, 50, 190, 80);
 
-    let py = 120;
-    let dataReferencia = "";
+    let py = 145;
+    let dataRef = "";
 
-    // Tabela organizada com Quebra de Página
-    dadosLimpos.forEach((d, idx) => {
+    // Tabela organizada
+    dadosLimpos.forEach((d) => {
         if (py > 270) { doc.addPage(); py = 20; }
 
-        if (d.data !== dataReferencia) {
-            // Se mudar o dia, adiciona um destaque
-            doc.setFillColor(241, 245, 249);
-            doc.rect(15, py, 180, 8, 'F');
-            doc.setTextColor(15, 23, 42);
+        if (d.data !== dataRef) {
+            doc.setFillColor(230, 230, 230);
+            doc.rect(10, py, 190, 8, 'F');
+            doc.setTextColor(0);
             doc.setFont(undefined, 'bold');
-            doc.text(`DATA: ${d.data}`, 20, py + 5.5);
-            dataReferencia = d.data;
+            doc.text(`DATA: ${d.data}`, 15, py + 5.5);
+            dataRef = d.data;
             py += 15;
-            doc.setFont(undefined, 'normal');
-            doc.setTextColor(100);
-            doc.text("HORA", 20, py);
-            doc.text("TEMP (°C)", 85, py);
-            doc.text("UMID (%)", 150, py);
-            py += 5;
-            doc.line(15, py, 195, py);
-            py += 8;
         }
 
-        doc.setTextColor(60);
-        doc.text(d.hora, 20, py);
-        doc.text(`${d.temp}°C`, 85, py);
-        doc.text(`${d.hum}%`, 150, py);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(50);
+        doc.text(`${d.hora}  |  Temp: ${d.temp}°C  |  Hum: ${d.hum}%`, 20, py);
         py += 7;
     });
 
-    doc.save(`Relatorio_NewEnergy_${abaAtual}.pdf`);
+    doc.save(`NewEnergy_BI_${abaAtual}.pdf`);
 }
 
-auth.onAuthStateChanged(u => { if(u) carregarHistorico(); else location.href="index.html"; });
+// Iniciar
+firebase.auth().onAuthStateChanged(u => { if(u) carregarHistorico(); else location.href="index.html"; });
 </script>
 </body>
 </html>
