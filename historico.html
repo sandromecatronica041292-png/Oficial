@@ -20,12 +20,12 @@
 
         .chart-container { background: rgba(0,0,0,0.2); border-radius: 20px; padding: 15px; margin-bottom: 25px; border: 1px solid var(--border); height: 350px; }
         #lista { max-height: 400px; overflow-y: auto; padding-right: 5px; }
-        .item { background: rgba(255,255,255,0.03); padding: 15px 20px; border-radius: 15px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .item { background: rgba(255,255,255,0.03); padding: 15px 20px; border-radius: 15px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid transparent; }
         .data-divider { color: var(--accent-hum); font-size: 10px; font-weight: 900; margin: 25px 0 10px; display: flex; align-items: center; }
         .data-divider::after { content: ""; flex: 1; height: 1px; background: var(--border); margin-left: 10px; }
         
         .btn-group { display: flex; gap: 10px; margin-top: 20px; }
-        .btn { flex: 1; padding: 16px; border: none; border-radius: 14px; font-weight: 800; cursor: pointer; font-size: 12px; text-transform: uppercase; }
+        .btn { flex: 1; padding: 16px; border: none; border-radius: 14px; font-weight: 800; cursor: pointer; font-size: 12px; text-transform: uppercase; transition: 0.3s; }
         .btn-pdf { background: var(--accent-hum); color: #000; }
         .btn-back { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
     </style>
@@ -58,12 +58,13 @@
     <div id="lista"></div>
 
     <div class="btn-group">
-        <button class="btn btn-pdf" onclick="exportarPDF()">Exportar PDF</button>
+        <button class="btn btn-pdf" onclick="exportarPDF()">Gerar PDF Oficial</button>
         <button class="btn btn-back" onclick="location.href='painel.html'">Voltar</button>
     </div>
 </div>
 
 <script>
+// Configuração Firebase
 firebase.initializeApp({
     apiKey:"AIzaSyB5FnkQiFi3gn9Iup2KNcbrKxWd-0Jjo6Y",
     authDomain:"oficial-688e8.firebaseapp.com",
@@ -72,58 +73,76 @@ firebase.initializeApp({
 });
 const db = firebase.database();
 let myChart = null;
-let globalData = []; // Única fonte de verdade
+let globalData = []; 
 
-// Gerenciador de Abas
+// Controle de Abas
 document.querySelectorAll('.tab').forEach(tab => {
     tab.addEventListener('click', function() {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         this.classList.add('active');
-        const p = this.getAttribute('data-periodo');
-        fetchData(p);
+        fetchData(this.getAttribute('data-periodo'));
     });
 });
 
 async function fetchData(periodo) {
     const listaDiv = document.getElementById("lista");
-    listaDiv.innerHTML = "<p style='text-align:center; padding:50px;'>Sincronizando registros de " + periodo + "...</p>";
+    listaDiv.innerHTML = "<p style='text-align:center; padding:50px;'>Filtrando dados exatos...</p>";
     
-    // RESET TOTAL: Limpa o array global antes de qualquer coisa
-    globalData = [];
+    globalData = []; // Limpa memória para evitar mistura
 
     try {
         const snapshot = await db.ref("/historico/" + periodo).once("value");
-        const base = snapshot.val();
+        const dataSnapshot = snapshot.val();
 
-        if (!base) {
-            listaDiv.innerHTML = "<p style='text-align:center; padding:40px;'>Nenhum registro para este período.</p>";
+        if (!dataSnapshot) {
+            listaDiv.innerHTML = "<p style='text-align:center; padding:40px;'>Nenhum dado encontrado para " + periodo + ".</p>";
             if(myChart) myChart.destroy();
             return;
         }
 
-        // Processamento Seguro
-        Object.keys(base).forEach(dataPasta => {
-            const registros = base[dataPasta];
+        const agora = new Date();
+        const hojeBR = agora.toLocaleDateString('pt-BR');
+
+        Object.keys(dataSnapshot).forEach(dataPasta => {
+            const registros = dataSnapshot[dataPasta];
             Object.keys(registros).forEach(ts => {
-                globalData.push({
-                    ts: parseInt(ts),
-                    temp: parseFloat(registros[ts].temp || 0),
-                    hum: parseFloat(registros[ts].hum || 0),
-                    dataStr: new Date(parseInt(ts) * 1000).toLocaleDateString('pt-BR'),
-                    horaStr: new Date(parseInt(ts) * 1000).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})
-                });
+                const dataItem = new Date(parseInt(ts) * 1000);
+                const dataItemBR = dataItem.toLocaleDateString('pt-BR');
+                
+                let valida = false;
+
+                // Lógica de Filtro por Período
+                if (periodo === 'diario') {
+                    if (dataItemBR === hojeBR) valida = true;
+                } else if (periodo === 'semanal') {
+                    const diff = (agora - dataItem) / (1000 * 60 * 60 * 24);
+                    if (diff <= 7) valida = true;
+                } else if (periodo === 'mensal') {
+                    const diff = (agora - dataItem) / (1000 * 60 * 60 * 24);
+                    if (diff <= 30) valida = true;
+                } else {
+                    valida = true; // Anual mostra tudo da pasta anual
+                }
+
+                if (valida) {
+                    globalData.push({
+                        ts: parseInt(ts),
+                        temp: parseFloat(registros[ts].temp || 0),
+                        hum: parseFloat(registros[ts].hum || 0),
+                        dataStr: dataItemBR,
+                        horaStr: dataItem.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})
+                    });
+                }
             });
         });
 
-        // Ordenar por Tempo (Mais novos primeiro para a lista)
+        // Ordenar do mais novo para o mais antigo (Lista)
         globalData.sort((a, b) => b.ts - a.ts);
 
         renderUI();
-        renderChart();
+        renderChart(periodo);
 
-    } catch (error) {
-        console.error("Erro ao buscar dados:", error);
-    }
+    } catch (e) { console.error(e); }
 }
 
 function renderUI() {
@@ -143,75 +162,77 @@ function renderUI() {
         const div = document.createElement('div');
         div.className = 'item';
         div.innerHTML = `
-            <div><b style="font-size:16px;">${item.horaStr}</b><br><small style="color:var(--text-muted)">${item.dataStr}</small></div>
-            <div style="display:flex; gap:15px;">
-                <div style="text-align:right"><small style="display:block; font-size:9px;">TEMP</small><span style="color:var(--accent-temp); font-weight:900;">${item.temp}°C</span></div>
-                <div style="text-align:right"><small style="display:block; font-size:9px;">UMID</small><span style="color:var(--accent-hum); font-weight:900;">${item.hum}%</span></div>
+            <div><b>${item.horaStr}</b><br><small style="color:var(--text-muted)">${item.dataStr}</small></div>
+            <div style="display:flex; gap:15px; text-align:right;">
+                <div><small style="display:block; font-size:8px;">TEMP</small><span style="color:var(--accent-temp); font-weight:900;">${item.temp.toFixed(2)}°C</span></div>
+                <div><small style="display:block; font-size:8px;">UMID</small><span style="color:var(--accent-hum); font-weight:900;">${item.hum.toFixed(2)}%</span></div>
             </div>`;
         listaDiv.appendChild(div);
     });
 }
 
-function renderChart() {
+function renderChart(periodo) {
     if (myChart) myChart.destroy();
-
-    // No gráfico, mostramos do antigo para o novo
     const chartData = [...globalData].sort((a, b) => a.ts - b.ts);
     const ctx = document.getElementById('mainChart').getContext('2d');
 
     myChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: chartData.map(d => chartData.length > 20 ? d.dataStr : d.horaStr),
+            labels: chartData.map(d => periodo === 'diario' ? d.horaStr : d.dataStr),
             datasets: [
-                { label: 'Temperatura', data: chartData.map(d => d.temp), borderColor: '#f43f5e', tension: 0.4, pointRadius: 3, borderWidth: 2 },
-                { label: 'Umidade', data: chartData.map(d => d.hum), borderColor: '#00d2ff', tension: 0.4, pointRadius: 3, borderWidth: 2 }
+                { label: 'Temp', data: chartData.map(d => d.temp), borderColor: '#f43f5e', tension: 0.3, pointRadius: 1 },
+                { label: 'Umid', data: chartData.map(d => d.hum), borderColor: '#00d2ff', tension: 0.3, pointRadius: 1 }
             ]
         },
         options: {
             responsive: true, maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
-            plugins: { 
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: '#101625',
-                    padding: 12,
-                    callbacks: {
-                        title: (c) => `Data/Hora: ${chartData[c[0].dataIndex].dataStr} ${chartData[c[0].dataIndex].horaStr}`
-                    }
-                }
-            },
+            plugins: { legend: { display: false } },
             scales: {
-                x: { ticks: { color: '#64748b', font: {size: 10} }, grid: { display: false } },
-                y: { ticks: { color: '#64748b' }, grid: { color: 'rgba(255,255,255,0.03)' } }
+                x: { ticks: { color: '#64748b', maxTicksLimit: 10 } },
+                y: { ticks: { color: '#64748b' } }
             }
         }
     });
 }
 
-function exportarPDF() {
+async function exportarPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-    const activeTab = document.querySelector('.tab.active').innerText;
-
+    const abaNome = document.querySelector('.tab.active').innerText;
+    
+    // Cabeçalho PDF
     doc.setFillColor(7, 10, 19);
     doc.rect(0, 0, 210, 30, 'F');
     doc.setTextColor(0, 210, 255);
-    doc.text(`RELATÓRIO NEWENERGY - ${activeTab}`, 15, 20);
+    doc.setFontSize(16);
+    doc.text(`NEWENERGY - RELATÓRIO ${abaNome.toUpperCase()}`, 15, 15);
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 15, 25);
 
-    let py = 40;
-    globalData.forEach((d, i) => {
+    // Gráfico no PDF
+    const chartCanvas = document.getElementById('mainChart');
+    const chartImg = chartCanvas.toDataURL("image/png", 1.0);
+    doc.addImage(chartImg, 'PNG', 10, 40, 190, 60);
+
+    // Tabela de Dados (Sincronizada com o filtro)
+    let py = 110;
+    doc.setTextColor(0);
+    doc.setFontSize(11);
+    doc.text("REGISTROS FILTRADOS:", 15, py);
+    py += 10;
+    
+    doc.setFontSize(9);
+    globalData.forEach(d => {
         if (py > 280) { doc.addPage(); py = 20; }
-        doc.setFontSize(10);
-        doc.setTextColor(50);
-        doc.text(`${d.dataStr} ${d.horaStr} | Temp: ${d.temp}C | Hum: ${d.hum}%`, 15, py);
+        doc.text(`${d.dataStr} às ${d.horaStr} --- Temp: ${d.temp.toFixed(2)}C | Umid: ${d.hum.toFixed(2)}%`, 15, py);
         py += 7;
     });
 
-    doc.save(`Relatorio_${activeTab}.pdf`);
+    doc.save(`NewEnergy_${abaNome}.pdf`);
 }
 
-// Inicialização segura
 firebase.auth().onAuthStateChanged(u => { if(u) fetchData('diario'); else location.href='index.html'; });
 </script>
 </body>
