@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>NewEnergy | Advanced BI</title>
+    <title>NewEnergy | BI Sincronizado</title>
     <style>
         :root {
             --bg-dark: #070a13; --card-bg: #101625;
@@ -22,8 +22,8 @@
         .chart-container { background: rgba(0,0,0,0.2); border-radius: 20px; padding: 15px; margin-bottom: 25px; border: 1px solid var(--border); height: 350px; }
         #lista { max-height: 400px; overflow-y: auto; padding-right: 5px; }
         
-        .item { background: rgba(255,255,255,0.03); padding: 12px 20px; border-radius: 12px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.02); }
-        .item.alerta { border-left: 4px solid var(--danger); background: rgba(255, 71, 87, 0.08); }
+        .item { background: rgba(255,255,255,0.03); padding: 12px 20px; border-radius: 12px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.02); transition: 0.3s; }
+        .item.alerta { border-left: 4px solid var(--danger); background: rgba(255, 71, 87, 0.1); }
         
         .data-divider { color: var(--accent-hum); font-size: 10px; font-weight: 900; margin: 25px 0 10px; display: flex; align-items: center; text-transform: uppercase; }
         .data-divider::after { content: ""; flex: 1; height: 1px; background: var(--border); margin-left: 10px; }
@@ -47,7 +47,7 @@
 <div class="card">
     <header style="border-left: 4px solid var(--accent-hum); padding-left: 20px; margin-bottom: 25px;">
         <h1 style="margin:0; font-size:24px;">Advanced Intelligence</h1>
-        <p style="margin:0; color:var(--text-muted); font-size:12px;">Relatório Analítico Sincronizado com Painel de Controle</p>
+        <p style="margin:0; color:var(--text-muted); font-size:12px;">Sincronização em Tempo Real com Painel de Controle</p>
     </header>
 
     <div class="tabs">
@@ -79,45 +79,39 @@ firebase.initializeApp({
 });
 const db = firebase.database();
 let myChart = null, globalData = [];
-let limitesConfig = { tMax: 100, tMin: 0, hMax: 100, hMin: 0 }; // Default caso falhe a leitura
+let limites = { tempMax: 100, tempMin: 0, umidMax: 100, umidMin: 0 };
 
-// 1. BUSCAR LIMITES DO PAINEL (Configuração Invisível)
-async function carregarLimites() {
-    try {
-        const snap = await db.ref("/configuracoes").once("value");
-        const configs = snap.val();
-        if(configs) {
-            limitesConfig = {
-                tMax: parseFloat(configs.tempMax || 100),
-                tMin: parseFloat(configs.tempMin || 0),
-                hMax: parseFloat(configs.umidMax || 100),
-                hMin: parseFloat(configs.umidMin || 0)
+// 1. MONITORAMENTO CONTÍNUO DOS LIMITES DO PAINEL
+function iniciarSincronizacaoLimites() {
+    db.ref("/configuracoes").on("value", (snap) => {
+        const data = snap.val();
+        if (data) {
+            limites = {
+                tempMax: parseFloat(data.tempMax),
+                tempMin: parseFloat(data.tempMin),
+                umidMax: parseFloat(data.umidMax),
+                umidMin: parseFloat(data.umidMin)
             };
-            console.log("Limites Sincronizados:", limitesConfig);
+            console.log("Limites Atualizados do Painel:", limites);
+            // Re-renderiza a lista e gráfico para aplicar novas cores imediatamente
+            if (globalData.length > 0) {
+                renderUI();
+            }
         }
-    } catch (e) { console.error("Erro ao ler limites:", e); }
+    });
 }
 
-document.querySelectorAll('.tab').forEach(tab => {
-    tab.addEventListener('click', function() {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        this.classList.add('active');
-        fetchData(this.getAttribute('data-periodo'));
-    });
-});
-
+// 2. BUSCA DE DADOS DO HISTÓRICO
 async function fetchData(periodo) {
-    await carregarLimites(); // Garante que os limites estão atualizados antes de filtrar
-    
     const listaDiv = document.getElementById("lista");
-    listaDiv.innerHTML = "<p style='text-align:center; padding:50px;'>Processando indicadores...</p>";
+    listaDiv.innerHTML = "<p style='text-align:center; padding:50px;'>Acessando Base de Dados...</p>";
     globalData = []; 
 
     try {
         const snapshot = await db.ref("/historico/" + periodo).once("value");
         const base = snapshot.val();
         if (!base) {
-            listaDiv.innerHTML = "<p style='text-align:center; padding:40px;'>Sem dados para o período.</p>";
+            listaDiv.innerHTML = "<p style='text-align:center; padding:40px;'>Sem registros.</p>";
             if(myChart) myChart.destroy();
             return;
         }
@@ -169,20 +163,20 @@ function renderUI() {
             ultimaData = d.data;
         }
 
-        // VERIFICAÇÃO DE ALERTA BASEADA NO PAINEL
-        const tAlerta = d.temp > limitesConfig.tMax || d.temp < limitesConfig.tMin;
-        const hAlerta = d.hum > limitesConfig.hMax || d.hum < limitesConfig.hMin;
+        // VERIFICAÇÃO CONTRA OS LIMITES DO PAINEL
+        const tErro = (d.temp > limites.tempMax || d.temp < limites.tempMin);
+        const hErro = (d.hum > limites.umidMax || d.hum < limites.umidMin);
         
         const item = document.createElement('div');
-        item.className = `item ${(tAlerta || hAlerta) ? 'alerta' : ''}`;
+        item.className = `item ${(tErro || hErro) ? 'alerta' : ''}`;
         item.innerHTML = `
-            <div><b>${d.hora}</b><br><small style="color:var(--text-muted)">REG: ${d.ts}</small></div>
+            <div><b>${d.hora}</b><br><small style="color:var(--text-muted)">ID: ${d.ts}</small></div>
             <div style="display:flex; gap:20px; text-align:right;">
                 <div><small style="display:block; font-size:8px;">TEMPERATURA</small>
-                    <span class="${tAlerta ? 'valor-critico' : ''}" style="color:var(--accent-temp); font-weight:800;">${d.temp.toFixed(2)}°C</span>
+                    <span class="${tErro ? 'valor-critico' : ''}" style="color:var(--accent-temp); font-weight:800;">${d.temp.toFixed(2)}°C</span>
                 </div>
                 <div><small style="display:block; font-size:8px;">UMIDADE</small>
-                    <span class="${hAlerta ? 'valor-critico' : ''}" style="color:var(--accent-hum); font-weight:800;">${d.hum.toFixed(2)}%</span>
+                    <span class="${hErro ? 'valor-critico' : ''}" style="color:var(--accent-hum); font-weight:800;">${d.hum.toFixed(2)}%</span>
                 </div>
             </div>`;
         listaDiv.appendChild(item);
@@ -198,11 +192,11 @@ function renderChart(periodo) {
         data: {
             labels: cleanData.map(d => periodo === 'diario' ? d.hora : d.data),
             datasets: [
-                { label: 'Temp', data: cleanData.map(d => d.temp), borderColor: '#f43f5e', backgroundColor: 'rgba(244, 63, 94, 0.1)', fill: true, tension: 0.4, pointRadius: 0 },
-                { label: 'Umid', data: cleanData.map(d => d.hum), borderColor: '#00d2ff', backgroundColor: 'rgba(0, 210, 255, 0.1)', fill: true, tension: 0.4, pointRadius: 0 }
+                { label: 'Temp', data: cleanData.map(d => d.temp), borderColor: '#f43f5e', tension: 0.4, pointRadius: 0 },
+                { label: 'Umid', data: cleanData.map(d => d.hum), borderColor: '#00d2ff', tension: 0.4, pointRadius: 0 }
             ]
         },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        options: { responsive: true, maintainAspectRatio: false }
     });
 }
 
@@ -211,12 +205,11 @@ async function exportarPDF() {
     const doc = new jsPDF();
     const aba = document.querySelector('.tab.active').innerText;
     
-    // Dados de Resumo
-    const mediaT = globalData.reduce((a, b) => a + b.temp, 0) / globalData.length;
-    const maxT = Math.max(...globalData.map(d => d.temp));
-    const minH = Math.min(...globalData.map(d => d.hum));
+    // Cálculos
+    const mediaT = globalData.length ? (globalData.reduce((a, b) => a + b.temp, 0) / globalData.length) : 0;
+    const maxT = globalData.length ? Math.max(...globalData.map(d => d.temp)) : 0;
 
-    // Cabeçalho
+    // Header Dark
     doc.setFillColor(16, 22, 37);
     doc.rect(0, 0, 210, 45, 'F');
     doc.setTextColor(255, 255, 255);
@@ -224,26 +217,22 @@ async function exportarPDF() {
     doc.text("NEWENERGY", 15, 20);
     doc.setFontSize(9);
     doc.setTextColor(0, 210, 255);
-    doc.text("RELATÓRIO DE MONITORAMENTO - SINCRONIZAÇÃO DE LIMITES", 15, 28);
+    doc.text("RELATÓRIO TÉCNICO - LIMITES SINCRONIZADOS COM PAINEL", 15, 28);
     
-    // Dashboard Resumo
+    // Resumo com os Limites Atuais do Painel
     doc.setFillColor(245, 247, 250);
     doc.rect(15, 55, 180, 20, 'F');
-    doc.setTextColor(100); doc.setFontSize(7);
-    doc.text(`CONFIG. ATUAL: T[${limitesConfig.tMin}-${limitesConfig.tMax}] H[${limitesConfig.hMin}-${limitesConfig.hMax}]`, 140, 52);
-    
-    doc.setTextColor(16, 22, 37); doc.setFontSize(10);
-    doc.text(`Média T: ${mediaT.toFixed(2)}C  |  Pico T: ${maxT.toFixed(2)}C  |  Min H: ${minH.toFixed(2)}%`, 25, 67);
+    doc.setTextColor(16, 22, 37); doc.setFontSize(9);
+    doc.text(`Limites no momento da geração: Temp[${limites.tempMin}-${limites.tempMax}] | Umid[${limites.umidMin}-${limites.umidMax}]`, 20, 62);
+    doc.text(`Média Temperatura: ${mediaT.toFixed(2)}°C  |  Pico: ${maxT.toFixed(2)}°C`, 20, 70);
 
     // Gráfico
     const imgData = document.getElementById('mainChart').toDataURL("image/png", 1.0);
-    doc.addImage(imgData, 'PNG', 15, 80, 180, 60);
+    doc.addImage(imgData, 'PNG', 15, 85, 180, 60);
 
-    // Tabela Zebra
-    let py = 150;
-    doc.setFontSize(10);
-    doc.text("LOG DE REGISTROS (DETECÇÃO DE ANOMALIAS)", 15, py);
-    py += 8;
+    // Tabela
+    let py = 155;
+    doc.setFontSize(10); doc.text("LOG DE REGISTROS TÉCNICOS", 15, py); py += 8;
     
     doc.setFillColor(230, 235, 245);
     doc.rect(15, py, 180, 8, 'F');
@@ -251,36 +240,41 @@ async function exportarPDF() {
     doc.text("DATA/HORA", 20, py + 5.5);
     doc.text("TEMP", 80, py + 5.5);
     doc.text("UMID", 120, py + 5.5);
-    doc.text("STATUS TÉCNICO", 160, py + 5.5);
+    doc.text("STATUS", 165, py + 5.5);
     py += 8;
 
     globalData.forEach((d, i) => {
         if (py > 270) { doc.addPage(); py = 20; }
         if (i % 2 === 0) { doc.setFillColor(248, 250, 255); doc.rect(15, py, 180, 7, 'F'); }
         
-        const tErro = d.temp > limitesConfig.tMax || d.temp < limitesConfig.tMin;
-        const hErro = d.hum > limitesConfig.hMax || d.hum < limitesConfig.hMin;
+        const tErro = (d.temp > limites.tempMax || d.temp < limites.tempMin);
+        const hErro = (d.hum > limites.umidMax || d.hum < limites.umidMin);
         
-        doc.setTextColor((tErro || hErro) ? 200 : 80, 0, 0);
+        if (tErro || hErro) doc.setTextColor(200, 0, 0); else doc.setTextColor(80);
+        
         doc.text(`${d.data} ${d.hora}`, 20, py + 5);
         doc.text(`${d.temp.toFixed(2)}°C`, 80, py + 5);
         doc.text(`${d.hum.toFixed(2)}%`, 120, py + 5);
-        doc.text((tErro || hErro) ? "FORA DOS LIMITES" : "NORMAL", 160, py + 5);
+        doc.text((tErro || hErro) ? "ALERTA" : "NORMAL", 165, py + 5);
         py += 7;
-        doc.setTextColor(80);
     });
 
-    // Assinatura
-    py += 15;
-    if (py > 275) { doc.addPage(); py = 30; }
-    doc.setDrawColor(180);
-    doc.line(60, py + 10, 150, py + 10);
-    doc.text("RESPONSÁVEL TÉCNICO", 105, py + 15, {align: "center"});
-
-    doc.save(`Relatorio_Sincronizado_NewEnergy.pdf`);
+    doc.save(`Relatorio_Sincronizado_${aba}.pdf`);
 }
 
-firebase.auth().onAuthStateChanged(u => { if(u) fetchData('diario'); else location.href='index.html'; });
+// Inicialização
+firebase.auth().onAuthStateChanged(u => { 
+    if(u) {
+        iniciarSincronizacaoLimites(); // Começa a ouvir o painel imediatamente
+        fetchData('diario'); 
+    } else {
+        location.href='index.html'; 
+    }
+});
+
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', function() {
+    fetchData(this.getAttribute('data-periodo'));
+}));
 </script>
 </body>
 </html>
