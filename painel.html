@@ -81,6 +81,7 @@
   .btn-history { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
   .btn-history:hover { background: var(--accent); color: #000; }
 
+  /* Admin Panel overlay */
   #adminPanel { 
     display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
     background: #0f172a; border-radius: 28px; padding: 30px; box-sizing: border-box; 
@@ -105,7 +106,7 @@
 <body>
 <div class="card">
   <div id="adminPanel">
-    <div class="logo-principal" style="font-size: 14px; margin-bottom: 25px;">Engine Configuration</div>
+    <div class="logo-principal" style="font-size: 14px; margin-bottom: 25px;">Configurações Avançadas</div>
     
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
       <div><label>Temp Mín</label><input type="number" id="tMin" class="admin-input"></div>
@@ -114,24 +115,25 @@
       <div><label>Hum Máx</label><input type="number" id="hMax" class="admin-input"></div>
     </div>
 
-    <label>E-mail de Alerta</label>
+    <label>E-mail para Alertas</label>
     <div style="display: flex; gap: 8px; margin-bottom: 15px;">
-      <input type="email" id="cfgEmail" class="admin-input" style="flex: 2; margin-bottom: 0;">
-      <button onclick="enviarEmailTeste()" class="btn-action" style="flex: 1; font-size: 9px; padding: 0; height: 42px; background: #1e293b; color: var(--accent); border: 1px solid var(--accent); margin-bottom: 0;">TESTAR</button>
+        <input type="email" id="cfgEmail" class="admin-input" style="flex: 2; margin-bottom: 0;">
+        <button onclick="enviarEmailTeste()" class="btn-action" style="flex: 1; font-size: 10px; padding: 0; height: 42px; background: transparent; color: var(--accent); border: 1px solid var(--accent); margin-bottom:0;">TESTAR</button>
     </div>
 
-    <label>Registros no Histórico (leituras/hora)</label>
-    <input type="number" id="cfgFreq" class="admin-input" placeholder="Ex: 20">
+    <label>Frequência do Histórico (Leituras / Hora)</label>
+    <input type="number" id="cfgFreq" class="admin-input" placeholder="Ex: 5, 10, 20...">
+    <p style="font-size: 9px; color: var(--text-muted); margin-top: -10px; margin-bottom: 15px;">* Define o tempo entre registros no banco de relatórios.</p>
     
     <div style="background: rgba(0,210,255,0.05); padding: 15px; border-radius: 12px; border: 1px solid rgba(0,210,255,0.1); margin-bottom: 20px;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-size: 11px; font-weight: bold;">DISPAROS NO MÊS: <span id="countEmailDisplay" style="color:var(--accent)">0</span></span>
-            <button onclick="resetarContador()" style="background:var(--off); color:white; border:none; padding:4px 8px; border-radius:5px; font-size:9px; cursor:pointer;">RESET</button>
+            <span style="font-size: 11px; font-weight: bold;">ALERTAS ENVIADOS: <span id="countEmailDisplay" style="color:var(--accent)">0</span></span>
+            <button onclick="resetarContador()" style="background:var(--off); color:white; border:none; padding:4px 8px; border-radius:5px; font-size:9px; cursor:pointer;">ZERAR</button>
         </div>
     </div>
 
-    <button id="btnSalvar" class="btn-action" style="background:var(--accent); color:#000;" onclick="salvarConfig()">Salvar Configurações</button>
-    <button class="btn-action" style="background:transparent; color:var(--text-muted); border:1px solid #334155" onclick="fecharAdmin()">Cancelar</button>
+    <button id="btnSalvar" class="btn-action" style="background:var(--accent); color:#000;" onclick="salvarConfig()">Gravar Configurações</button>
+    <button class="btn-action" style="background:transparent; color:var(--text-muted); border:1px solid #334155" onclick="fecharAdmin()">Voltar</button>
   </div>
 
   <div class="header-main">
@@ -141,7 +143,7 @@
   
   <div class="status-container">
     <div id="status" class="status-badge st-online">
-      <div class="dot"></div> <span>CONECTANDO...</span>
+      <div class="dot"></div> <span>SINCRONIZANDO...</span>
     </div>
   </div>
 
@@ -249,31 +251,27 @@ function enviarAlertaEmail(t, h) {
   });
 }
 
-// NOVO: Função para testar e-mail imediatamente
+// NOVO: Função para enviar e-mail de teste
 function enviarEmailTeste() {
-  const emailAlvo = document.getElementById("cfgEmail").value;
-  if (!emailAlvo) return alert("Insira um e-mail primeiro!");
-  
-  const btn = event.target;
-  const originalText = btn.innerText;
-  btn.innerText = "ENVIANDO...";
-  btn.disabled = true;
-  
-  emailjs.send("service_kx31f3s", "template_mqzi3at", {
-    equipamento: "NewEnergy - TESTE DE CONEXÃO",
-    tipo: "Teste de Configuração",
-    valor: "O sistema de notificações está operando corretamente.",
-    data: new Date().toLocaleString(),
-    para_email: emailAlvo
-  }).then(() => {
-    alert("E-mail de teste enviado com sucesso para " + emailAlvo);
-    btn.innerText = originalText;
-    btn.disabled = false;
-  }).catch(err => {
-    alert("Erro ao enviar e-mail. Verifique suas credenciais EmailJS.");
-    btn.innerText = "ERRO";
-    btn.disabled = false;
-  });
+    const destino = document.getElementById("cfgEmail").value;
+    if(!destino) return alert("Por favor, digite um e-mail.");
+    
+    const btn = event.target;
+    btn.innerText = "ENVIANDO...";
+    
+    emailjs.send("service_kx31f3s", "template_mqzi3at", {
+        equipamento: "NewEnergy - TESTE",
+        tipo: "Verificação de Conexão",
+        valor: "Configuração de e-mail funcionando corretamente.",
+        data: new Date().toLocaleString(),
+        para_email: destino
+    }).then(() => {
+        alert("E-mail de teste enviado!");
+        btn.innerText = "TESTAR";
+    }).catch(err => {
+        alert("Erro no envio: " + err);
+        btn.innerText = "ERRO";
+    });
 }
 
 // Interação Logo-Admin (5 cliques)
@@ -301,7 +299,7 @@ function salvarConfig() {
     leiturasPorHora: parseInt(document.getElementById("cfgFreq").value) || 20
   };
   db.ref("/config_alertas").update(updates).then(() => {
-    alert("Configurações atualizadas!");
+    alert("Configurações salvas com sucesso!");
     fecharAdmin();
   });
 }
