@@ -79,21 +79,17 @@ firebase.initializeApp({
 const db = firebase.database();
 let myChart = null, globalData = [];
 
-// OBJETIVO: SINCRONIZAR COM OS LIMITES DO SEU PAINEL
+// Sincroniza limites do Painel Invisível
 let limitesAtivos = { tMin: 0, tMax: 100, hMin: 0, hMax: 100 };
 
 function sincronizarConfiguracoes() {
-    // Apontando para o nó correto do seu código do painel: /config_alertas
     db.ref("/config_alertas").on("value", (snap) => {
         const val = snap.val();
         if (val) {
-            limitesAtivos.tMin = parseFloat(val.tMin);
-            limitesAtivos.tMax = parseFloat(val.tMax);
-            limitesAtivos.hMin = parseFloat(val.hMin);
-            limitesAtivos.hMax = parseFloat(val.hMax);
-            console.log("Limites Sincronizados do Painel:", limitesAtivos);
-            
-            // Se já houver dados na tela, atualiza as cores imediatamente
+            limitesAtivos.tMin = parseFloat(val.tMin) || 0;
+            limitesAtivos.tMax = parseFloat(val.tMax) || 100;
+            limitesAtivos.hMin = parseFloat(val.hMin) || 0;
+            limitesAtivos.hMax = parseFloat(val.hMax) || 100;
             if (globalData.length > 0) renderUI();
         }
     });
@@ -116,19 +112,20 @@ async function fetchData(periodo) {
         const hoje = new Date().toLocaleDateString('pt-BR');
         const agora = new Date();
 
-        Object.keys(base).forEach(pasta => {
-            const registros = base[pasta];
+        // Lógica para percorrer as subpastas de data criadas pelo ESP32
+        Object.keys(base).forEach(pastaData => {
+            const registros = base[pastaData];
             Object.keys(registros).forEach(ts => {
                 const dt = new Date(parseInt(ts) * 1000);
                 const dtStr = dt.toLocaleDateString('pt-BR');
-                let ok = false;
+                let incluir = false;
 
-                if (periodo === 'diario' && dtStr === hoje) ok = true;
-                else if (periodo === 'semanal' && (agora - dt) / 86400000 <= 7) ok = true;
-                else if (periodo === 'mensal' && (agora - dt) / 86400000 <= 30) ok = true;
-                else if (periodo === 'anual') ok = true;
+                if (periodo === 'diario' && dtStr === hoje) incluir = true;
+                else if (periodo === 'semanal' && (agora - dt) / 86400000 <= 7) incluir = true;
+                else if (periodo === 'mensal' && (agora - dt) / 86400000 <= 30) incluir = true;
+                else if (periodo === 'anual') incluir = true;
 
-                if (ok) {
+                if (incluir) {
                     globalData.push({
                         ts: parseInt(ts),
                         temp: parseFloat(registros[ts].temp),
@@ -160,7 +157,6 @@ function renderUI() {
             ultimaData = d.data;
         }
 
-        // VERIFICAÇÃO CONTRA OS LIMITES DO PAINEL (tMin, tMax, hMin, hMax)
         const erroT = (d.temp > limitesAtivos.tMax || d.temp < limitesAtivos.tMin);
         const erroH = (d.hum > limitesAtivos.hMax || d.hum < limitesAtivos.hMin);
         
@@ -189,11 +185,19 @@ function renderChart(periodo) {
         data: {
             labels: cleanData.map(d => periodo === 'diario' ? d.hora : d.data),
             datasets: [
-                { label: 'Temp', data: cleanData.map(d => d.temp), borderColor: '#f43f5e', tension: 0.4, pointRadius: 0 },
-                { label: 'Umid', data: cleanData.map(d => d.hum), borderColor: '#00d2ff', tension: 0.4, pointRadius: 0 }
+                { label: 'Temp', data: cleanData.map(d => d.temp), borderColor: '#f43f5e', tension: 0.4, pointRadius: 2, backgroundColor: 'rgba(244, 63, 94, 0.1)', fill: true },
+                { label: 'Umid', data: cleanData.map(d => d.hum), borderColor: '#00d2ff', tension: 0.4, pointRadius: 2, backgroundColor: 'rgba(0, 210, 255, 0.1)', fill: true }
             ]
         },
-        options: { responsive: true, maintainAspectRatio: false }
+        options: { 
+            responsive: true, 
+            maintainAspectRatio: false,
+            scales: {
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } },
+                x: { grid: { display: false }, ticks: { color: '#64748b' } }
+            },
+            plugins: { legend: { display: false } }
+        }
     });
 }
 
@@ -202,7 +206,6 @@ async function exportarPDF() {
     const doc = new jsPDF();
     const aba = document.querySelector('.tab.active').innerText;
     
-    // Header Dark
     doc.setFillColor(16, 22, 37);
     doc.rect(0, 0, 210, 45, 'F');
     doc.setTextColor(255, 255, 255);
@@ -210,19 +213,16 @@ async function exportarPDF() {
     doc.text("NEWENERGY", 15, 20);
     doc.setFontSize(9);
     doc.setTextColor(0, 210, 255);
-    doc.text("RELATÓRIO DE MONITORAMENTO - PARÂMETROS DE CONTROLE", 15, 28);
+    doc.text("RELATÓRIO DE MONITORAMENTO - " + aba.toUpperCase(), 15, 28);
     
-    // Dashboard Resumo
     doc.setFillColor(245, 247, 250);
     doc.rect(15, 55, 180, 15, 'F');
     doc.setTextColor(100); doc.setFontSize(8);
-    doc.text(`Limites Configurados no Painel: Temp [${limitesAtivos.tMin}-${limitesAtivos.tMax}] | Hum [${limitesAtivos.hMin}-${limitesAtivos.hMax}]`, 20, 65);
+    doc.text(`Limites no Registro: Temp [${limitesAtivos.tMin}-${limitesAtivos.tMax}] | Hum [${limitesAtivos.hMin}-${limitesAtivos.hMax}]`, 20, 65);
 
-    // Gráfico
     const imgData = document.getElementById('mainChart').toDataURL("image/png", 1.0);
     doc.addImage(imgData, 'PNG', 15, 80, 180, 60);
 
-    // Tabela
     let py = 150;
     doc.setTextColor(0); doc.setFontSize(10); doc.text("LOG DE REGISTROS TÉCNICOS", 15, py); py += 8;
     
@@ -238,12 +238,9 @@ async function exportarPDF() {
     globalData.forEach((d, i) => {
         if (py > 270) { doc.addPage(); py = 20; }
         if (i % 2 === 0) { doc.setFillColor(248, 250, 255); doc.rect(15, py, 180, 7, 'F'); }
-        
         const tErr = (d.temp > limitesAtivos.tMax || d.temp < limitesAtivos.tMin);
         const hErr = (d.hum > limitesAtivos.hMax || d.hum < limitesAtivos.hMin);
-        
         if (tErr || hErr) doc.setTextColor(200, 0, 0); else doc.setTextColor(80);
-        
         doc.text(`${d.data} ${d.hora}`, 20, py + 5);
         doc.text(`${d.temp.toFixed(2)}°C`, 80, py + 5);
         doc.text(`${d.hum.toFixed(2)}%`, 120, py + 5);
@@ -256,7 +253,7 @@ async function exportarPDF() {
 
 firebase.auth().onAuthStateChanged(u => { 
     if(u) {
-        sincronizarConfiguracoes(); // Começa a ouvir os limites do Painel
+        sincronizarConfiguracoes();
         fetchData('diario'); 
     } else {
         location.href='index.html'; 
@@ -264,6 +261,8 @@ firebase.auth().onAuthStateChanged(u => {
 });
 
 document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', function() {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    this.classList.add('active');
     fetchData(this.getAttribute('data-periodo'));
 }));
 </script>
