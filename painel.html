@@ -81,7 +81,6 @@
   .btn-history { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
   .btn-history:hover { background: var(--accent); color: #000; }
 
-  /* Admin Panel overlay */
   #adminPanel { 
     display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
     background: #0f172a; border-radius: 28px; padding: 30px; box-sizing: border-box; 
@@ -118,12 +117,11 @@
     <label>E-mail para Alertas</label>
     <div style="display: flex; gap: 8px; margin-bottom: 15px;">
         <input type="email" id="cfgEmail" class="admin-input" style="flex: 2; margin-bottom: 0;">
-        <button onclick="enviarEmailTeste()" class="btn-action" style="flex: 1; font-size: 10px; padding: 0; height: 42px; background: transparent; color: var(--accent); border: 1px solid var(--accent); margin-bottom:0;">TESTAR</button>
+        <button onclick="enviarEmailTeste(event)" class="btn-action" style="flex: 1; font-size: 10px; padding: 0; height: 42px; background: transparent; color: var(--accent); border: 1px solid var(--accent); margin-bottom:0;">TESTAR</button>
     </div>
 
     <label>Frequência do Histórico (Leituras / Hora)</label>
     <input type="number" id="cfgFreq" class="admin-input" placeholder="Ex: 5, 10, 20...">
-    <p style="font-size: 9px; color: var(--text-muted); margin-top: -10px; margin-bottom: 15px;">* Define o tempo entre registros no banco de relatórios.</p>
     
     <div style="background: rgba(0,210,255,0.05); padding: 15px; border-radius: 12px; border: 1px solid rgba(0,210,255,0.1); margin-bottom: 20px;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -169,16 +167,18 @@
 <script>
 emailjs.init("W2__8f2fBoqRPX9hX");
 
-firebase.initializeApp({
+const firebaseConfig = {
   apiKey: "AIzaSyB5FnkQiFi3gn9Iup2KNcbrKxWd-0Jjo6Y",
   authDomain: "oficial-688e8.firebaseapp.com",
   databaseURL: "https://oficial-688e8-default-rtdb.firebaseio.com/",
   projectId: "oficial-688e8"
-});
+};
+
+firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const auth = firebase.auth();
 
-let config = { tMin: 15, tMax: 35, hMin: 30, hMax: 80, intervalo: 2000, emailDestino: "", tempoEmail: 600000, contadorAlertas: 0, leiturasPorHora: 20 };
+let config = { tMin: 15, tMax: 35, hMin: 30, hMax: 80, intervalo: 5000, emailDestino: "", tempoEmail: 600000, contadorAlertas: 0, leiturasPorHora: 20 };
 let gT, gH, ultimaVezAlertado = 0;
 
 function rodarDashboard() {
@@ -195,14 +195,22 @@ function rodarDashboard() {
   gH = new Gauge(document.getElementById("gHum")).setOptions(gOpt('#00d2ff'));
   gH.maxValue = 100; gH.setMinValue(0); gH.set(0);
 
+  // Monitoramento de Status Online/Offline Otimizado
   db.ref("/last_seen").on("value", snap => {
-    const check = () => {
-      const isOff = (Date.now() - (snap.val() * 1000)) > (config.intervalo + 15000);
+    const verificarStatus = () => {
+      const agora = Math.floor(Date.now() / 1000);
+      const ultimoSinal = parseInt(snap.val());
+      
+      // Tolerância de 45 segundos para considerar offline
+      const isOff = (agora - ultimoSinal) > 45; 
       const st = document.getElementById("status");
-      st.innerHTML = isOff ? '<div class="dot"></div> OFFLINE' : '<div class="dot"></div> SISTEMA ATIVO';
+      
+      st.innerHTML = isOff ? '<div class="dot"></div> SISTEMA OFFLINE' : '<div class="dot"></div> SISTEMA ATIVO';
       st.className = "status-badge " + (isOff ? "st-offline" : "st-online");
     };
-    check();
+    verificarStatus();
+    if(window.stInt) clearInterval(window.stInt);
+    window.stInt = setInterval(verificarStatus, 10000);
   });
 
   db.ref("/led").on("value", s => {
@@ -213,21 +221,19 @@ function rodarDashboard() {
   });
 
   db.ref("/temp").on("value", s => { 
-    const v = parseFloat(s.val()); gT.set(v); 
-    document.getElementById("tempVal").innerText = v.toFixed(1) + "°C";
-    analisarAlertas();
+    const v = parseFloat(s.val()); if(!isNaN(v)) { gT.set(v); document.getElementById("tempVal").innerText = v.toFixed(1) + "°C"; analisarAlertas(); }
   });
 
   db.ref("/hum").on("value", s => { 
-    const v = parseFloat(s.val()); gH.set(v); 
-    document.getElementById("humVal").innerText = v.toFixed(1) + "%";
-    analisarAlertas();
+    const v = parseFloat(s.val()); if(!isNaN(v)) { gH.set(v); document.getElementById("humVal").innerText = v.toFixed(1) + "%"; analisarAlertas(); }
   });
 }
 
 function analisarAlertas() {
   const t = parseFloat(document.getElementById("tempVal").innerText);
   const h = parseFloat(document.getElementById("humVal").innerText);
+  if(isNaN(t) || isNaN(h)) return;
+
   const msg = document.getElementById("alertMessage");
   let erro = (t > config.tMax || t < config.tMin || h > config.hMax || h < config.hMin);
   msg.innerText = erro ? "⚠️ ATENÇÃO: PARÂMETROS FORA DA ZONA DE SEGURANÇA" : "";
@@ -251,12 +257,11 @@ function enviarAlertaEmail(t, h) {
   });
 }
 
-// NOVO: Função para enviar e-mail de teste
-function enviarEmailTeste() {
+function enviarEmailTeste(e) {
     const destino = document.getElementById("cfgEmail").value;
     if(!destino) return alert("Por favor, digite um e-mail.");
-    
-    const btn = event.target;
+    const btn = e.target;
+    const originalText = btn.innerText;
     btn.innerText = "ENVIANDO...";
     
     emailjs.send("service_kx31f3s", "template_mqzi3at", {
@@ -267,14 +272,13 @@ function enviarEmailTeste() {
         para_email: destino
     }).then(() => {
         alert("E-mail de teste enviado!");
-        btn.innerText = "TESTAR";
+        btn.innerText = originalText;
     }).catch(err => {
         alert("Erro no envio: " + err);
         btn.innerText = "ERRO";
     });
 }
 
-// Interação Logo-Admin (5 cliques)
 let cliques = 0;
 document.getElementById("logoAdmin").onclick = () => {
   if(++cliques >= 5) {
@@ -296,18 +300,22 @@ function salvarConfig() {
     hMin: parseFloat(document.getElementById("hMin").value),
     hMax: parseFloat(document.getElementById("hMax").value),
     emailDestino: document.getElementById("cfgEmail").value,
-    leiturasPorHora: parseInt(document.getElementById("cfgFreq").value) || 20
+    leiturasPorHora: parseInt(document.getElementById("cfgFreq").value) || 20,
+    intervalo: 5000 // Fixo em 5s para garantir estabilidade
   };
   db.ref("/config_alertas").update(updates).then(() => {
-    alert("Configurações salvas com sucesso!");
+    alert("Configurações salvas!");
     fecharAdmin();
   });
 }
 
 function fecharAdmin() { document.getElementById("adminPanel").style.display = "none"; }
-function resetarContador() { if(confirm("Zerar estatísticas de alertas?")) db.ref("/config_alertas/contadorAlertas").set(0); }
+function resetarContador() { if(confirm("Zerar estatísticas?")) db.ref("/config_alertas/contadorAlertas").set(0); }
 function fazerLogout() { auth.signOut().then(() => window.location.replace("index.html")); }
-document.getElementById("btnLED").onclick = () => { db.ref("/led").get().then(s => db.ref("/led").set(s.val() == 1 ? 0 : 1)); };
+
+document.getElementById("btnLED").onclick = () => { 
+  db.ref("/led").transaction(current => (current == 1 ? 0 : 1));
+};
 
 auth.onAuthStateChanged(user => { 
   if (!user) window.location.replace("index.html"); 
