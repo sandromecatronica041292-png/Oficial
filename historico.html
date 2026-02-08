@@ -79,7 +79,6 @@ firebase.initializeApp({
 const db = firebase.database();
 let myChart = null, globalData = [];
 
-// Sincroniza limites do Painel Invisível
 let limitesAtivos = { tMin: 0, tMax: 100, hMin: 0, hMax: 100 };
 
 function sincronizarConfiguracoes() {
@@ -101,8 +100,10 @@ async function fetchData(periodo) {
     globalData = []; 
 
     try {
-        const snapshot = await db.ref("/historico/" + periodo).once("value");
+        // CORREÇÃO: Lê sempre de /diario, pois o ESP32 centraliza os dados lá
+        const snapshot = await db.ref("/historico/diario").once("value");
         const base = snapshot.val();
+        
         if (!base) {
             listaDiv.innerHTML = "<p style='text-align:center; padding:40px;'>Nenhum dado encontrado.</p>";
             if(myChart) myChart.destroy();
@@ -112,14 +113,15 @@ async function fetchData(periodo) {
         const hoje = new Date().toLocaleDateString('pt-BR');
         const agora = new Date();
 
-        // Lógica para percorrer as subpastas de data criadas pelo ESP32
         Object.keys(base).forEach(pastaData => {
             const registros = base[pastaData];
             Object.keys(registros).forEach(ts => {
-                const dt = new Date(parseInt(ts) * 1000);
+                const timestampNum = parseInt(ts);
+                const dt = new Date(timestampNum * 1000);
                 const dtStr = dt.toLocaleDateString('pt-BR');
                 let incluir = false;
 
+                // Filtro Lógico no Front-end
                 if (periodo === 'diario' && dtStr === hoje) incluir = true;
                 else if (periodo === 'semanal' && (agora - dt) / 86400000 <= 7) incluir = true;
                 else if (periodo === 'mensal' && (agora - dt) / 86400000 <= 30) incluir = true;
@@ -127,7 +129,7 @@ async function fetchData(periodo) {
 
                 if (incluir) {
                     globalData.push({
-                        ts: parseInt(ts),
+                        ts: timestampNum,
                         temp: parseFloat(registros[ts].temp),
                         hum: parseFloat(registros[ts].hum),
                         data: dtStr,
@@ -137,10 +139,15 @@ async function fetchData(periodo) {
             });
         });
 
+        // Ordena do mais recente para o mais antigo
         globalData.sort((a, b) => b.ts - a.ts);
+        
         renderUI();
         renderChart(periodo);
-    } catch (e) { console.error(e); }
+    } catch (e) { 
+        console.error("Erro ao buscar dados:", e);
+        listaDiv.innerHTML = "<p style='text-align:center; color:red;'>Erro na sincronização.</p>";
+    }
 }
 
 function renderUI() {
@@ -178,8 +185,10 @@ function renderUI() {
 
 function renderChart(periodo) {
     if (myChart) myChart.destroy();
+    // Para o gráfico, usamos ordem cronológica (antigo -> novo)
     const cleanData = [...globalData].sort((a, b) => a.ts - b.ts);
     const ctx = document.getElementById('mainChart').getContext('2d');
+    
     myChart = new Chart(ctx, {
         type: 'line',
         data: {
