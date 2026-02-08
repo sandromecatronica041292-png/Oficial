@@ -160,11 +160,12 @@
 
   <div id="alertMessage" style="color:var(--warn); min-height:20px; font-size:11px; margin-bottom:20px; font-weight:bold; letter-spacing: 0.5px;"></div>
 
-  <button id="btnLED" class="btn-action btn-led off">Sincronizando LED...</button>
+  <button id="btnLED" class="btn-action btn-led off" disabled>Conectando...</button>
   <button class="btn-action btn-history" onclick="location.href='historico.html'">Relatórios Avançados</button>
 </div>
 
 <script>
+// Configurações do Firebase
 emailjs.init("W2__8f2fBoqRPX9hX");
 
 const firebaseConfig = {
@@ -178,7 +179,7 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const auth = firebase.auth();
 
-let config = { tMin: 15, tMax: 35, hMin: 30, hMax: 80, intervalo: 5000, emailDestino: "", tempoEmail: 600000, contadorAlertas: 0, leiturasPorHora: 20 };
+let config = { tMin: 15, tMax: 35, hMin: 30, hMax: 80, emailDestino: "", tempoEmail: 600000, contadorAlertas: 0 };
 let gT, gH, ultimaVezAlertado = 0;
 
 function rodarDashboard() {
@@ -195,22 +196,30 @@ function rodarDashboard() {
   gH = new Gauge(document.getElementById("gHum")).setOptions(gOpt('#00d2ff'));
   gH.maxValue = 100; gH.setMinValue(0); gH.set(0);
 
-  // Monitoramento de Status Online/Offline Otimizado
+  // Lógica de Status (Verifica se o ESP mandou sinal nos últimos 60s)
   db.ref("/last_seen").on("value", snap => {
-    const verificarStatus = () => {
+    const check = () => {
       const agora = Math.floor(Date.now() / 1000);
-      const ultimoSinal = parseInt(snap.val());
-      
-      // Tolerância de 45 segundos para considerar offline
-      const isOff = (agora - ultimoSinal) > 45; 
+      const last = parseInt(snap.val()) || 0;
+      const isOff = (agora - last) > 60;
       const st = document.getElementById("status");
-      
-      st.innerHTML = isOff ? '<div class="dot"></div> SISTEMA OFFLINE' : '<div class="dot"></div> SISTEMA ATIVO';
-      st.className = "status-badge " + (isOff ? "st-offline" : "st-online");
+      if(st) {
+          st.innerHTML = isOff ? '<div class="dot"></div> SISTEMA OFFLINE' : '<div class="dot"></div> SISTEMA ATIVO';
+          st.className = "status-badge " + (isOff ? "st-offline" : "st-online");
+      }
     };
-    verificarStatus();
-    if(window.stInt) clearInterval(window.stInt);
-    window.stInt = setInterval(verificarStatus, 10000);
+    check();
+    if(window.stInterval) clearInterval(window.stInterval);
+    window.stInterval = setInterval(check, 15000);
+  });
+
+  // Dados em Tempo Real
+  db.ref("/temp").on("value", s => { 
+    const v = parseFloat(s.val()); if(!isNaN(v)) { gT.set(v); document.getElementById("tempVal").innerText = v.toFixed(1) + "°C"; analisarAlertas(); }
+  });
+
+  db.ref("/hum").on("value", s => { 
+    const v = parseFloat(s.val()); if(!isNaN(v)) { gH.set(v); document.getElementById("humVal").innerText = v.toFixed(1) + "%"; analisarAlertas(); }
   });
 
   db.ref("/led").on("value", s => {
@@ -218,14 +227,7 @@ function rodarDashboard() {
     const b = document.getElementById("btnLED");
     b.innerText = on ? "DESATIVAR ILUMINAÇÃO" : "ATIVAR ILUMINAÇÃO";
     b.className = "btn-action btn-led " + (on ? "on" : "off");
-  });
-
-  db.ref("/temp").on("value", s => { 
-    const v = parseFloat(s.val()); if(!isNaN(v)) { gT.set(v); document.getElementById("tempVal").innerText = v.toFixed(1) + "°C"; analisarAlertas(); }
-  });
-
-  db.ref("/hum").on("value", s => { 
-    const v = parseFloat(s.val()); if(!isNaN(v)) { gH.set(v); document.getElementById("humVal").innerText = v.toFixed(1) + "%"; analisarAlertas(); }
+    b.disabled = false;
   });
 }
 
@@ -235,10 +237,10 @@ function analisarAlertas() {
   if(isNaN(t) || isNaN(h)) return;
 
   const msg = document.getElementById("alertMessage");
-  let erro = (t > config.tMax || t < config.tMin || h > config.hMax || h < config.hMin);
-  msg.innerText = erro ? "⚠️ ATENÇÃO: PARÂMETROS FORA DA ZONA DE SEGURANÇA" : "";
+  let fora = (t > config.tMax || t < config.tMin || h > config.hMax || h < config.hMin);
+  msg.innerText = fora ? "⚠️ ATENÇÃO: PARÂMETROS FORA DA ZONA DE SEGURANÇA" : "";
   
-  if (erro && (Date.now() - ultimaVezAlertado > config.tempoEmail)) {
+  if (fora && (Date.now() - ultimaVezAlertado > (config.tempoEmail || 600000))) {
     enviarAlertaEmail(t, h);
   }
 }
@@ -248,8 +250,7 @@ function enviarAlertaEmail(t, h) {
   emailjs.send("service_kx31f3s", "template_mqzi3at", {
     equipamento: "NewEnergy Monitor Pro",
     tipo: "Anomalia Detectada",
-    valor: `Temp: ${t}°C | Hum: ${h}%`,
-    data: new Date().toLocaleString(),
+    valor: `Temp: ${t.toFixed(1)}°C | Hum: ${h.toFixed(1)}%`,
     para_email: config.emailDestino
   }).then(() => {
     ultimaVezAlertado = Date.now();
@@ -257,75 +258,58 @@ function enviarAlertaEmail(t, h) {
   });
 }
 
-function enviarEmailTeste(e) {
-    const destino = document.getElementById("cfgEmail").value;
-    if(!destino) return alert("Por favor, digite um e-mail.");
-    const btn = e.target;
-    const originalText = btn.innerText;
-    btn.innerText = "ENVIANDO...";
-    
-    emailjs.send("service_kx31f3s", "template_mqzi3at", {
-        equipamento: "NewEnergy - TESTE",
-        tipo: "Verificação de Conexão",
-        valor: "Configuração de e-mail funcionando corretamente.",
-        data: new Date().toLocaleString(),
-        para_email: destino
-    }).then(() => {
-        alert("E-mail de teste enviado!");
-        btn.innerText = originalText;
-    }).catch(err => {
-        alert("Erro no envio: " + err);
-        btn.innerText = "ERRO";
-    });
-}
-
-let cliques = 0;
+// Funções Administrativas
+let cliquesLogo = 0;
 document.getElementById("logoAdmin").onclick = () => {
-  if(++cliques >= 5) {
+  if(++cliquesLogo >= 5) {
     document.getElementById("adminPanel").style.display = "flex";
-    document.getElementById("tMin").value = config.tMin;
-    document.getElementById("tMax").value = config.tMax;
-    document.getElementById("hMin").value = config.hMin;
-    document.getElementById("hMax").value = config.hMax;
-    document.getElementById("cfgEmail").value = config.emailDestino;
+    document.getElementById("tMin").value = config.tMin || 15;
+    document.getElementById("tMax").value = config.tMax || 35;
+    document.getElementById("hMin").value = config.hMin || 30;
+    document.getElementById("hMax").value = config.hMax || 80;
+    document.getElementById("cfgEmail").value = config.emailDestino || "";
     document.getElementById("cfgFreq").value = config.leiturasPorHora || 20;
-    cliques = 0;
+    cliquesLogo = 0;
   }
 };
 
 function salvarConfig() {
-  const updates = {
+  const up = {
     tMin: parseFloat(document.getElementById("tMin").value),
     tMax: parseFloat(document.getElementById("tMax").value),
     hMin: parseFloat(document.getElementById("hMin").value),
     hMax: parseFloat(document.getElementById("hMax").value),
     emailDestino: document.getElementById("cfgEmail").value,
-    leiturasPorHora: parseInt(document.getElementById("cfgFreq").value) || 20,
-    intervalo: 5000 // Fixo em 5s para garantir estabilidade
+    leiturasPorHora: parseInt(document.getElementById("cfgFreq").value) || 20
   };
-  db.ref("/config_alertas").update(updates).then(() => {
-    alert("Configurações salvas!");
-    fecharAdmin();
-  });
+  db.ref("/config_alertas").update(up).then(() => { alert("Configurações gravadas!"); fecharAdmin(); });
 }
 
 function fecharAdmin() { document.getElementById("adminPanel").style.display = "none"; }
 function resetarContador() { if(confirm("Zerar estatísticas?")) db.ref("/config_alertas/contadorAlertas").set(0); }
 function fazerLogout() { auth.signOut().then(() => window.location.replace("index.html")); }
 
-document.getElementById("btnLED").onclick = () => { 
-  db.ref("/led").transaction(current => (current == 1 ? 0 : 1));
+document.getElementById("btnLED").onclick = function() { 
+  this.disabled = true; 
+  db.ref("/led").transaction(c => (c == 1 ? 0 : 1));
 };
+
+function enviarEmailTeste(e) {
+    const d = document.getElementById("cfgEmail").value;
+    if(!d) return alert("Digite um e-mail.");
+    const b = e.target; b.innerText = "ENVIANDO...";
+    emailjs.send("service_kx31f3s", "template_mqzi3at", {
+        equipamento: "NewEnergy - TESTE",
+        tipo: "Conexão OK",
+        valor: "O sistema de alertas está pronto.",
+        para_email: d
+    }).then(() => { alert("E-mail enviado!"); b.innerText = "TESTAR"; });
+}
 
 auth.onAuthStateChanged(user => { 
   if (!user) window.location.replace("index.html"); 
   else {
-    db.ref("/config_alertas").on("value", s => { 
-      if(s.val()) {
-        config = s.val();
-        document.getElementById("countEmailDisplay").innerText = config.contadorAlertas || 0;
-      }
-    });
+    db.ref("/config_alertas").on("value", s => { if(s.val()) config = s.val(); document.getElementById("countEmailDisplay").innerText = config.contadorAlertas || 0; });
     rodarDashboard(); 
   }
 });
