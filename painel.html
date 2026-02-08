@@ -165,7 +165,6 @@
 </div>
 
 <script>
-// Configurações do Firebase
 emailjs.init("W2__8f2fBoqRPX9hX");
 
 const firebaseConfig = {
@@ -196,12 +195,15 @@ function rodarDashboard() {
   gH = new Gauge(document.getElementById("gHum")).setOptions(gOpt('#00d2ff'));
   gH.maxValue = 100; gH.setMinValue(0); gH.set(0);
 
-  // Lógica de Status (Verifica se o ESP mandou sinal nos últimos 60s)
   db.ref("/last_seen").on("value", snap => {
     const check = () => {
       const agora = Math.floor(Date.now() / 1000);
       const last = parseInt(snap.val()) || 0;
-      const isOff = (agora - last) > 60;
+      // Lógica robusta: considera offline apenas se a diferença for maior que 90s
+      // Independente de fuso horário local
+      const diff = Math.abs(agora - last);
+      const isOff = diff > 90 && (agora - last) > 90;
+      
       const st = document.getElementById("status");
       if(st) {
           st.innerHTML = isOff ? '<div class="dot"></div> SISTEMA OFFLINE' : '<div class="dot"></div> SISTEMA ATIVO';
@@ -210,10 +212,9 @@ function rodarDashboard() {
     };
     check();
     if(window.stInterval) clearInterval(window.stInterval);
-    window.stInterval = setInterval(check, 15000);
+    window.stInterval = setInterval(check, 10000);
   });
 
-  // Dados em Tempo Real
   db.ref("/temp").on("value", s => { 
     const v = parseFloat(s.val()); if(!isNaN(v)) { gT.set(v); document.getElementById("tempVal").innerText = v.toFixed(1) + "°C"; analisarAlertas(); }
   });
@@ -235,11 +236,9 @@ function analisarAlertas() {
   const t = parseFloat(document.getElementById("tempVal").innerText);
   const h = parseFloat(document.getElementById("humVal").innerText);
   if(isNaN(t) || isNaN(h)) return;
-
   const msg = document.getElementById("alertMessage");
   let fora = (t > config.tMax || t < config.tMin || h > config.hMax || h < config.hMin);
   msg.innerText = fora ? "⚠️ ATENÇÃO: PARÂMETROS FORA DA ZONA DE SEGURANÇA" : "";
-  
   if (fora && (Date.now() - ultimaVezAlertado > (config.tempoEmail || 600000))) {
     enviarAlertaEmail(t, h);
   }
@@ -258,7 +257,6 @@ function enviarAlertaEmail(t, h) {
   });
 }
 
-// Funções Administrativas
 let cliquesLogo = 0;
 document.getElementById("logoAdmin").onclick = () => {
   if(++cliquesLogo >= 5) {
