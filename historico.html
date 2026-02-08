@@ -3,124 +3,268 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>NewEnergy | Business Intelligence</title>
+    <title>NewEnergy | BI Sincronizado</title>
     <style>
-        :root { --bg: #070a13; --card: #101625; --accent: #00d2ff; --temp: #f43f5e; --text: #f0f4f8; --muted: #64748b; }
-        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 20px; display: flex; justify-content: center; }
-        .card { background: var(--card); border-radius: 24px; padding: 25px; width: 100%; max-width: 850px; border: 1px solid rgba(255,255,255,0.08); }
-        .tabs { display: flex; gap: 5px; background: #000; padding: 5px; border-radius: 12px; margin-bottom: 20px; }
-        .tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; color: var(--muted); font-size: 12px; font-weight: bold; border-radius: 8px; transition: 0.3s; }
-        .tab.active { background: var(--card); color: var(--accent); }
-        .chart-container { height: 300px; margin-bottom: 20px; }
-        #lista { max-height: 350px; overflow-y: auto; }
-        .item { background: rgba(255,255,255,0.03); padding: 12px; border-radius: 10px; margin-bottom: 5px; display: flex; justify-content: space-between; font-size: 13px; border-left: 4px solid transparent; }
-        .item.alerta { border-left-color: var(--temp); background: rgba(244, 63, 94, 0.05); }
-        .data-divider { color: var(--accent); font-size: 11px; margin: 15px 0 5px; font-weight: bold; text-transform: uppercase; }
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 12px; background: var(--accent); color: #000; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        :root {
+            --bg-dark: #070a13; --card-bg: #101625;
+            --accent-hum: #00d2ff; --accent-temp: #f43f5e;
+            --text-main: #f0f4f8; --text-muted: #64748b;
+            --border: rgba(255, 255, 255, 0.08);
+            --danger: #ff4757;
+        }
+        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-dark); color: var(--text-main); display: flex; justify-content: center; padding: 20px; }
+        .card { background: var(--card-bg); border-radius: 28px; padding: 30px; width: 100%; max-width: 900px; border: 1px solid var(--border); box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
+        
+        .tabs { display: flex; background: #070a13; padding: 5px; border-radius: 14px; margin-bottom: 20px; gap: 4px; border: 1px solid var(--border); }
+        .tab { flex: 1; padding: 12px; text-align: center; border-radius: 10px; cursor: pointer; font-size: 11px; font-weight: 700; color: var(--text-muted); transition: 0.3s; text-transform: uppercase; }
+        .tab.active { background: var(--card-bg); color: var(--accent-hum); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+
+        .chart-container { background: rgba(0,0,0,0.2); border-radius: 20px; padding: 15px; margin-bottom: 25px; border: 1px solid var(--border); height: 350px; }
+        #lista { max-height: 400px; overflow-y: auto; padding-right: 5px; }
+        
+        .item { background: rgba(255,255,255,0.03); padding: 12px 20px; border-radius: 12px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.02); transition: 0.3s; }
+        .item.alerta { border-left: 4px solid var(--danger); background: rgba(255, 71, 87, 0.1); }
+        
+        .data-divider { color: var(--accent-hum); font-size: 10px; font-weight: 900; margin: 25px 0 10px; display: flex; align-items: center; text-transform: uppercase; }
+        .data-divider::after { content: ""; flex: 1; height: 1px; background: var(--border); margin-left: 10px; }
+        
+        .btn-group { display: flex; gap: 10px; margin-top: 20px; }
+        .btn { flex: 1; padding: 16px; border: none; border-radius: 14px; font-weight: 800; cursor: pointer; font-size: 12px; text-transform: uppercase; transition: 0.3s; }
+        .btn-pdf { background: var(--accent-hum); color: #000; box-shadow: 0 10px 20px rgba(0, 210, 255, 0.2); }
+        .btn-back { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+
+        .valor-critico { color: var(--danger) !important; font-weight: 900; }
     </style>
+    
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
+
 <div class="card">
-    <h2>Performance Analítica</h2>
+    <header style="border-left: 4px solid var(--accent-hum); padding-left: 20px; margin-bottom: 25px;">
+        <h1 style="margin:0; font-size:24px;">Advanced Intelligence</h1>
+        <p style="margin:0; color:var(--text-muted); font-size:12px;">Relatório de Performance Técnica</p>
+    </header>
+
     <div class="tabs">
-        <div class="tab active" onclick="setTab(this, 'diario')">DIÁRIO</div>
-        <div class="tab" onclick="setTab(this, 'semanal')">SEMANAL</div>
-        <div class="tab" onclick="setTab(this, 'mensal')">MENSAL</div>
+        <div class="tab active" data-periodo="diario">Diário</div>
+        <div class="tab" data-periodo="semanal">Semanal</div>
+        <div class="tab" data-periodo="mensal">Mensal</div>
+        <div class="tab" data-periodo="anual">Anual</div>
     </div>
-    <div class="chart-container"><canvas id="mainChart"></canvas></div>
+
+    <div class="chart-container">
+        <canvas id="mainChart"></canvas>
+    </div>
+
     <div id="lista"></div>
-    <button class="btn" onclick="location.href='painel.html'">VOLTAR AO PAINEL</button>
+
+    <div class="btn-group">
+        <button class="btn btn-pdf" onclick="exportarPDF()">Exportar Relatório Analítico</button>
+        <button class="btn btn-back" onclick="location.href='painel.html'">Voltar</button>
+    </div>
 </div>
 
 <script>
 firebase.initializeApp({
-    databaseURL: "https://oficial-688e8-default-rtdb.firebaseio.com/"
+    apiKey: "AIzaSyB5FnkQiFi3gn9Iup2KNcbrKxWd-0Jjo6Y",
+    authDomain: "oficial-688e8.firebaseapp.com",
+    databaseURL: "https://oficial-688e8-default-rtdb.firebaseio.com/",
+    projectId: "oficial-688e8"
 });
 const db = firebase.database();
-let myChart = null, dadosGerais = [];
+let myChart = null, globalData = [];
 
-async function carregarDados(periodo) {
-    const lista = document.getElementById("lista");
-    lista.innerHTML = "Sincronizando...";
-    
-    const snap = await db.ref("/historico/diario").once("value");
-    const base = snap.val();
-    if(!base) { lista.innerHTML = "Sem dados."; return; }
+// Sincroniza limites do Painel Invisível
+let limitesAtivos = { tMin: 0, tMax: 100, hMin: 0, hMax: 100 };
 
-    dadosGerais = [];
-    const agora = new Date();
-    const hojeStr = agora.toLocaleDateString('pt-BR');
-
-    Object.keys(base).forEach(dia => {
-        Object.keys(base[dia]).forEach(ts => {
-            const d = base[dia][ts];
-            const dataObj = new Date(parseInt(ts) * 1000);
-            const dataStr = dataObj.toLocaleDateString('pt-BR');
-            
-            let incluir = false;
-            if(periodo === 'diario' && dataStr === hojeStr) incluir = true;
-            else if(periodo === 'semanal' && (agora - dataObj) <= 7*86400000) incluir = true;
-            else if(periodo === 'mensal' && (agora - dataObj) <= 30*86400000) incluir = true;
-
-            if(incluir) {
-                dadosGerais.push({
-                    ts: parseInt(ts),
-                    temp: d.temp,
-                    hum: d.hum,
-                    data: dataStr,
-                    hora: dataObj.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})
-                });
-            }
-        });
+function sincronizarConfiguracoes() {
+    db.ref("/config_alertas").on("value", (snap) => {
+        const val = snap.val();
+        if (val) {
+            limitesAtivos.tMin = parseFloat(val.tMin) || 0;
+            limitesAtivos.tMax = parseFloat(val.tMax) || 100;
+            limitesAtivos.hMin = parseFloat(val.hMin) || 0;
+            limitesAtivos.hMax = parseFloat(val.hMax) || 100;
+            if (globalData.length > 0) renderUI();
+        }
     });
-
-    dadosGerais.sort((a,b) => b.ts - a.ts);
-    renderizar(periodo);
 }
 
-function renderizar(periodo) {
-    const lista = document.getElementById("lista");
-    lista.innerHTML = "";
+async function fetchData(periodo) {
+    const listaDiv = document.getElementById("lista");
+    listaDiv.innerHTML = "<p style='text-align:center; padding:50px;'>Sincronizando registros...</p>";
+    globalData = []; 
+
+    try {
+        const snapshot = await db.ref("/historico/" + periodo).once("value");
+        const base = snapshot.val();
+        if (!base) {
+            listaDiv.innerHTML = "<p style='text-align:center; padding:40px;'>Nenhum dado encontrado.</p>";
+            if(myChart) myChart.destroy();
+            return;
+        }
+
+        const hoje = new Date().toLocaleDateString('pt-BR');
+        const agora = new Date();
+
+        // Lógica para percorrer as subpastas de data criadas pelo ESP32
+        Object.keys(base).forEach(pastaData => {
+            const registros = base[pastaData];
+            Object.keys(registros).forEach(ts => {
+                const dt = new Date(parseInt(ts) * 1000);
+                const dtStr = dt.toLocaleDateString('pt-BR');
+                let incluir = false;
+
+                if (periodo === 'diario' && dtStr === hoje) incluir = true;
+                else if (periodo === 'semanal' && (agora - dt) / 86400000 <= 7) incluir = true;
+                else if (periodo === 'mensal' && (agora - dt) / 86400000 <= 30) incluir = true;
+                else if (periodo === 'anual') incluir = true;
+
+                if (incluir) {
+                    globalData.push({
+                        ts: parseInt(ts),
+                        temp: parseFloat(registros[ts].temp),
+                        hum: parseFloat(registros[ts].hum),
+                        data: dtStr,
+                        hora: dt.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})
+                    });
+                }
+            });
+        });
+
+        globalData.sort((a, b) => b.ts - a.ts);
+        renderUI();
+        renderChart(periodo);
+    } catch (e) { console.error(e); }
+}
+
+function renderUI() {
+    const listaDiv = document.getElementById("lista");
+    listaDiv.innerHTML = "";
     let ultimaData = "";
 
-    dadosGerais.forEach(d => {
-        if(d.data !== ultimaData) {
-            lista.innerHTML += `<div class="data-divider">Data: ${d.data}</div>`;
+    globalData.forEach(d => {
+        if (d.data !== ultimaData) {
+            const div = document.createElement('div');
+            div.className = 'data-divider';
+            div.innerHTML = `📅 ${d.data}`;
+            listaDiv.appendChild(div);
             ultimaData = d.data;
         }
-        lista.innerHTML += `
-            <div class="item">
-                <span><b>${d.hora}</b></span>
-                <span>Temp: <b style="color:var(--temp)">${d.temp}°C</b></span>
-                <span>Umid: <b style="color:var(--accent)">${d.hum}%</b></span>
-            </div>`;
-    });
 
-    const chartData = [...dadosGerais].sort((a,b) => a.ts - b.ts);
-    if(myChart) myChart.destroy();
-    myChart = new Chart(document.getElementById('mainChart'), {
+        const erroT = (d.temp > limitesAtivos.tMax || d.temp < limitesAtivos.tMin);
+        const erroH = (d.hum > limitesAtivos.hMax || d.hum < limitesAtivos.hMin);
+        
+        const item = document.createElement('div');
+        item.className = `item ${(erroT || erroH) ? 'alerta' : ''}`;
+        item.innerHTML = `
+            <div><b>${d.hora}</b><br><small style="color:var(--text-muted)">ID: ${d.ts}</small></div>
+            <div style="display:flex; gap:20px; text-align:right;">
+                <div><small style="display:block; font-size:8px;">TEMPERATURA</small>
+                    <span class="${erroT ? 'valor-critico' : ''}" style="color:var(--accent-temp); font-weight:800;">${d.temp.toFixed(2)}°C</span>
+                </div>
+                <div><small style="display:block; font-size:8px;">UMIDADE</small>
+                    <span class="${erroH ? 'valor-critico' : ''}" style="color:var(--accent-hum); font-weight:800;">${d.hum.toFixed(2)}%</span>
+                </div>
+            </div>`;
+        listaDiv.appendChild(item);
+    });
+}
+
+function renderChart(periodo) {
+    if (myChart) myChart.destroy();
+    const cleanData = [...globalData].sort((a, b) => a.ts - b.ts);
+    const ctx = document.getElementById('mainChart').getContext('2d');
+    myChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: chartData.map(d => periodo === 'diario' ? d.hora : d.data),
+            labels: cleanData.map(d => periodo === 'diario' ? d.hora : d.data),
             datasets: [
-                { label: 'Temp', data: chartData.map(d => d.temp), borderColor: '#f43f5e', tension: 0.4 },
-                { label: 'Umid', data: chartData.map(d => d.hum), borderColor: '#00d2ff', tension: 0.4 }
+                { label: 'Temp', data: cleanData.map(d => d.temp), borderColor: '#f43f5e', tension: 0.4, pointRadius: 2, backgroundColor: 'rgba(244, 63, 94, 0.1)', fill: true },
+                { label: 'Umid', data: cleanData.map(d => d.hum), borderColor: '#00d2ff', tension: 0.4, pointRadius: 2, backgroundColor: 'rgba(0, 210, 255, 0.1)', fill: true }
             ]
         },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        options: { 
+            responsive: true, 
+            maintainAspectRatio: false,
+            scales: {
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } },
+                x: { grid: { display: false }, ticks: { color: '#64748b' } }
+            },
+            plugins: { legend: { display: false } }
+        }
     });
 }
 
-function setTab(el, p) {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    el.classList.add('active');
-    carregarDados(p);
+async function exportarPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const aba = document.querySelector('.tab.active').innerText;
+    
+    doc.setFillColor(16, 22, 37);
+    doc.rect(0, 0, 210, 45, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.text("NEWENERGY", 15, 20);
+    doc.setFontSize(9);
+    doc.setTextColor(0, 210, 255);
+    doc.text("RELATÓRIO DE MONITORAMENTO - " + aba.toUpperCase(), 15, 28);
+    
+    doc.setFillColor(245, 247, 250);
+    doc.rect(15, 55, 180, 15, 'F');
+    doc.setTextColor(100); doc.setFontSize(8);
+    doc.text(`Limites no Registro: Temp [${limitesAtivos.tMin}-${limitesAtivos.tMax}] | Hum [${limitesAtivos.hMin}-${limitesAtivos.hMax}]`, 20, 65);
+
+    const imgData = document.getElementById('mainChart').toDataURL("image/png", 1.0);
+    doc.addImage(imgData, 'PNG', 15, 80, 180, 60);
+
+    let py = 150;
+    doc.setTextColor(0); doc.setFontSize(10); doc.text("LOG DE REGISTROS TÉCNICOS", 15, py); py += 8;
+    
+    doc.setFillColor(230, 235, 245);
+    doc.rect(15, py, 180, 8, 'F');
+    doc.setFontSize(8);
+    doc.text("DATA/HORA", 20, py + 5.5);
+    doc.text("TEMPERATURA", 80, py + 5.5);
+    doc.text("UMIDADE", 120, py + 5.5);
+    doc.text("STATUS", 165, py + 5.5);
+    py += 8;
+
+    globalData.forEach((d, i) => {
+        if (py > 270) { doc.addPage(); py = 20; }
+        if (i % 2 === 0) { doc.setFillColor(248, 250, 255); doc.rect(15, py, 180, 7, 'F'); }
+        const tErr = (d.temp > limitesAtivos.tMax || d.temp < limitesAtivos.tMin);
+        const hErr = (d.hum > limitesAtivos.hMax || d.hum < limitesAtivos.hMin);
+        if (tErr || hErr) doc.setTextColor(200, 0, 0); else doc.setTextColor(80);
+        doc.text(`${d.data} ${d.hora}`, 20, py + 5);
+        doc.text(`${d.temp.toFixed(2)}°C`, 80, py + 5);
+        doc.text(`${d.hum.toFixed(2)}%`, 120, py + 5);
+        doc.text((tErr || hErr) ? "ALERTA" : "NORMAL", 165, py + 5);
+        py += 7;
+    });
+
+    doc.save(`Relatorio_Performance_${aba}.pdf`);
 }
 
-carregarDados('diario');
+firebase.auth().onAuthStateChanged(u => { 
+    if(u) {
+        sincronizarConfiguracoes();
+        fetchData('diario'); 
+    } else {
+        location.href='index.html'; 
+    }
+});
+
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', function() {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    this.classList.add('active');
+    fetchData(this.getAttribute('data-periodo'));
+}));
 </script>
 </body>
 </html>
