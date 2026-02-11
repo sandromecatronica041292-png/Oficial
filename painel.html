@@ -25,6 +25,13 @@
     position: relative; backdrop-filter: blur(10px);
   }
 
+  /* Estilo do Ícone de Status Discreto */
+  .wifi-status-container {
+    display: flex; justify-content: flex-end; margin-bottom: -20px; padding-right: 5px;
+  }
+  #wifiIcon { cursor: pointer; transition: 0.3s; opacity: 0.7; }
+  #wifiIcon:hover { opacity: 1; transform: scale(1.1); }
+
   .header-main { position: relative; margin-bottom: 30px; }
   .logo-principal { 
     font-size: 20px; text-transform: uppercase; letter-spacing: 5px; font-weight: 900; 
@@ -81,7 +88,6 @@
   .btn-history { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
   .btn-history:hover { background: var(--accent); color: #000; }
 
-  /* Admin Panel overlay */
   #adminPanel { 
     display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
     background: #0f172a; border-radius: 28px; padding: 30px; box-sizing: border-box; 
@@ -105,6 +111,16 @@
 
 <body>
 <div class="card">
+  <div class="wifi-status-container">
+    <div id="wifiIcon" onclick="menuRedeOculto()" title="Status da Conexão">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" id="wifiSvg" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12.55a11 11 0 0 1 14.08 0"></path>
+            <path d="M1.42 9a16 16 0 0 1 21.16 0"></path>
+            <circle cx="12" cy="20" r="2" fill="currentColor"></circle>
+        </svg>
+    </div>
+  </div>
+
   <div id="adminPanel">
     <div class="logo-principal" style="font-size: 14px; margin-bottom: 25px;">Configurações Avançadas</div>
     
@@ -123,7 +139,6 @@
 
     <label>Frequência do Histórico (Leituras / Hora)</label>
     <input type="number" id="cfgFreq" class="admin-input" placeholder="Ex: 5, 10, 20...">
-    <p style="font-size: 9px; color: var(--text-muted); margin-top: -10px; margin-bottom: 15px;">* Define o tempo entre registros no banco de relatórios.</p>
     
     <div style="background: rgba(0,210,255,0.05); padding: 15px; border-radius: 12px; border: 1px solid rgba(0,210,255,0.1); margin-bottom: 20px;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -180,6 +195,7 @@ const auth = firebase.auth();
 
 let config = { tMin: 15, tMax: 35, hMin: 30, hMax: 80, intervalo: 2000, emailDestino: "", tempoEmail: 600000, contadorAlertas: 0, leiturasPorHora: 20 };
 let gT, gH, ultimaVezAlertado = 0;
+let statusInternet = 1;
 
 function rodarDashboard() {
   const gOpt = (col) => ({
@@ -195,14 +211,28 @@ function rodarDashboard() {
   gH = new Gauge(document.getElementById("gHum")).setOptions(gOpt('#00d2ff'));
   gH.maxValue = 100; gH.setMinValue(0); gH.set(0);
 
+  // Monitor de Status do Hardware e WiFi
+  db.ref("/net_status").on("value", s => { statusInternet = s.val(); });
+
   db.ref("/last_seen").on("value", snap => {
-    const check = () => {
-      const isOff = (Date.now() - (snap.val() * 1000)) > (config.intervalo + 15000);
-      const st = document.getElementById("status");
-      st.innerHTML = isOff ? '<div class="dot"></div> OFFLINE' : '<div class="dot"></div> SISTEMA ATIVO';
-      st.className = "status-badge " + (isOff ? "st-offline" : "st-online");
-    };
-    check();
+      const agora = Math.floor(Date.now() / 1000);
+      const diff = agora - snap.val();
+      const wifiSvg = document.getElementById("wifiSvg");
+      const stBadge = document.getElementById("status");
+
+      if (diff > 30) { 
+          wifiSvg.setAttribute("stroke", "var(--off)");
+          stBadge.className = "status-badge st-offline";
+          stBadge.innerHTML = '<div class="dot"></div> DISPOSITIVO OFFLINE';
+      } else if (statusInternet == 0) {
+          wifiSvg.setAttribute("stroke", "var(--warn)");
+          stBadge.className = "status-badge st-offline";
+          stBadge.innerHTML = '<div class="dot"></div> WI-FI SEM INTERNET';
+      } else {
+          wifiSvg.setAttribute("stroke", "var(--on)");
+          stBadge.className = "status-badge st-online";
+          stBadge.innerHTML = '<div class="dot"></div> SISTEMA ATIVO';
+      }
   });
 
   db.ref("/led").on("value", s => {
@@ -231,50 +261,40 @@ function analisarAlertas() {
   const msg = document.getElementById("alertMessage");
   let erro = (t > config.tMax || t < config.tMin || h > config.hMax || h < config.hMin);
   msg.innerText = erro ? "⚠️ ATENÇÃO: PARÂMETROS FORA DA ZONA DE SEGURANÇA" : "";
-  
-  if (erro && (Date.now() - ultimaVezAlertado > config.tempoEmail)) {
-    enviarAlertaEmail(t, h);
-  }
+  if (erro && (Date.now() - ultimaVezAlertado > config.tempoEmail)) { enviarAlertaEmail(t, h); }
 }
 
 function enviarAlertaEmail(t, h) {
   if (!config.emailDestino) return;
   emailjs.send("service_kx31f3s", "template_mqzi3at", {
-    equipamento: "NewEnergy Monitor Pro",
-    tipo: "Anomalia Detectada",
-    valor: `Temp: ${t}°C | Hum: ${h}%`,
-    data: new Date().toLocaleString(),
-    para_email: config.emailDestino
+    equipamento: "NewEnergy Monitor Pro", tipo: "Anomalia Detectada",
+    valor: `Temp: ${t}°C | Hum: ${h}%`, data: new Date().toLocaleString(), para_email: config.emailDestino
   }).then(() => {
     ultimaVezAlertado = Date.now();
     db.ref("/config_alertas/contadorAlertas").set((config.contadorAlertas || 0) + 1);
   });
 }
 
-// NOVO: Função para enviar e-mail de teste
 function enviarEmailTeste() {
     const destino = document.getElementById("cfgEmail").value;
     if(!destino) return alert("Por favor, digite um e-mail.");
-    
-    const btn = event.target;
-    btn.innerText = "ENVIANDO...";
-    
+    const btn = event.target; btn.innerText = "ENVIANDO...";
     emailjs.send("service_kx31f3s", "template_mqzi3at", {
-        equipamento: "NewEnergy - TESTE",
-        tipo: "Verificação de Conexão",
-        valor: "Configuração de e-mail funcionando corretamente.",
-        data: new Date().toLocaleString(),
-        para_email: destino
-    }).then(() => {
-        alert("E-mail de teste enviado!");
-        btn.innerText = "TESTAR";
-    }).catch(err => {
-        alert("Erro no envio: " + err);
-        btn.innerText = "ERRO";
-    });
+        equipamento: "NewEnergy - TESTE", tipo: "Verificação",
+        valor: "Configuração OK.", data: new Date().toLocaleString(), para_email: destino
+    }).then(() => { alert("E-mail enviado!"); btn.innerText = "TESTAR"; });
 }
 
-// Interação Logo-Admin (5 cliques)
+// Botão Secreto no WiFi para Admin
+function menuRedeOculto() {
+    if(confirm("Deseja alterar a rede Wi-Fi do equipamento?")) {
+        let p = prompt("Senha de Admin:");
+        if(p === "1234") { // Sua senha personalizada
+            db.ref("/config_wifi").set(1).then(() => alert("Comando enviado! Conecte-se na rede do dispositivo em instantes."));
+        }
+    }
+}
+
 let cliques = 0;
 document.getElementById("logoAdmin").onclick = () => {
   if(++cliques >= 5) {
@@ -298,14 +318,11 @@ function salvarConfig() {
     emailDestino: document.getElementById("cfgEmail").value,
     leiturasPorHora: parseInt(document.getElementById("cfgFreq").value) || 20
   };
-  db.ref("/config_alertas").update(updates).then(() => {
-    alert("Configurações salvas com sucesso!");
-    fecharAdmin();
-  });
+  db.ref("/config_alertas").update(updates).then(() => { alert("Salvo!"); fecharAdmin(); });
 }
 
 function fecharAdmin() { document.getElementById("adminPanel").style.display = "none"; }
-function resetarContador() { if(confirm("Zerar estatísticas de alertas?")) db.ref("/config_alertas/contadorAlertas").set(0); }
+function resetarContador() { if(confirm("Zerar?")) db.ref("/config_alertas/contadorAlertas").set(0); }
 function fazerLogout() { auth.signOut().then(() => window.location.replace("index.html")); }
 document.getElementById("btnLED").onclick = () => { db.ref("/led").get().then(s => db.ref("/led").set(s.val() == 1 ? 0 : 1)); };
 
@@ -313,10 +330,7 @@ auth.onAuthStateChanged(user => {
   if (!user) window.location.replace("index.html"); 
   else {
     db.ref("/config_alertas").on("value", s => { 
-      if(s.val()) {
-        config = s.val();
-        document.getElementById("countEmailDisplay").innerText = config.contadorAlertas || 0;
-      }
+      if(s.val()) { config = s.val(); document.getElementById("countEmailDisplay").innerText = config.contadorAlertas || 0; }
     });
     rodarDashboard(); 
   }
