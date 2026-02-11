@@ -25,7 +25,7 @@
     position: relative; backdrop-filter: blur(10px);
   }
 
-  /* AJUSTE: Barra de topo para organizar Wi-Fi e Logout */
+  /* BARRA DE TOPO: Wi-Fi e Logout alinhados */
   .top-bar {
     display: flex;
     justify-content: space-between;
@@ -51,37 +51,34 @@
     -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
     cursor: pointer; transition: 0.3s;
   }
-  .logo-principal:hover { transform: scale(1.05); filter: brightness(1.2); }
 
-  .status-container { margin-bottom: 25px; }
   .status-badge { 
     display: inline-flex; align-items: center; gap: 8px; 
     padding: 8px 20px; border-radius: 50px; font-size: 11px; 
     font-weight: 800; letter-spacing: 1px; border: 1px solid rgba(255,255,255,0.05); 
   }
   
-  .dot { width: 8px; height: 8px; border-radius: 50%; position: relative; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; }
   .st-online .dot { background: var(--on); box-shadow: 0 0 10px var(--on); animation: pulse 1.5s infinite; }
+  .st-online { color: var(--on); background: rgba(0, 255, 136, 0.05); }
+  .st-offline { color: var(--off); background: rgba(244, 63, 94, 0.05); }
   .st-offline .dot { background: var(--off); }
   
   @keyframes pulse {
-    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7); }
-    70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(0, 255, 136, 0); }
-    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); }
+    0% { transform: scale(0.95); }
+    70% { transform: scale(1); }
+    100% { transform: scale(0.95); }
   }
-
-  .st-online { color: var(--on); background: rgba(0, 255, 136, 0.05); }
-  .st-offline { color: var(--off); background: rgba(244, 63, 94, 0.05); }
 
   .gauges-container { display: flex; gap: 15px; margin-bottom: 30px; }
   .gauge-box { 
-    flex: 1; background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0) 100%); 
-    padding: 20px 10px; border-radius: 22px; border: 1px solid rgba(255,255,255,0.05); 
+    flex: 1; background: rgba(255,255,255,0.02); padding: 20px 10px; 
+    border-radius: 22px; border: 1px solid rgba(255,255,255,0.05); 
     display: flex; flex-direction: column; align-items: center;
   }
   .gauge-box canvas { width: 140px !important; height: 85px !important; }
   .g-title { font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 8px; }
-  .g-value { font-size: 22px; font-weight: 900; letter-spacing: -1px; }
+  .g-value { font-size: 22px; font-weight: 900; }
 
   .btn-action { 
     width: 100%; padding: 18px; border: none; border-radius: 16px; 
@@ -90,9 +87,7 @@
   }
   .btn-led.on { background: var(--on); color: #052e16; box-shadow: 0 10px 20px -5px rgba(0, 255, 136, 0.3); }
   .btn-led.off { background: #1e293b; color: var(--text-muted); border: 1px solid rgba(255,255,255,0.1); }
-  
   .btn-history { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
-  .btn-history:hover { background: var(--accent); color: #000; }
 
   #adminPanel { 
     display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
@@ -101,25 +96,21 @@
   }
   .admin-input { 
     background: #070a13; border: 1px solid #334155; color: white; 
-    padding: 12px; border-radius: 10px; width: 100%; box-sizing: border-box; 
-    font-size: 14px; margin-bottom: 15px; outline: none; transition: 0.3s;
+    padding: 12px; border-radius: 10px; width: 100%; margin-bottom: 15px; outline: none;
   }
-  .admin-input:focus { border-color: var(--accent); }
-  label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 5px; display: block; }
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gaugeJS/dist/gauge.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 
 <body>
 <div class="card">
   <div class="top-bar">
-    <div id="wifiIcon" onclick="menuRedeOculto()" title="Status da Conexão">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" id="wifiSvg" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <div id="wifiIcon" onclick="menuRedeOculto()" title="Redefinir Wi-Fi">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" id="wifiSvg" stroke="currentColor" stroke-width="3" stroke-linecap="round">
             <path d="M5 12.55a11 11 0 0 1 14.08 0"></path>
             <path d="M1.42 9a16 16 0 0 1 21.16 0"></path>
             <circle cx="12" cy="20" r="2" fill="currentColor"></circle>
@@ -130,32 +121,10 @@
 
   <div id="adminPanel">
     <div class="logo-principal" style="font-size: 14px; margin-bottom: 25px;">Configurações Avançadas</div>
-    
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-      <div><label>Temp Mín</label><input type="number" id="tMin" class="admin-input"></div>
-      <div><label>Temp Máx</label><input type="number" id="tMax" class="admin-input"></div>
-      <div><label>Hum Mín</label><input type="number" id="hMin" class="admin-input"></div>
-      <div><label>Hum Máx</label><input type="number" id="hMax" class="admin-input"></div>
-    </div>
-
-    <label>E-mail para Alertas</label>
-    <div style="display: flex; gap: 8px; margin-bottom: 15px;">
-        <input type="email" id="cfgEmail" class="admin-input" style="flex: 2; margin-bottom: 0;">
-        <button onclick="enviarEmailTeste()" class="btn-action" style="flex: 1; font-size: 10px; padding: 0; height: 42px; background: transparent; color: var(--accent); border: 1px solid var(--accent); margin-bottom:0;">TESTAR</button>
-    </div>
-
-    <label>Frequência do Histórico (Leituras / Hora)</label>
-    <input type="number" id="cfgFreq" class="admin-input" placeholder="Ex: 5, 10, 20...">
-    
-    <div style="background: rgba(0,210,255,0.05); padding: 15px; border-radius: 12px; border: 1px solid rgba(0,210,255,0.1); margin-bottom: 20px;">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-size: 11px; font-weight: bold;">ALERTAS ENVIADOS: <span id="countEmailDisplay" style="color:var(--accent)">0</span></span>
-            <button onclick="resetarContador()" style="background:var(--off); color:white; border:none; padding:4px 8px; border-radius:5px; font-size:9px; cursor:pointer;">ZERAR</button>
-        </div>
-    </div>
-
-    <button id="btnSalvar" class="btn-action" style="background:var(--accent); color:#000;" onclick="salvarConfig()">Gravar Configurações</button>
-    <button class="btn-action" style="background:transparent; color:var(--text-muted); border:1px solid #334155" onclick="fecharAdmin()">Voltar</button>
+    <label style="font-size: 10px; color: gray;">E-MAIL DE ALERTA</label>
+    <input type="email" id="cfgEmail" class="admin-input" placeholder="seu@email.com">
+    <button class="btn-action" style="background:var(--accent); color:#000;" onclick="salvarConfig()">Salvar e Sair</button>
+    <button class="btn-action" style="background:transparent; color:gray" onclick="fecharAdmin()">Cancelar</button>
   </div>
 
   <div class="header-main">
@@ -164,7 +133,7 @@
   
   <div class="status-container">
     <div id="status" class="status-badge st-online">
-      <div class="dot"></div> <span>SINCRONIZANDO...</span>
+      <div class="dot"></div> <span>SINCRONIZANDO</span>
     </div>
   </div>
 
@@ -181,15 +150,12 @@
     </div>
   </div>
 
-  <div id="alertMessage" style="color:var(--warn); min-height:20px; font-size:11px; margin-bottom:20px; font-weight:bold; letter-spacing: 0.5px;"></div>
-
-  <button id="btnLED" class="btn-action btn-led off">Sincronizando LED...</button>
+  <button id="btnLED" class="btn-action btn-led off">Conectando LED...</button>
   <button class="btn-action btn-history" onclick="location.href='historico.html'">Relatórios Avançados</button>
 </div>
 
 <script>
-emailjs.init("W2__8f2fBoqRPX9hX");
-
+// Configuração Firebase
 firebase.initializeApp({
   apiKey: "AIzaSyB5FnkQiFi3gn9Iup2KNcbrKxWd-0Jjo6Y",
   authDomain: "oficial-688e8.firebaseapp.com",
@@ -199,13 +165,11 @@ firebase.initializeApp({
 const db = firebase.database();
 const auth = firebase.auth();
 
-let config = { tMin: 15, tMax: 35, hMin: 30, hMax: 80, intervalo: 2000, emailDestino: "", tempoEmail: 600000, contadorAlertas: 0, leiturasPorHora: 20 };
-let gT, gH, ultimaVezAlertado = 0;
-let statusInternet = 1;
+let gT, gH;
 
 function rodarDashboard() {
   const gOpt = (col) => ({
-    angle: 0.15, lineWidth: 0.22, radiusScale: 1,
+    angle: 0.15, lineWidth: 0.2, radiusScale: 1,
     pointer: { length: 0.6, strokeWidth: 0.04, color: '#f0f4f8' },
     colorStart: col, colorStop: col, strokeColor: '#1e293b',
     highDpiSupport: true, generateGradient: true
@@ -217,22 +181,15 @@ function rodarDashboard() {
   gH = new Gauge(document.getElementById("gHum")).setOptions(gOpt('#00d2ff'));
   gH.maxValue = 100; gH.setMinValue(0); gH.set(0);
 
-  db.ref("/net_status").on("value", s => { statusInternet = s.val(); });
-
+  // Monitor de Status Online (30 segundos de tolerância)
   db.ref("/last_seen").on("value", snap => {
-      const agora = Math.floor(Date.now() / 1000);
-      const diff = agora - snap.val();
+      const diff = Math.floor(Date.now() / 1000) - snap.val();
       const wifiSvg = document.getElementById("wifiSvg");
       const stBadge = document.getElementById("status");
-
       if (diff > 30) { 
           wifiSvg.setAttribute("stroke", "var(--off)");
           stBadge.className = "status-badge st-offline";
           stBadge.innerHTML = '<div class="dot"></div> DISPOSITIVO OFFLINE';
-      } else if (statusInternet == 0) {
-          wifiSvg.setAttribute("stroke", "var(--warn)");
-          stBadge.className = "status-badge st-offline";
-          stBadge.innerHTML = '<div class="dot"></div> WI-FI SEM INTERNET';
       } else {
           wifiSvg.setAttribute("stroke", "var(--on)");
           stBadge.className = "status-badge st-online";
@@ -250,94 +207,42 @@ function rodarDashboard() {
   db.ref("/temp").on("value", s => { 
     const v = parseFloat(s.val()); gT.set(v); 
     document.getElementById("tempVal").innerText = v.toFixed(1) + "°C";
-    analisarAlertas();
   });
 
   db.ref("/hum").on("value", s => { 
     const v = parseFloat(s.val()); gH.set(v); 
     document.getElementById("humVal").innerText = v.toFixed(1) + "%";
-    analisarAlertas();
   });
 }
 
-function analisarAlertas() {
-  const t = parseFloat(document.getElementById("tempVal").innerText);
-  const h = parseFloat(document.getElementById("humVal").innerText);
-  const msg = document.getElementById("alertMessage");
-  let erro = (t > config.tMax || t < config.tMin || h > config.hMax || h < config.hMin);
-  msg.innerText = erro ? "⚠️ ATENÇÃO: PARÂMETROS FORA DA ZONA DE SEGURANÇA" : "";
-  if (erro && (Date.now() - ultimaVezAlertado > config.tempoEmail)) { enviarAlertaEmail(t, h); }
-}
-
-function enviarAlertaEmail(t, h) {
-  if (!config.emailDestino) return;
-  emailjs.send("service_kx31f3s", "template_mqzi3at", {
-    equipamento: "NewEnergy Monitor Pro", tipo: "Anomalia Detectada",
-    valor: `Temp: ${t}°C | Hum: ${h}%`, data: new Date().toLocaleString(), para_email: config.emailDestino
-  }).then(() => {
-    ultimaVezAlertado = Date.now();
-    db.ref("/config_alertas/contadorAlertas").set((config.contadorAlertas || 0) + 1);
-  });
-}
-
-function enviarEmailTeste() {
-    const destino = document.getElementById("cfgEmail").value;
-    if(!destino) return alert("Por favor, digite um e-mail.");
-    const btn = event.target; btn.innerText = "ENVIANDO...";
-    emailjs.send("service_kx31f3s", "template_mqzi3at", {
-        equipamento: "NewEnergy - TESTE", tipo: "Verificação",
-        valor: "Configuração OK.", data: new Date().toLocaleString(), para_email: destino
-    }).then(() => { alert("E-mail enviado!"); btn.innerText = "TESTAR"; });
-}
-
+// Reset de Wi-Fi sem senha (apenas confirmação)
 function menuRedeOculto() {
-    if(confirm("Deseja alterar a rede Wi-Fi do equipamento?")) {
-        let p = prompt("Senha de Admin:");
-        if(p === "1234") { 
-            db.ref("/config_wifi").set(1).then(() => alert("Comando enviado! Conecte-se na rede do dispositivo em instantes."));
-        }
+    if(confirm("Deseja colocar o equipamento em modo de configuração Wi-Fi?")) {
+        db.ref("/config_wifi").set(1).then(() => {
+            alert("Comando enviado! O ESP32 entrará em modo Setup. Conecte-se na rede 'NewEnergy_Setup'.");
+        });
     }
 }
 
-let cliques = 0;
 document.getElementById("logoAdmin").onclick = () => {
-  if(++cliques >= 5) {
     document.getElementById("adminPanel").style.display = "flex";
-    document.getElementById("tMin").value = config.tMin;
-    document.getElementById("tMax").value = config.tMax;
-    document.getElementById("hMin").value = config.hMin;
-    document.getElementById("hMax").value = config.hMax;
-    document.getElementById("cfgEmail").value = config.emailDestino;
-    document.getElementById("cfgFreq").value = config.leiturasPorHora || 20;
-    cliques = 0;
-  }
 };
 
 function salvarConfig() {
-  const updates = {
-    tMin: parseFloat(document.getElementById("tMin").value),
-    tMax: parseFloat(document.getElementById("tMax").value),
-    hMin: parseFloat(document.getElementById("hMin").value),
-    hMax: parseFloat(document.getElementById("hMax").value),
-    emailDestino: document.getElementById("cfgEmail").value,
-    leiturasPorHora: parseInt(document.getElementById("cfgFreq").value) || 20
-  };
-  db.ref("/config_alertas").update(updates).then(() => { alert("Salvo!"); fecharAdmin(); });
+    const email = document.getElementById("cfgEmail").value;
+    db.ref("/config_alertas").update({ emailDestino: email }).then(() => {
+        alert("Configuração salva!");
+        fecharAdmin();
+    });
 }
 
 function fecharAdmin() { document.getElementById("adminPanel").style.display = "none"; }
-function resetarContador() { if(confirm("Zerar?")) db.ref("/config_alertas/contadorAlertas").set(0); }
 function fazerLogout() { auth.signOut().then(() => window.location.replace("index.html")); }
 document.getElementById("btnLED").onclick = () => { db.ref("/led").get().then(s => db.ref("/led").set(s.val() == 1 ? 0 : 1)); };
 
 auth.onAuthStateChanged(user => { 
   if (!user) window.location.replace("index.html"); 
-  else {
-    db.ref("/config_alertas").on("value", s => { 
-      if(s.val()) { config = s.val(); document.getElementById("countEmailDisplay").innerText = config.contadorAlertas || 0; }
-    });
-    rodarDashboard(); 
-  }
+  else rodarDashboard(); 
 });
 </script>
 </body>
