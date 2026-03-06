@@ -3,37 +3,171 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>NewEnergy | BI Sincronizado</title>
+    <title>NewEnergy | Performance Analítica</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-dark: #070a13; --card-bg: #101625;
-            --accent-hum: #00d2ff; --accent-temp: #f43f5e;
-            --text-main: #f0f4f8; --text-muted: #64748b;
-            --border: rgba(255, 255, 255, 0.08);
-            --danger: #ff4757;
+            /* Paleta Corporate High-End */
+            --brand-primary: #1a365d;
+            --brand-accent: #007aff;
+            --bg-body: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --danger: #e11d48;
+            --accent-hum: #007aff;
+            --accent-temp: #f43f5e;
+            --shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05);
         }
-        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-dark); color: var(--text-main); display: flex; justify-content: center; padding: 20px; }
-        .card { background: var(--card-bg); border-radius: 28px; padding: 30px; width: 100%; max-width: 900px; border: 1px solid var(--border); box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
-        
-        .tabs { display: flex; background: #070a13; padding: 5px; border-radius: 14px; margin-bottom: 20px; gap: 4px; border: 1px solid var(--border); }
-        .tab { flex: 1; padding: 12px; text-align: center; border-radius: 10px; cursor: pointer; font-size: 11px; font-weight: 700; color: var(--text-muted); transition: 0.3s; text-transform: uppercase; }
-        .tab.active { background: var(--card-bg); color: var(--accent-hum); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
 
-        .chart-container { background: rgba(0,0,0,0.2); border-radius: 20px; padding: 15px; margin-bottom: 25px; border: 1px solid var(--border); height: 350px; }
-        #lista { max-height: 400px; overflow-y: auto; padding-right: 5px; }
-        
-        .item { background: rgba(255,255,255,0.03); padding: 12px 20px; border-radius: 12px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.02); transition: 0.3s; }
-        .item.alerta { border-left: 4px solid var(--danger); background: rgba(255, 71, 87, 0.1); }
-        
-        .data-divider { color: var(--accent-hum); font-size: 10px; font-weight: 900; margin: 25px 0 10px; display: flex; align-items: center; text-transform: uppercase; }
-        .data-divider::after { content: ""; flex: 1; height: 1px; background: var(--border); margin-left: 10px; }
-        
-        .btn-group { display: flex; gap: 10px; margin-top: 20px; }
-        .btn { flex: 1; padding: 16px; border: none; border-radius: 14px; font-weight: 800; cursor: pointer; font-size: 12px; text-transform: uppercase; transition: 0.3s; }
-        .btn-pdf { background: var(--accent-hum); color: #000; box-shadow: 0 10px 20px rgba(0, 210, 255, 0.2); }
-        .btn-back { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+        body { 
+            margin: 0; 
+            font-family: 'Inter', sans-serif; 
+            background: var(--bg-body); 
+            color: var(--text-main); 
+            display: flex; 
+            justify-content: center; 
+            padding: 20px;
+            background-image: radial-gradient(at 0% 0%, rgba(0, 122, 255, 0.03) 0, transparent 50%);
+        }
 
-        .valor-critico { color: var(--danger) !important; font-weight: 900; }
+        .card { 
+            background: var(--card-bg); 
+            border-radius: 16px; 
+            padding: 40px; 
+            width: 100%; 
+            max-width: 900px; 
+            border: 1px solid var(--border); 
+            box-shadow: var(--shadow); 
+        }
+        
+        header { 
+            border-left: 4px solid var(--brand-accent); 
+            padding-left: 20px; 
+            margin-bottom: 35px; 
+            text-align: left;
+        }
+
+        header h1 { margin:0; font-size: 24px; font-weight: 800; color: var(--brand-primary); letter-spacing: -0.5px; }
+        header p { margin:4px 0 0; color: var(--text-muted); font-size: 13px; font-weight: 500; }
+
+        .tabs { 
+            display: flex; 
+            background: #f1f5f9; 
+            padding: 4px; 
+            border-radius: 10px; 
+            margin-bottom: 25px; 
+            gap: 4px; 
+        }
+
+        .tab { 
+            flex: 1; 
+            padding: 10px; 
+            text-align: center; 
+            border-radius: 7px; 
+            cursor: pointer; 
+            font-size: 12px; 
+            font-weight: 600; 
+            color: var(--text-muted); 
+            transition: 0.2s; 
+            text-transform: none; 
+        }
+
+        .tab.active { 
+            background: white; 
+            color: var(--brand-accent); 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
+        }
+
+        .chart-container { 
+            background: #ffffff; 
+            border-radius: 12px; 
+            padding: 20px; 
+            margin-bottom: 30px; 
+            border: 1px solid var(--border); 
+            height: 350px; 
+        }
+
+        #lista { 
+            max-height: 400px; 
+            overflow-y: auto; 
+            padding-right: 10px; 
+        }
+        
+        /* Custom Scrollbar */
+        #lista::-webkit-scrollbar { width: 6px; }
+        #lista::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+
+        .item { 
+            background: #fff; 
+            padding: 14px 20px; 
+            border-radius: 10px; 
+            margin-bottom: 8px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border: 1px solid var(--border); 
+            transition: 0.2s; 
+        }
+
+        .item:hover { border-color: var(--brand-accent); background: #fcfdfe; }
+
+        .item.alerta { 
+            border-left: 4px solid var(--danger); 
+            background: #fff1f2; 
+        }
+        
+        .data-divider { 
+            color: var(--brand-primary); 
+            font-size: 11px; 
+            font-weight: 700; 
+            margin: 30px 0 12px; 
+            display: flex; 
+            align-items: center; 
+        }
+
+        .data-divider::after { 
+            content: ""; 
+            flex: 1; 
+            height: 1px; 
+            background: var(--border); 
+            margin-left: 15px; 
+        }
+        
+        .btn-group { display: flex; gap: 12px; margin-top: 30px; }
+
+        .btn { 
+            flex: 1; 
+            padding: 14px; 
+            border: none; 
+            border-radius: 10px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            font-size: 14px; 
+            transition: all 0.2s; 
+        }
+
+        .btn-pdf { 
+            background: var(--brand-primary); 
+            color: #ffffff; 
+            box-shadow: 0 4px 12px rgba(26, 54, 93, 0.15); 
+        }
+
+        .btn-pdf:hover { background: #2d4a77; transform: translateY(-1px); }
+
+        .btn-back { 
+            background: white; 
+            color: var(--text-muted); 
+            border: 1.5px solid var(--border); 
+        }
+
+        .btn-back:hover { border-color: var(--text-muted); color: var(--text-main); }
+
+        .valor-critico { color: var(--danger) !important; font-weight: 800; }
+        
+        b { color: var(--brand-primary); }
+        small { color: var(--text-light); }
     </style>
     
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -45,9 +179,9 @@
 <body>
 
 <div class="card">
-    <header style="border-left: 4px solid var(--accent-hum); padding-left: 20px; margin-bottom: 25px;">
-        <h1 style="margin:0; font-size:24px;">Advanced Intelligence</h1>
-        <p style="margin:0; color:var(--text-muted); font-size:12px;">Relatório de Performance Técnica</p>
+    <header>
+        <h1>Performance Analytics</h1>
+        <p>Monitoramento de Infraestrutura NewEnergy</p>
     </header>
 
     <div class="tabs">
@@ -64,12 +198,13 @@
     <div id="lista"></div>
 
     <div class="btn-group">
-        <button class="btn btn-pdf" onclick="exportarPDF()">Exportar Relatório Analítico</button>
-        <button class="btn btn-back" onclick="location.href='painel.html'">Voltar</button>
+        <button class="btn btn-pdf" onclick="exportarPDF()">Gerar Relatório Executivo</button>
+        <button class="btn btn-back" onclick="location.href='painel.html'">Voltar ao Painel</button>
     </div>
 </div>
 
 <script>
+// TODA A LÓGICA E FUNÇÕES MANTIDAS INTEGRALMENTE
 firebase.initializeApp({
     apiKey: "AIzaSyB5FnkQiFi3gn9Iup2KNcbrKxWd-0Jjo6Y",
     authDomain: "oficial-688e8.firebaseapp.com",
@@ -79,7 +214,6 @@ firebase.initializeApp({
 const db = firebase.database();
 let myChart = null, globalData = [];
 
-// Sincroniza limites do Painel Invisível
 let limitesAtivos = { tMin: 0, tMax: 100, hMin: 0, hMax: 100 };
 
 function sincronizarConfiguracoes() {
@@ -97,14 +231,14 @@ function sincronizarConfiguracoes() {
 
 async function fetchData(periodo) {
     const listaDiv = document.getElementById("lista");
-    listaDiv.innerHTML = "<p style='text-align:center; padding:50px;'>Sincronizando registros...</p>";
+    listaDiv.innerHTML = "<p style='text-align:center; padding:50px; color:#64748b;'>Acessando servidores...</p>";
     globalData = []; 
 
     try {
         const snapshot = await db.ref("/historico/" + periodo).once("value");
         const base = snapshot.val();
         if (!base) {
-            listaDiv.innerHTML = "<p style='text-align:center; padding:40px;'>Nenhum dado encontrado.</p>";
+            listaDiv.innerHTML = "<p style='text-align:center; padding:40px; color:#64748b;'>Sem dados para este período.</p>";
             if(myChart) myChart.destroy();
             return;
         }
@@ -112,7 +246,6 @@ async function fetchData(periodo) {
         const hoje = new Date().toLocaleDateString('pt-BR');
         const agora = new Date();
 
-        // Lógica para percorrer as subpastas de data criadas pelo ESP32
         Object.keys(base).forEach(pastaData => {
             const registros = base[pastaData];
             Object.keys(registros).forEach(ts => {
@@ -152,7 +285,7 @@ function renderUI() {
         if (d.data !== ultimaData) {
             const div = document.createElement('div');
             div.className = 'data-divider';
-            div.innerHTML = `📅 ${d.data}`;
+            div.innerHTML = `📌 ${d.data}`;
             listaDiv.appendChild(div);
             ultimaData = d.data;
         }
@@ -163,13 +296,13 @@ function renderUI() {
         const item = document.createElement('div');
         item.className = `item ${(erroT || erroH) ? 'alerta' : ''}`;
         item.innerHTML = `
-            <div><b>${d.hora}</b><br><small style="color:var(--text-muted)">ID: ${d.ts}</small></div>
-            <div style="display:flex; gap:20px; text-align:right;">
-                <div><small style="display:block; font-size:8px;">TEMPERATURA</small>
-                    <span class="${erroT ? 'valor-critico' : ''}" style="color:var(--accent-temp); font-weight:800;">${d.temp.toFixed(2)}°C</span>
+            <div><b>${d.hora}</b><br><small>Ref: ${d.ts}</small></div>
+            <div style="display:flex; gap:24px; text-align:right;">
+                <div><small style="display:block; font-size:9px; font-weight:700;">TEMPERATURA</small>
+                    <span class="${erroT ? 'valor-critico' : ''}" style="color:var(--accent-temp); font-weight:700; font-size:15px;">${d.temp.toFixed(2)}°C</span>
                 </div>
-                <div><small style="display:block; font-size:8px;">UMIDADE</small>
-                    <span class="${erroH ? 'valor-critico' : ''}" style="color:var(--accent-hum); font-weight:800;">${d.hum.toFixed(2)}%</span>
+                <div><small style="display:block; font-size:9px; font-weight:700;">UMIDADE</small>
+                    <span class="${erroH ? 'valor-critico' : ''}" style="color:var(--accent-hum); font-weight:700; font-size:15px;">${d.hum.toFixed(2)}%</span>
                 </div>
             </div>`;
         listaDiv.appendChild(item);
@@ -185,16 +318,17 @@ function renderChart(periodo) {
         data: {
             labels: cleanData.map(d => periodo === 'diario' ? d.hora : d.data),
             datasets: [
-                { label: 'Temp', data: cleanData.map(d => d.temp), borderColor: '#f43f5e', tension: 0.4, pointRadius: 2, backgroundColor: 'rgba(244, 63, 94, 0.1)', fill: true },
-                { label: 'Umid', data: cleanData.map(d => d.hum), borderColor: '#00d2ff', tension: 0.4, pointRadius: 2, backgroundColor: 'rgba(0, 210, 255, 0.1)', fill: true }
+                { label: 'Temperatura', data: cleanData.map(d => d.temp), borderColor: '#f43f5e', tension: 0.3, pointRadius: 0, borderWidth: 2, backgroundColor: 'rgba(244, 63, 94, 0.05)', fill: true },
+                { label: 'Umidade', data: cleanData.map(d => d.hum), borderColor: '#007aff', tension: 0.3, pointRadius: 0, borderWidth: 2, backgroundColor: 'rgba(0, 122, 255, 0.05)', fill: true }
             ]
         },
         options: { 
             responsive: true, 
             maintainAspectRatio: false,
+            interaction: { intersect: false, mode: 'index' },
             scales: {
-                y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } },
-                x: { grid: { display: false }, ticks: { color: '#64748b' } }
+                y: { grid: { color: '#f1f5f9' }, ticks: { color: '#94a3b8', font: { size: 10 } } },
+                x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10 } } }
             },
             plugins: { legend: { display: false } }
         }
@@ -206,7 +340,8 @@ async function exportarPDF() {
     const doc = new jsPDF();
     const aba = document.querySelector('.tab.active').innerText;
     
-    doc.setFillColor(16, 22, 37);
+    // MODELO ORIGINAL DE PDF MANTIDO
+    doc.setFillColor(26, 54, 93); // Azul Marinho NewEnergy
     doc.rect(0, 0, 210, 45, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(22);
