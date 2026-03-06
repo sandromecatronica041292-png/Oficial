@@ -3,138 +3,151 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>NewEnergy | Secure Login</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <title>NewEnergy | Monitoramento Inteligente</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   
   <style>
     :root {
-      --bg-dark: #0b0f1b;
-      --card-bg: #161b2d;
-      --accent: #00d2ff;
-      --accent-hover: #0099cc;
-      --text-main: #ffffff;
-      --text-muted: #8fa3c6;
-      --glass: rgba(255, 255, 255, 0.03);
-      --error: #ff5722;
+      /* Paleta Panorama Health / High-End Tech */
+      --brand-primary: #1a365d;    /* Azul Marinho Corporativo */
+      --brand-accent: #007aff;     /* Azul Apple/Tech */
+      --bg-light: #f8fafc;        /* Cinza muito claro (fundo) */
+      --text-dark: #1e293b;        /* Texto principal */
+      --text-light: #64748b;       /* Texto secundário */
+      --error: #e11d48;
+      --card-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
     }
 
     body {
       margin: 0;
-      font-family: 'Inter', 'Segoe UI', sans-serif;
-      background: var(--bg-dark);
-      background-image: radial-gradient(circle at 50% 50%, #1a233a 0%, #0b0f1b 100%);
-      color: var(--text-main);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg-light);
+      background-image: radial-gradient(at 0% 0%, rgba(0, 122, 255, 0.03) 0, transparent 50%), 
+                        radial-gradient(at 50% 0%, rgba(26, 54, 93, 0.03) 0, transparent 50%);
+      color: var(--text-dark);
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
-      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
     }
 
     .card {
-      background: var(--card-bg);
-      border-radius: 24px;
-      padding: 40px;
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 48px 40px;
       width: 100%;
-      max-width: 380px;
-      box-shadow: 0 25px 50px rgba(0,0,0,0.6);
-      border: 1px solid rgba(255,255,255,0.05);
-      text-align: center;
-      backdrop-filter: blur(10px);
-    }
-
-    .logo-badge {
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 5px;
-      color: var(--accent);
-      margin-bottom: 10px;
-      font-weight: 800;
-    }
-
-    h1 {
-      font-size: 28px;
-      font-weight: 800;
-      margin: 0 0 10px 0;
-      letter-spacing: -1px;
-    }
-
-    p {
-      color: var(--text-muted);
-      font-size: 14px;
-      margin-bottom: 30px;
-    }
-
-    .input-group {
-      margin-bottom: 15px;
+      max-width: 400px;
+      box-shadow: var(--card-shadow);
+      border: 1px solid rgba(0, 0, 0, 0.05);
       text-align: left;
     }
 
-    label {
+    .header {
+      margin-bottom: 32px;
+      text-align: center;
+    }
+
+    .logo-badge {
       font-size: 11px;
       text-transform: uppercase;
-      color: var(--text-muted);
-      margin-left: 5px;
-      font-weight: 600;
+      letter-spacing: 2px;
+      color: var(--brand-accent);
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 700;
+      margin: 0;
+      color: var(--brand-primary);
+      letter-spacing: -0.5px;
+    }
+
+    p {
+      color: var(--text-light);
+      font-size: 14px;
+      margin: 8px 0 0 0;
+    }
+
+    .input-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      font-size: 13px;
+      color: var(--text-dark);
+      font-weight: 500;
+      display: block;
+      margin-bottom: 6px;
     }
 
     input {
       width: 100%;
-      padding: 14px 16px;
-      margin-top: 5px;
-      background: rgba(0,0,0,0.2);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 12px;
-      color: #fff;
+      padding: 12px 16px;
+      background: #ffffff;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 8px;
+      color: var(--text-dark);
       font-size: 15px;
       box-sizing: border-box;
-      transition: all 0.3s;
+      transition: all 0.2s ease;
     }
 
     input:focus {
       outline: none;
-      border-color: var(--accent);
-      background: rgba(0,210,255,0.05);
-      box-shadow: 0 0 15px rgba(0, 210, 255, 0.1);
+      border-color: var(--brand-accent);
+      box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
     }
 
     button {
       width: 100%;
-      padding: 16px;
-      background: var(--accent);
-      color: #0b0f1b;
+      padding: 14px;
+      background: var(--brand-primary);
+      color: #ffffff;
       border: none;
-      border-radius: 14px;
-      font-size: 16px;
-      font-weight: 700;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
       cursor: pointer;
-      margin-top: 20px;
-      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      margin-top: 12px;
+      transition: all 0.2s ease;
     }
 
     button:hover {
-      background: var(--accent-hover);
-      transform: translateY(-2px);
-      box-shadow: 0 10px 20px rgba(0, 210, 255, 0.2);
+      background: #2d4a77;
+      box-shadow: 0 4px 12px rgba(26, 54, 93, 0.2);
     }
 
-    button:active { transform: translateY(0); }
+    button:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+    }
 
     #error {
       font-size: 13px;
       color: var(--error);
-      background: rgba(255, 87, 34, 0.1);
-      padding: 10px;
-      border-radius: 10px;
-      margin-bottom: 20px;
-      display: none; /* Escondido por padrão */
+      background: #fff1f2;
+      border: 1px solid #ffe4e6;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 24px;
+      display: none;
+      text-align: center;
     }
 
     .footer-note {
-      margin-top: 30px;
-      font-size: 11px;
-      color: var(--text-muted);
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid #f1f5f9;
+      font-size: 12px;
+      color: var(--text-light);
+      text-align: center;
     }
+
+    /* Suavização de scroll e seleção */
+    ::selection { background: rgba(0, 122, 255, 0.2); }
   </style>
 
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -143,31 +156,33 @@
 <body>
 
   <div class="card">
-    <div class="logo-badge">Security Portal</div>
-    <h1>NewEnergy</h1>
-    <p>Acesse o monitoramento industrial</p>
+    <div class="header">
+      <div class="logo-badge">Industrial Intelligence</div>
+      <h1>NewEnergy</h1>
+      <p>Acesse o portal de monitoramento</p>
+    </div>
 
     <div id="error"></div>
 
     <div class="input-group">
       <label>E-mail Corporativo</label>
-      <input type="email" id="email" placeholder="nome@empresa.com">
+      <input type="email" id="email" placeholder="exemplo@empresa.com.br">
     </div>
 
     <div class="input-group">
       <label>Senha de Acesso</label>
-      <input type="password" id="password" placeholder="••••••••">
+      <input type="password" id="password" placeholder="Digite sua senha">
     </div>
 
-    <button id="btnLogin">Autenticar Sistema</button>
+    <button id="btnLogin">Entrar no Sistema</button>
 
     <div class="footer-note">
-      Sistema Protegido • NewEnergy v2.0
+      &copy; 2024 NewEnergy Solutions • Infraestrutura Crítica
     </div>
   </div>
 
   <script>
-    // ===== CONFIGURAÇÃO FIREBASE =====
+    // Configuração do Firebase (Mantida a original)
     const firebaseConfig = {
       apiKey: "AIzaSyB5FnkQiFi3gn9Iup2KNcbrKxWd-0Jjo6Y",
       authDomain: "oficial-688e8.firebaseapp.com",
@@ -183,22 +198,20 @@
     const btnLogin = document.getElementById("btnLogin");
     const errorEl = document.getElementById("error");
 
-    // Redireciona se já estiver logado
     auth.onAuthStateChanged(user => {
       if (user) window.location.href = "painel.html";
     });
 
-    // ===== LOGIN =====
     btnLogin.addEventListener("click", () => {
       const email = emailEl.value;
       const pass = passEl.value;
 
       if(!email || !pass) {
-        showError("Preencha todos os campos.");
+        showError("Preencha todos os campos para prosseguir.");
         return;
       }
 
-      btnLogin.innerText = "Verificando...";
+      btnLogin.innerText = "Autenticando...";
       btnLogin.disabled = true;
       errorEl.style.display = "none";
 
@@ -207,10 +220,9 @@
           window.location.href = "painel.html";
         })
         .catch(err => { 
-          btnLogin.innerText = "Autenticar Sistema";
+          btnLogin.innerText = "Entrar no Sistema";
           btnLogin.disabled = false;
-          showError("Credenciais inválidas ou erro de conexão."); 
-          console.error(err);
+          showError("Acesso negado. Verifique suas credenciais."); 
         });
     });
 
@@ -219,7 +231,6 @@
       errorEl.style.display = "block";
     }
 
-    // Permitir login ao apertar "Enter"
     document.addEventListener("keypress", (e) => {
       if(e.key === "Enter") btnLogin.click();
     });
