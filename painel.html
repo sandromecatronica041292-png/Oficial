@@ -7,16 +7,15 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root { 
-    /* Paleta Panorama Health / Corporate Tech */
-    --brand-primary: #1a365d;    /* Azul Marinho */
-    --brand-accent: #007aff;     /* Azul Apple/Tech */
-    --bg-body: #f1f5f9;         /* Cinza suave de fundo */
+    --brand-primary: #1a365d;    
+    --brand-accent: #007aff;     
+    --bg-body: #f1f5f9;         
     --card-bg: #ffffff;
     --text-main: #1e293b;
     --text-muted: #64748b;
-    --on: #10b981;              /* Verde Esmeralda */
-    --off: #e11d48;             /* Vermelho Premium */
-    --warn: #f59e0b;            /* Âmbar */
+    --on: #10b981;              
+    --off: #e11d48;             
+    --warn: #f59e0b;            
     --shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05);
   }
   
@@ -131,7 +130,7 @@
 
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
         <div>
-            <label>Intervalo (Min)</label>
+            <label>Intervalo de Alerta (Min)</label>
             <input type="number" id="cfgTempoEmail" class="admin-input" placeholder="Minutos">
         </div>
         <div>
@@ -182,7 +181,6 @@
 </div>
 
 <script>
-// MANTENDO TODA A LÓGICA ORIGINAL INTACTA
 emailjs.init("W2__8f2fBoqRPX9hX");
 
 firebase.initializeApp({
@@ -253,6 +251,9 @@ function analisarAlertas() {
   }
 }
 
+/** * CORREÇÃO CIRÚRGICA: 
+ * Registra o evento de alerta no histórico imediatamente após o e-mail ser disparado.
+ */
 function enviarAlertaEmail(t, h) {
   if (!config.emailDestino) return;
   emailjs.send("service_kx31f3s", "template_mqzi3at", {
@@ -264,6 +265,14 @@ function enviarAlertaEmail(t, h) {
   }).then(() => {
     ultimaVezAlertado = Date.now();
     db.ref("/config_alertas/contadorAlertas").set((config.contadorAlertas || 0) + 1);
+
+    // REGISTRO NO HISTÓRICO: Garante que o alerta conste no BI
+    const agoraTS = Math.floor(Date.now() / 1000);
+    const dataPasta = new Date().toLocaleDateString('pt-BR').split('/').reverse().join('-');
+    db.ref(`/historico/diario/${dataPasta}/${agoraTS}`).set({
+      temp: t,
+      hum: h
+    });
   });
 }
 
