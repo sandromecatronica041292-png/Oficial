@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>NewEnergy | Analytics Pro</title>
+    <title>NewEnergy | Performance Analítica</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -107,7 +107,6 @@ firebase.initializeApp({
 const db = firebase.database();
 let myChart = null, globalData = [], limitesAtivos = { tMin: 0, tMax: 40, hMin: 0, hMax: 100 };
 
-// Sincroniza Configurações de Alerta
 db.ref("/config_alertas").on("value", snap => {
     if(snap.val()) limitesAtivos = snap.val();
 });
@@ -173,19 +172,18 @@ function renderUI() {
             ultimaData = d.data;
         }
 
-        const erroT = d.temp > limitesAtivos.tMax || d.temp < limitesAtivos.tMin;
-        const erroH = d.hum > limitesAtivos.hMax || d.hum < limitesAtivos.hMin;
+        const erro = d.temp > limitesAtivos.tMax || d.temp < limitesAtivos.tMin || d.hum > limitesAtivos.hMax || d.hum < limitesAtivos.hMin;
         
         const item = document.createElement('div');
-        item.className = `item ${(erroT || erroH) ? 'alerta' : ''}`;
+        item.className = `item ${erro ? 'alerta' : ''}`;
         item.innerHTML = `
             <div><b>${d.hora}</b></div>
             <div style="display:flex; gap:24px; text-align:right;">
                 <div><small style="display:block; font-size:9px;">TEMP</small>
-                    <span class="${erroT ? 'valor-critico' : ''}" style="color:var(--accent-temp); font-weight:700;">${d.temp.toFixed(1)}°C</span>
+                    <span class="${d.temp > limitesAtivos.tMax || d.temp < limitesAtivos.tMin ? 'valor-critico' : ''}" style="color:var(--accent-temp); font-weight:700;">${d.temp.toFixed(1)}°C</span>
                 </div>
                 <div><small style="display:block; font-size:9px;">HUM</small>
-                    <span class="${erroH ? 'valor-critico' : ''}" style="color:var(--accent-hum); font-weight:700;">${d.hum.toFixed(1)}%</span>
+                    <span class="${d.hum > limitesAtivos.hMax || d.hum < limitesAtivos.hMin ? 'valor-critico' : ''}" style="color:var(--accent-hum); font-weight:700;">${d.hum.toFixed(1)}%</span>
                 </div>
             </div>`;
         listaDiv.appendChild(item);
@@ -229,60 +227,52 @@ async function exportarPDF() {
         doc.setFontSize(8); doc.text(`RELATÓRIO TÉCNICO COMPLETO: ${aba.toUpperCase()} | PÁGINA: ${pg}`, 15, 22);
     };
 
+    const desenharTitulosTabela = (y) => {
+        doc.setFillColor(26, 54, 93); doc.rect(15, y, 180, 8, 'F');
+        doc.setTextColor(255); doc.setFontSize(8);
+        doc.text("DATA / HORA", 20, y + 5); 
+        doc.text("TEMPERATURA", 80, y + 5); 
+        doc.text("UMIDADE", 120, y + 5); 
+        doc.text("STATUS", 165, y + 5);
+    };
+
     desenharHeader(1);
 
-    // Box de Parâmetros
     doc.setFillColor(240, 244, 248); doc.rect(15, 40, 180, 10, 'F');
     doc.setTextColor(60); doc.setFontSize(8);
-    doc.text(`Limites de Alerta: T: ${limitesAtivos.tMin}C a ${limitesAtivos.tMax}C | H: ${limitesAtivos.hMin}% a ${limitesAtivos.hMax}%`, 20, 46);
+    doc.text(`Limites de Alerta: T: ${limitesAtivos.tMin}C a ${limitesAtivos.tMax}C | H: ${limitesAtivos.hMin}% a ${limitesAtivos.hMax}%`, 20, 46.5);
 
     try {
         const img = document.getElementById('mainChart').toDataURL("image/png", 0.7);
         doc.addImage(img, 'PNG', 15, 55, 180, 60);
     } catch(e) {}
 
-    let py = 128; // Início da tabela
+    desenharTitulosTabela(125);
+
+    let py = 140; 
     let pgCount = 1;
-    
-    // Títulos da Tabela com alinhamento fixo
-    doc.setFillColor(26, 54, 93); doc.rect(15, 120, 180, 7, 'F');
-    doc.setTextColor(255); doc.setFontSize(8);
-    doc.text("DATA / HORA", 20, 124.5); 
-    doc.text("TEMPERATURA", 80, 124.5); 
-    doc.text("UMIDADE", 120, 124.5); 
-    doc.text("STATUS", 165, 124.5);
 
     for (let i = 0; i < globalData.length; i++) {
         const d = globalData[i];
         
-        // Verifica quebra de página
         if (py > 280) { 
             doc.addPage(); 
             pgCount++; 
             desenharHeader(pgCount); 
-            // Re-desenha títulos na nova página
-            doc.setFillColor(26, 54, 93); doc.rect(15, 40, 180, 7, 'F');
-            doc.setTextColor(255);
-            doc.text("DATA / HORA", 20, 44.5); 
-            doc.text("TEMPERATURA", 80, 44.5); 
-            doc.text("UMIDADE", 120, 44.5); 
-            doc.text("STATUS", 165, 44.5);
-            py = 52; 
+            desenharTitulosTabela(40); 
+            py = 55; 
         }
         
         const erro = d.temp > limitesAtivos.tMax || d.temp < limitesAtivos.tMin || d.hum > limitesAtivos.hMax || d.hum < limitesAtivos.hMin;
         
-        // Fundo intercalado
-        if (i % 2 === 0) { doc.setFillColor(245, 247, 250); doc.rect(15, py-4, 180, 6, 'F'); }
-        
-        // COR DA LINHA COMPLETA: Se houver erro, tudo fica vermelho
-        if (erro) {
-            doc.setTextColor(200, 0, 0); // Vermelho Alerta
-        } else {
-            doc.setTextColor(50, 50, 50); // Cinza padrão
+        if (i % 2 === 0) { 
+            doc.setFillColor(245, 247, 250); 
+            doc.rect(15, py - 4, 180, 6, 'F'); 
         }
-
+        
+        doc.setTextColor(erro ? 200 : 50, 0, 0); 
         doc.setFontSize(8);
+        
         doc.text(`${d.data} ${d.hora}`, 20, py);
         doc.text(`${d.temp.toFixed(2)} °C`, 80, py);
         doc.text(`${d.hum.toFixed(2)} %`, 120, py);
@@ -290,7 +280,6 @@ async function exportarPDF() {
         
         py += 6;
 
-        // Feedback de progresso
         if (i % 400 === 0) {
             btn.innerText = `PROCESSANDO: ${Math.round((i/globalData.length)*100)}%`;
             await new Promise(r => setTimeout(r, 1));
@@ -298,11 +287,9 @@ async function exportarPDF() {
     }
 
     doc.save(`Relatorio_NewEnergy_Full_${aba}.pdf`);
-    btn.disabled = false; 
-    btn.innerText = originalText;
+    btn.disabled = false; btn.innerText = originalText;
 }
 
-// INICIALIZAÇÃO
 firebase.auth().onAuthStateChanged(u => { 
     if(u) fetchData('diario'); 
     else location.href='index.html'; 
