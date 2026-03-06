@@ -49,7 +49,7 @@
         .item { 
             background: #fff; padding: 14px 20px; border-radius: 10px; 
             margin-bottom: 8px; display: flex; justify-content: space-between; 
-            align-items: center; border: 1px solid var(--border); 
+            align-items: center; border: 1px solid var(--border); transition: 0.2s;
         }
         .item.alerta { border-left: 4px solid var(--danger); background: #fff1f2; }
         
@@ -127,6 +127,9 @@ async function fetchData(periodo) {
         }
 
         const agora = new Date();
+        const mesAtual = agora.getMonth();
+        const anoAtual = agora.getFullYear();
+
         Object.keys(base).forEach(dia => {
             const registros = base[dia];
             Object.keys(registros).forEach(ts => {
@@ -135,8 +138,8 @@ async function fetchData(periodo) {
 
                 if (periodo === 'diario' && dt.toLocaleDateString() === agora.toLocaleDateString()) ok = true;
                 else if (periodo === 'semanal' && (agora - dt) <= 604800000) ok = true;
-                else if (periodo === 'mensal' && dt.getMonth() === agora.getMonth() && dt.getFullYear() === agora.getFullYear()) ok = true;
-                else if (periodo === 'anual' && dt.getFullYear() === agora.getFullYear()) ok = true;
+                else if (periodo === 'mensal' && dt.getMonth() === mesAtual && dt.getFullYear() === anoAtual) ok = true;
+                else if (periodo === 'anual' && dt.getFullYear() === anoAtual) ok = true;
 
                 if (ok) {
                     globalData.push({
@@ -202,7 +205,12 @@ function renderChart(periodo) {
                 { label: 'Hum', data: cleanData.map(d => d.hum), borderColor: '#007aff', tension: 0.3, pointRadius: cleanData.length > 50 ? 0 : 3 }
             ]
         },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        options: { 
+            responsive: true, 
+            maintainAspectRatio: false, 
+            scales: { x: { ticks: { autoSkip: true, maxTicksLimit: 10 } } },
+            plugins: { legend: { display: false } } 
+        }
     });
 }
 
@@ -223,37 +231,66 @@ async function exportarPDF() {
 
     desenharHeader(1);
 
-    // Box de Parâmetros de Limites (O que você pediu para voltar)
+    // Box de Parâmetros
     doc.setFillColor(240, 244, 248); doc.rect(15, 40, 180, 10, 'F');
     doc.setTextColor(60); doc.setFontSize(8);
-    doc.text(`Limites de Alerta Configurados - Temperatura: ${limitesAtivos.tMin}°C a ${limitesAtivos.tMax}°C | Umidade: ${limitesAtivos.hMin}% a ${limitesAtivos.hMax}%`, 20, 46);
+    doc.text(`Limites de Alerta: T: ${limitesAtivos.tMin}C a ${limitesAtivos.tMax}C | H: ${limitesAtivos.hMin}% a ${limitesAtivos.hMax}%`, 20, 46);
 
     try {
         const img = document.getElementById('mainChart').toDataURL("image/png", 0.7);
         doc.addImage(img, 'PNG', 15, 55, 180, 60);
     } catch(e) {}
 
-    let py = 125, pgCount = 1;
+    let py = 128; // Início da tabela
+    let pgCount = 1;
     
-    // Títulos da Tabela
-    doc.setFillColor(26, 54, 93); doc.rect(15, 117, 180, 7, 'F');
-    doc.setTextColor(255); doc.text("DATA/HORA", 20, 121.5); doc.text("TEMP", 85, 121.5); doc.text("HUM", 125, 121.5); doc.text("STATUS", 165, 121.5);
+    // Títulos da Tabela com alinhamento fixo
+    doc.setFillColor(26, 54, 93); doc.rect(15, 120, 180, 7, 'F');
+    doc.setTextColor(255); doc.setFontSize(8);
+    doc.text("DATA / HORA", 20, 124.5); 
+    doc.text("TEMPERATURA", 80, 124.5); 
+    doc.text("UMIDADE", 120, 124.5); 
+    doc.text("STATUS", 165, 124.5);
 
     for (let i = 0; i < globalData.length; i++) {
         const d = globalData[i];
-        if (py > 280) { doc.addPage(); pgCount++; desenharHeader(pgCount); py = 45; }
         
-        if (i % 2 === 0) { doc.setFillColor(245, 247, 250); doc.rect(15, py-4, 180, 6, 'F'); }
+        // Verifica quebra de página
+        if (py > 280) { 
+            doc.addPage(); 
+            pgCount++; 
+            desenharHeader(pgCount); 
+            // Re-desenha títulos na nova página
+            doc.setFillColor(26, 54, 93); doc.rect(15, 40, 180, 7, 'F');
+            doc.setTextColor(255);
+            doc.text("DATA / HORA", 20, 44.5); 
+            doc.text("TEMPERATURA", 80, 44.5); 
+            doc.text("UMIDADE", 120, 44.5); 
+            doc.text("STATUS", 165, 44.5);
+            py = 52; 
+        }
         
         const erro = d.temp > limitesAtivos.tMax || d.temp < limitesAtivos.tMin || d.hum > limitesAtivos.hMax || d.hum < limitesAtivos.hMin;
-        doc.setTextColor(erro ? 200 : 50, 0, 0); doc.setFontSize(8);
+        
+        // Fundo intercalado
+        if (i % 2 === 0) { doc.setFillColor(245, 247, 250); doc.rect(15, py-4, 180, 6, 'F'); }
+        
+        // COR DA LINHA COMPLETA: Se houver erro, tudo fica vermelho
+        if (erro) {
+            doc.setTextColor(200, 0, 0); // Vermelho Alerta
+        } else {
+            doc.setTextColor(50, 50, 50); // Cinza padrão
+        }
+
+        doc.setFontSize(8);
         doc.text(`${d.data} ${d.hora}`, 20, py);
-        doc.setTextColor(50);
-        doc.text(`${d.temp.toFixed(2)}C`, 85, py);
-        doc.text(`${d.hum.toFixed(2)}%`, 125, py);
-        doc.text(erro ? "ALERTA" : "OK", 165, py);
+        doc.text(`${d.temp.toFixed(2)} °C`, 80, py);
+        doc.text(`${d.hum.toFixed(2)} %`, 120, py);
+        doc.text(erro ? "ALERTA !!!" : "NORMAL", 165, py);
+        
         py += 6;
 
+        // Feedback de progresso
         if (i % 400 === 0) {
             btn.innerText = `PROCESSANDO: ${Math.round((i/globalData.length)*100)}%`;
             await new Promise(r => setTimeout(r, 1));
@@ -261,10 +298,16 @@ async function exportarPDF() {
     }
 
     doc.save(`Relatorio_NewEnergy_Full_${aba}.pdf`);
-    btn.disabled = false; btn.innerText = originalText;
+    btn.disabled = false; 
+    btn.innerText = originalText;
 }
 
-firebase.auth().onAuthStateChanged(u => { if(u) fetchData('diario'); else location.href='index.html'; });
+// INICIALIZAÇÃO
+firebase.auth().onAuthStateChanged(u => { 
+    if(u) fetchData('diario'); 
+    else location.href='index.html'; 
+});
+
 document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', function() {
     document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
     this.classList.add('active');
