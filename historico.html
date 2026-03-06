@@ -7,7 +7,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            /* Paleta Corporate High-End */
             --brand-primary: #1a365d;
             --brand-accent: #007aff;
             --bg-body: #f8fafc;
@@ -22,152 +21,83 @@
         }
 
         body { 
-            margin: 0; 
-            font-family: 'Inter', sans-serif; 
-            background: var(--bg-body); 
-            color: var(--text-main); 
-            display: flex; 
-            justify-content: center; 
-            padding: 20px;
+            margin: 0; font-family: 'Inter', sans-serif; 
+            background: var(--bg-body); color: var(--text-main); 
+            display: flex; justify-content: center; padding: 20px;
             background-image: radial-gradient(at 0% 0%, rgba(0, 122, 255, 0.03) 0, transparent 50%);
         }
 
         .card { 
-            background: var(--card-bg); 
-            border-radius: 16px; 
-            padding: 40px; 
-            width: 100%; 
-            max-width: 900px; 
-            border: 1px solid var(--border); 
+            background: var(--card-bg); border-radius: 16px; padding: 40px; 
+            width: 100%; max-width: 900px; border: 1px solid var(--border); 
             box-shadow: var(--shadow); 
         }
         
         header { 
             border-left: 4px solid var(--brand-accent); 
-            padding-left: 20px; 
-            margin-bottom: 35px; 
-            text-align: left;
+            padding-left: 20px; margin-bottom: 35px; text-align: left;
         }
 
         header h1 { margin:0; font-size: 24px; font-weight: 800; color: var(--brand-primary); letter-spacing: -0.5px; }
         header p { margin:4px 0 0; color: var(--text-muted); font-size: 13px; font-weight: 500; }
 
         .tabs { 
-            display: flex; 
-            background: #f1f5f9; 
-            padding: 4px; 
-            border-radius: 10px; 
-            margin-bottom: 25px; 
-            gap: 4px; 
+            display: flex; background: #f1f5f9; padding: 4px; 
+            border-radius: 10px; margin-bottom: 25px; gap: 4px; 
         }
 
         .tab { 
-            flex: 1; 
-            padding: 10px; 
-            text-align: center; 
-            border-radius: 7px; 
-            cursor: pointer; 
-            font-size: 12px; 
-            font-weight: 600; 
-            color: var(--text-muted); 
-            transition: 0.2s; 
-            text-transform: none; 
+            flex: 1; padding: 10px; text-align: center; border-radius: 7px; 
+            cursor: pointer; font-size: 12px; font-weight: 600; 
+            color: var(--text-muted); transition: 0.2s; 
         }
 
         .tab.active { 
-            background: white; 
-            color: var(--brand-accent); 
+            background: white; color: var(--brand-accent); 
             box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
         }
 
         .chart-container { 
-            background: #ffffff; 
-            border-radius: 12px; 
-            padding: 20px; 
-            margin-bottom: 30px; 
-            border: 1px solid var(--border); 
-            height: 350px; 
+            background: #ffffff; border-radius: 12px; padding: 20px; 
+            margin-bottom: 30px; border: 1px solid var(--border); height: 350px; 
         }
 
-        #lista { 
-            max-height: 400px; 
-            overflow-y: auto; 
-            padding-right: 10px; 
-        }
-        
-        /* Custom Scrollbar */
+        #lista { max-height: 400px; overflow-y: auto; padding-right: 10px; }
         #lista::-webkit-scrollbar { width: 6px; }
         #lista::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
 
         .item { 
-            background: #fff; 
-            padding: 14px 20px; 
-            border-radius: 10px; 
-            margin-bottom: 8px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            border: 1px solid var(--border); 
-            transition: 0.2s; 
+            background: #fff; padding: 14px 20px; border-radius: 10px; 
+            margin-bottom: 8px; display: flex; justify-content: space-between; 
+            align-items: center; border: 1px solid var(--border); transition: 0.2s; 
         }
 
-        .item:hover { border-color: var(--brand-accent); background: #fcfdfe; }
-
-        .item.alerta { 
-            border-left: 4px solid var(--danger); 
-            background: #fff1f2; 
-        }
+        .item.alerta { border-left: 4px solid var(--danger); background: #fff1f2; }
         
         .data-divider { 
-            color: var(--brand-primary); 
-            font-size: 11px; 
-            font-weight: 700; 
-            margin: 30px 0 12px; 
-            display: flex; 
-            align-items: center; 
+            color: var(--brand-primary); font-size: 11px; font-weight: 700; 
+            margin: 30px 0 12px; display: flex; align-items: center; 
         }
 
         .data-divider::after { 
-            content: ""; 
-            flex: 1; 
-            height: 1px; 
-            background: var(--border); 
-            margin-left: 15px; 
+            content: ""; flex: 1; height: 1px; background: var(--border); margin-left: 15px; 
         }
         
         .btn-group { display: flex; gap: 12px; margin-top: 30px; }
 
         .btn { 
-            flex: 1; 
-            padding: 14px; 
-            border: none; 
-            border-radius: 10px; 
-            font-weight: 600; 
-            cursor: pointer; 
-            font-size: 14px; 
-            transition: all 0.2s; 
+            flex: 1; padding: 14px; border: none; border-radius: 10px; 
+            font-weight: 600; cursor: pointer; font-size: 14px; transition: all 0.2s; 
         }
 
-        .btn-pdf { 
-            background: var(--brand-primary); 
-            color: #ffffff; 
-            box-shadow: 0 4px 12px rgba(26, 54, 93, 0.15); 
-        }
-
+        .btn-pdf { background: var(--brand-primary); color: #ffffff; box-shadow: 0 4px 12px rgba(26, 54, 93, 0.15); }
         .btn-pdf:hover { background: #2d4a77; transform: translateY(-1px); }
 
-        .btn-back { 
-            background: white; 
-            color: var(--text-muted); 
-            border: 1.5px solid var(--border); 
-        }
-
+        .btn-back { background: white; color: var(--text-muted); border: 1.5px solid var(--border); }
         .btn-back:hover { border-color: var(--text-muted); color: var(--text-main); }
 
         .valor-critico { color: var(--danger) !important; font-weight: 800; }
-        
         b { color: var(--brand-primary); }
-        small { color: var(--text-light); }
     </style>
     
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -204,26 +134,27 @@
 </div>
 
 <script>
-// TODA A LÓGICA E FUNÇÕES MANTIDAS INTEGRALMENTE
 firebase.initializeApp({
     apiKey: "AIzaSyB5FnkQiFi3gn9Iup2KNcbrKxWd-0Jjo6Y",
     authDomain: "oficial-688e8.firebaseapp.com",
     databaseURL: "https://oficial-688e8-default-rtdb.firebaseio.com/",
     projectId: "oficial-688e8"
 });
+
 const db = firebase.database();
 let myChart = null, globalData = [];
-
 let limitesAtivos = { tMin: 0, tMax: 100, hMin: 0, hMax: 100 };
 
 function sincronizarConfiguracoes() {
     db.ref("/config_alertas").on("value", (snap) => {
         const val = snap.val();
         if (val) {
-            limitesAtivos.tMin = parseFloat(val.tMin) || 0;
-            limitesAtivos.tMax = parseFloat(val.tMax) || 100;
-            limitesAtivos.hMin = parseFloat(val.hMin) || 0;
-            limitesAtivos.hMax = parseFloat(val.hMax) || 100;
+            limitesAtivos = {
+                tMin: parseFloat(val.tMin) || 0,
+                tMax: parseFloat(val.tMax) || 100,
+                hMin: parseFloat(val.hMin) || 0,
+                hMax: parseFloat(val.hMax) || 100
+            };
             if (globalData.length > 0) renderUI();
         }
     });
@@ -243,27 +174,32 @@ async function fetchData(periodo) {
             return;
         }
 
-        const hoje = new Date().toLocaleDateString('pt-BR');
         const agora = new Date();
+        const mesAtual = agora.getMonth();
+        const anoAtual = agora.getFullYear();
 
         Object.keys(base).forEach(pastaData => {
             const registros = base[pastaData];
             Object.keys(registros).forEach(ts => {
                 const dt = new Date(parseInt(ts) * 1000);
-                const dtStr = dt.toLocaleDateString('pt-BR');
                 let incluir = false;
 
-                if (periodo === 'diario' && dtStr === hoje) incluir = true;
-                else if (periodo === 'semanal' && (agora - dt) / 86400000 <= 7) incluir = true;
-                else if (periodo === 'mensal' && (agora - dt) / 86400000 <= 30) incluir = true;
-                else if (periodo === 'anual') incluir = true;
+                if (periodo === 'diario') {
+                    if (dt.toLocaleDateString('pt-BR') === agora.toLocaleDateString('pt-BR')) incluir = true;
+                } else if (periodo === 'semanal') {
+                    if ((agora - dt) / 86400000 <= 7) incluir = true;
+                } else if (periodo === 'mensal') {
+                    if (dt.getMonth() === mesAtual && dt.getFullYear() === anoAtual) incluir = true;
+                } else if (periodo === 'anual') {
+                    if (dt.getFullYear() === anoAtual) incluir = true;
+                }
 
                 if (incluir) {
                     globalData.push({
                         ts: parseInt(ts),
                         temp: parseFloat(registros[ts].temp),
                         hum: parseFloat(registros[ts].hum),
-                        data: dtStr,
+                        data: dt.toLocaleDateString('pt-BR'),
                         hora: dt.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})
                     });
                 }
@@ -316,19 +252,18 @@ function renderChart(periodo) {
     myChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: cleanData.map(d => periodo === 'diario' ? d.hora : d.data),
+            labels: cleanData.map(d => (periodo === 'diario') ? d.hora : d.data),
             datasets: [
-                { label: 'Temperatura', data: cleanData.map(d => d.temp), borderColor: '#f43f5e', tension: 0.3, pointRadius: 0, borderWidth: 2, backgroundColor: 'rgba(244, 63, 94, 0.05)', fill: true },
-                { label: 'Umidade', data: cleanData.map(d => d.hum), borderColor: '#007aff', tension: 0.3, pointRadius: 0, borderWidth: 2, backgroundColor: 'rgba(0, 122, 255, 0.05)', fill: true }
+                { label: 'Temperatura', data: cleanData.map(d => d.temp), borderColor: '#f43f5e', tension: 0.3, pointRadius: cleanData.length > 50 ? 0 : 3, borderWidth: 2, backgroundColor: 'rgba(244, 63, 94, 0.05)', fill: true },
+                { label: 'Umidade', data: cleanData.map(d => d.hum), borderColor: '#007aff', tension: 0.3, pointRadius: cleanData.length > 50 ? 0 : 3, borderWidth: 2, backgroundColor: 'rgba(0, 122, 255, 0.05)', fill: true }
             ]
         },
         options: { 
-            responsive: true, 
-            maintainAspectRatio: false,
+            responsive: true, maintainAspectRatio: false,
             interaction: { intersect: false, mode: 'index' },
             scales: {
-                y: { grid: { color: '#f1f5f9' }, ticks: { color: '#94a3b8', font: { size: 10 } } },
-                x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10 } } }
+                y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 } } },
+                x: { grid: { display: false }, ticks: { autoSkip: true, maxTicksLimit: 12, font: { size: 10 } } }
             },
             plugins: { legend: { display: false } }
         }
@@ -340,50 +275,51 @@ async function exportarPDF() {
     const doc = new jsPDF();
     const aba = document.querySelector('.tab.active').innerText;
     
-    // MODELO ORIGINAL DE PDF MANTIDO
-    doc.setFillColor(26, 54, 93); // Azul Marinho NewEnergy
-    doc.rect(0, 0, 210, 45, 'F');
+    doc.setFillColor(26, 54, 93);
+    doc.rect(0, 0, 210, 40, 'F');
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(22);
-    doc.text("NEWENERGY", 15, 20);
+    doc.setFontSize(20);
+    doc.text("NEWENERGY", 15, 18);
     doc.setFontSize(9);
-    doc.setTextColor(0, 210, 255);
-    doc.text("RELATÓRIO DE MONITORAMENTO - " + aba.toUpperCase(), 15, 28);
+    doc.text("RELATÓRIO TÉCNICO DE PERFORMANCE: " + aba.toUpperCase(), 15, 26);
     
-    doc.setFillColor(245, 247, 250);
-    doc.rect(15, 55, 180, 15, 'F');
-    doc.setTextColor(100); doc.setFontSize(8);
-    doc.text(`Limites no Registro: Temp [${limitesAtivos.tMin}-${limitesAtivos.tMax}] | Hum [${limitesAtivos.hMin}-${limitesAtivos.hMax}]`, 20, 65);
+    doc.setFillColor(240, 244, 248);
+    doc.rect(15, 45, 180, 10, 'F');
+    doc.setTextColor(60);
+    doc.text(`Parâmetros de Alerta: T: ${limitesAtivos.tMin}C-${limitesAtivos.tMax}C | H: ${limitesAtivos.hMin}%-${limitesAtivos.hMax}%`, 20, 51);
 
     const imgData = document.getElementById('mainChart').toDataURL("image/png", 1.0);
-    doc.addImage(imgData, 'PNG', 15, 80, 180, 60);
+    doc.addImage(imgData, 'PNG', 15, 60, 180, 70);
 
-    let py = 150;
-    doc.setTextColor(0); doc.setFontSize(10); doc.text("LOG DE REGISTROS TÉCNICOS", 15, py); py += 8;
-    
-    doc.setFillColor(230, 235, 245);
-    doc.rect(15, py, 180, 8, 'F');
-    doc.setFontSize(8);
-    doc.text("DATA/HORA", 20, py + 5.5);
-    doc.text("TEMPERATURA", 80, py + 5.5);
-    doc.text("UMIDADE", 120, py + 5.5);
-    doc.text("STATUS", 165, py + 5.5);
+    let py = 145;
+    doc.setTextColor(0); doc.setFontSize(10);
+    doc.text("LOG DE REGISTROS (Amostra de 100 itens)", 15, py); 
+    py += 7;
+
+    doc.setFillColor(26, 54, 93); doc.rect(15, py, 180, 7, 'F');
+    doc.setTextColor(255); doc.setFontSize(8);
+    doc.text("DATA/HORA", 20, py + 5);
+    doc.text("TEMP", 85, py + 5);
+    doc.text("HUM", 125, py + 5);
+    doc.text("STATUS", 165, py + 5);
     py += 8;
 
-    globalData.forEach((d, i) => {
-        if (py > 270) { doc.addPage(); py = 20; }
-        if (i % 2 === 0) { doc.setFillColor(248, 250, 255); doc.rect(15, py, 180, 7, 'F'); }
+    const dataForPdf = globalData.slice(0, 100);
+    dataForPdf.forEach((d, i) => {
+        if (py > 280) { doc.addPage(); py = 20; }
+        if (i % 2 === 0) { doc.setFillColor(245, 247, 250); doc.rect(15, py, 180, 6, 'F'); }
         const tErr = (d.temp > limitesAtivos.tMax || d.temp < limitesAtivos.tMin);
         const hErr = (d.hum > limitesAtivos.hMax || d.hum < limitesAtivos.hMin);
-        if (tErr || hErr) doc.setTextColor(200, 0, 0); else doc.setTextColor(80);
-        doc.text(`${d.data} ${d.hora}`, 20, py + 5);
-        doc.text(`${d.temp.toFixed(2)}°C`, 80, py + 5);
-        doc.text(`${d.hum.toFixed(2)}%`, 120, py + 5);
-        doc.text((tErr || hErr) ? "ALERTA" : "NORMAL", 165, py + 5);
-        py += 7;
+        doc.setTextColor(tErr || hErr ? 200 : 50, 0, 0);
+        doc.text(`${d.data} ${d.hora}`, 20, py + 4.5);
+        doc.setTextColor(50);
+        doc.text(`${d.temp.toFixed(2)}C`, 85, py + 4.5);
+        doc.text(`${d.hum.toFixed(2)}%`, 125, py + 4.5);
+        doc.text(tErr || hErr ? "ALERTA" : "OK", 165, py + 4.5);
+        py += 6;
     });
 
-    doc.save(`Relatorio_Performance_${aba}.pdf`);
+    doc.save(`Relatorio_NewEnergy_${aba}.pdf`);
 }
 
 firebase.auth().onAuthStateChanged(u => { 
@@ -396,7 +332,7 @@ firebase.auth().onAuthStateChanged(u => {
 });
 
 document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', function() {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
     this.classList.add('active');
     fetchData(this.getAttribute('data-periodo'));
 }));
