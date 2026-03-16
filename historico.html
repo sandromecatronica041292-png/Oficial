@@ -3,37 +3,64 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>NewEnergy | BI Sincronizado</title>
+    <title>NewEnergy | Performance Analítica</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-dark: #070a13; --card-bg: #101625;
-            --accent-hum: #00d2ff; --accent-temp: #f43f5e;
-            --text-main: #f0f4f8; --text-muted: #64748b;
-            --border: rgba(255, 255, 255, 0.08);
-            --danger: #ff4757;
+            --brand-primary: #1a365d;
+            --brand-accent: #007aff;
+            --bg-body: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --danger: #e11d48;
+            --accent-temp: #f43f5e;
+            --accent-hum: #007aff;
+            --shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
         }
-        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-dark); color: var(--text-main); display: flex; justify-content: center; padding: 20px; }
-        .card { background: var(--card-bg); border-radius: 28px; padding: 30px; width: 100%; max-width: 900px; border: 1px solid var(--border); box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
-        
-        .tabs { display: flex; background: #070a13; padding: 5px; border-radius: 14px; margin-bottom: 20px; gap: 4px; border: 1px solid var(--border); }
-        .tab { flex: 1; padding: 12px; text-align: center; border-radius: 10px; cursor: pointer; font-size: 11px; font-weight: 700; color: var(--text-muted); transition: 0.3s; text-transform: uppercase; }
-        .tab.active { background: var(--card-bg); color: var(--accent-hum); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
 
-        .chart-container { background: rgba(0,0,0,0.2); border-radius: 20px; padding: 15px; margin-bottom: 25px; border: 1px solid var(--border); height: 350px; }
-        #lista { max-height: 400px; overflow-y: auto; padding-right: 5px; }
-        
-        .item { background: rgba(255,255,255,0.03); padding: 12px 20px; border-radius: 12px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.02); transition: 0.3s; }
-        .item.alerta { border-left: 4px solid var(--danger); background: rgba(255, 71, 87, 0.1); }
-        
-        .data-divider { color: var(--accent-hum); font-size: 10px; font-weight: 900; margin: 25px 0 10px; display: flex; align-items: center; text-transform: uppercase; }
-        .data-divider::after { content: ""; flex: 1; height: 1px; background: var(--border); margin-left: 10px; }
-        
-        .btn-group { display: flex; gap: 10px; margin-top: 20px; }
-        .btn { flex: 1; padding: 16px; border: none; border-radius: 14px; font-weight: 800; cursor: pointer; font-size: 12px; text-transform: uppercase; transition: 0.3s; }
-        .btn-pdf { background: var(--accent-hum); color: #000; box-shadow: 0 10px 20px rgba(0, 210, 255, 0.2); }
-        .btn-back { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+        body { 
+            margin: 0; font-family: 'Inter', sans-serif; 
+            background: var(--bg-body); color: var(--text-main); 
+            display: flex; justify-content: center; padding: 20px;
+        }
 
-        .valor-critico { color: var(--danger) !important; font-weight: 900; }
+        .card { 
+            background: var(--card-bg); border-radius: 16px; padding: 40px; 
+            width: 100%; max-width: 900px; border: 1px solid var(--border); 
+            box-shadow: var(--shadow); 
+        }
+        
+        header { border-left: 4px solid var(--brand-accent); padding-left: 20px; margin-bottom: 35px; }
+        header h1 { margin:0; font-size: 24px; font-weight: 800; color: var(--brand-primary); letter-spacing: -0.5px; }
+        header p { margin:4px 0 0; color: var(--text-muted); font-size: 13px; font-weight: 500; }
+
+        .tabs { display: flex; background: #f1f5f9; padding: 4px; border-radius: 10px; margin-bottom: 25px; gap: 4px; }
+        .tab { flex: 1; padding: 10px; text-align: center; border-radius: 7px; cursor: pointer; font-size: 12px; font-weight: 600; color: var(--text-muted); transition: 0.2s; }
+        .tab.active { background: white; color: var(--brand-accent); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+
+        .chart-container { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 30px; border: 1px solid var(--border); height: 350px; }
+
+        #lista { max-height: 400px; overflow-y: auto; padding-right: 10px; }
+        .data-divider { color: var(--brand-primary); font-size: 11px; font-weight: 700; margin: 25px 0 12px; display: flex; align-items: center; }
+        .data-divider::after { content: ""; flex: 1; height: 1px; background: var(--border); margin-left: 15px; }
+
+        .item { 
+            background: #fff; padding: 14px 20px; border-radius: 10px; 
+            margin-bottom: 8px; display: flex; justify-content: space-between; 
+            align-items: center; border: 1px solid var(--border); transition: 0.2s;
+        }
+        .item.alerta { border-left: 4px solid var(--danger); background: #fff1f2; }
+        
+        .btn-group { display: flex; gap: 12px; margin-top: 30px; }
+        .btn { flex: 1; padding: 14px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+        .btn-pdf { background: var(--brand-primary); color: #ffffff; box-shadow: 0 4px 12px rgba(26, 54, 93, 0.15); }
+        .btn-pdf:disabled { background: #64748b; opacity: 0.8; }
+        .btn-back { background: white; color: var(--text-muted); border: 1.5px solid var(--border); }
+
+        .valor-critico { color: var(--danger) !important; font-weight: 800; }
+        b { color: var(--brand-primary); }
     </style>
     
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -45,9 +72,9 @@
 <body>
 
 <div class="card">
-    <header style="border-left: 4px solid var(--accent-hum); padding-left: 20px; margin-bottom: 25px;">
-        <h1 style="margin:0; font-size:24px;">Advanced Intelligence</h1>
-        <p style="margin:0; color:var(--text-muted); font-size:12px;">Relatório de Performance Técnica</p>
+    <header>
+        <h1>Performance Analytics</h1>
+        <p>Monitoramento de Infraestrutura NewEnergy</p>
     </header>
 
     <div class="tabs">
@@ -64,8 +91,8 @@
     <div id="lista"></div>
 
     <div class="btn-group">
-        <button class="btn btn-pdf" onclick="exportarPDF()">Exportar Relatório Analítico</button>
-        <button class="btn btn-back" onclick="location.href='painel.html'">Voltar</button>
+        <button class="btn btn-pdf" id="btnPdf" onclick="exportarPDF()">Gerar Relatório Executivo</button>
+        <button class="btn btn-back" onclick="location.href='painel.html'">Voltar ao Painel</button>
     </div>
 </div>
 
@@ -76,68 +103,56 @@ firebase.initializeApp({
     databaseURL: "https://oficial-688e8-default-rtdb.firebaseio.com/",
     projectId: "oficial-688e8"
 });
+
 const db = firebase.database();
-let myChart = null, globalData = [];
+let myChart = null, globalData = [], limitesAtivos = { tMin: 0, tMax: 40, hMin: 0, hMax: 100 };
 
-// Sincroniza limites do Painel Invisível
-let limitesAtivos = { tMin: 0, tMax: 100, hMin: 0, hMax: 100 };
-
-function sincronizarConfiguracoes() {
-    db.ref("/config_alertas").on("value", (snap) => {
-        const val = snap.val();
-        if (val) {
-            limitesAtivos.tMin = parseFloat(val.tMin) || 0;
-            limitesAtivos.tMax = parseFloat(val.tMax) || 100;
-            limitesAtivos.hMin = parseFloat(val.hMin) || 0;
-            limitesAtivos.hMax = parseFloat(val.hMax) || 100;
-            if (globalData.length > 0) renderUI();
-        }
-    });
-}
+db.ref("/config_alertas").on("value", snap => {
+    if(snap.val()) limitesAtivos = snap.val();
+});
 
 async function fetchData(periodo) {
     const listaDiv = document.getElementById("lista");
-    listaDiv.innerHTML = "<p style='text-align:center; padding:50px;'>Sincronizando registros...</p>";
-    globalData = []; 
+    listaDiv.innerHTML = "<p style='text-align:center; padding:50px; color:#64748b;'>Acessando Base de Dados Completa...</p>";
+    globalData = [];
 
     try {
         const snapshot = await db.ref("/historico/" + periodo).once("value");
         const base = snapshot.val();
         if (!base) {
-            listaDiv.innerHTML = "<p style='text-align:center; padding:40px;'>Nenhum dado encontrado.</p>";
+            listaDiv.innerHTML = "<p style='text-align:center; padding:40px;'>Nenhum registro encontrado.</p>";
             if(myChart) myChart.destroy();
             return;
         }
 
-        const hoje = new Date().toLocaleDateString('pt-BR');
         const agora = new Date();
+        const mesAtual = agora.getMonth();
+        const anoAtual = agora.getFullYear();
 
-        // Lógica para percorrer as subpastas de data criadas pelo ESP32
-        Object.keys(base).forEach(pastaData => {
-            const registros = base[pastaData];
+        Object.keys(base).forEach(dia => {
+            const registros = base[dia];
             Object.keys(registros).forEach(ts => {
                 const dt = new Date(parseInt(ts) * 1000);
-                const dtStr = dt.toLocaleDateString('pt-BR');
-                let incluir = false;
+                let ok = false;
 
-                if (periodo === 'diario' && dtStr === hoje) incluir = true;
-                else if (periodo === 'semanal' && (agora - dt) / 86400000 <= 7) incluir = true;
-                else if (periodo === 'mensal' && (agora - dt) / 86400000 <= 30) incluir = true;
-                else if (periodo === 'anual') incluir = true;
+                if (periodo === 'diario' && dt.toLocaleDateString() === agora.toLocaleDateString()) ok = true;
+                else if (periodo === 'semanal' && (agora - dt) <= 604800000) ok = true;
+                else if (periodo === 'mensal' && dt.getMonth() === mesAtual && dt.getFullYear() === anoAtual) ok = true;
+                else if (periodo === 'anual' && dt.getFullYear() === anoAtual) ok = true;
 
-                if (incluir) {
+                if (ok) {
                     globalData.push({
                         ts: parseInt(ts),
                         temp: parseFloat(registros[ts].temp),
                         hum: parseFloat(registros[ts].hum),
-                        data: dtStr,
+                        data: dt.toLocaleDateString('pt-BR'),
                         hora: dt.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})
                     });
                 }
             });
         });
 
-        globalData.sort((a, b) => b.ts - a.ts);
+        globalData.sort((a,b) => b.ts - a.ts);
         renderUI();
         renderChart(periodo);
     } catch (e) { console.error(e); }
@@ -152,24 +167,23 @@ function renderUI() {
         if (d.data !== ultimaData) {
             const div = document.createElement('div');
             div.className = 'data-divider';
-            div.innerHTML = `📅 ${d.data}`;
+            div.innerHTML = `📌 ${d.data}`;
             listaDiv.appendChild(div);
             ultimaData = d.data;
         }
 
-        const erroT = (d.temp > limitesAtivos.tMax || d.temp < limitesAtivos.tMin);
-        const erroH = (d.hum > limitesAtivos.hMax || d.hum < limitesAtivos.hMin);
+        const erro = d.temp > limitesAtivos.tMax || d.temp < limitesAtivos.tMin || d.hum > limitesAtivos.hMax || d.hum < limitesAtivos.hMin;
         
         const item = document.createElement('div');
-        item.className = `item ${(erroT || erroH) ? 'alerta' : ''}`;
+        item.className = `item ${erro ? 'alerta' : ''}`;
         item.innerHTML = `
-            <div><b>${d.hora}</b><br><small style="color:var(--text-muted)">ID: ${d.ts}</small></div>
-            <div style="display:flex; gap:20px; text-align:right;">
-                <div><small style="display:block; font-size:8px;">TEMPERATURA</small>
-                    <span class="${erroT ? 'valor-critico' : ''}" style="color:var(--accent-temp); font-weight:800;">${d.temp.toFixed(2)}°C</span>
+            <div><b>${d.hora}</b></div>
+            <div style="display:flex; gap:24px; text-align:right;">
+                <div><small style="display:block; font-size:9px;">TEMP</small>
+                    <span class="${d.temp > limitesAtivos.tMax || d.temp < limitesAtivos.tMin ? 'valor-critico' : ''}" style="color:var(--accent-temp); font-weight:700;">${d.temp.toFixed(1)}°C</span>
                 </div>
-                <div><small style="display:block; font-size:8px;">UMIDADE</small>
-                    <span class="${erroH ? 'valor-critico' : ''}" style="color:var(--accent-hum); font-weight:800;">${d.hum.toFixed(2)}%</span>
+                <div><small style="display:block; font-size:9px;">HUM</small>
+                    <span class="${d.hum > limitesAtivos.hMax || d.hum < limitesAtivos.hMin ? 'valor-critico' : ''}" style="color:var(--accent-hum); font-weight:700;">${d.hum.toFixed(1)}%</span>
                 </div>
             </div>`;
         listaDiv.appendChild(item);
@@ -185,18 +199,15 @@ function renderChart(periodo) {
         data: {
             labels: cleanData.map(d => periodo === 'diario' ? d.hora : d.data),
             datasets: [
-                { label: 'Temp', data: cleanData.map(d => d.temp), borderColor: '#f43f5e', tension: 0.4, pointRadius: 2, backgroundColor: 'rgba(244, 63, 94, 0.1)', fill: true },
-                { label: 'Umid', data: cleanData.map(d => d.hum), borderColor: '#00d2ff', tension: 0.4, pointRadius: 2, backgroundColor: 'rgba(0, 210, 255, 0.1)', fill: true }
+                { label: 'Temp', data: cleanData.map(d => d.temp), borderColor: '#f43f5e', tension: 0.3, pointRadius: cleanData.length > 50 ? 0 : 3 },
+                { label: 'Hum', data: cleanData.map(d => d.hum), borderColor: '#007aff', tension: 0.3, pointRadius: cleanData.length > 50 ? 0 : 3 }
             ]
         },
         options: { 
             responsive: true, 
-            maintainAspectRatio: false,
-            scales: {
-                y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } },
-                x: { grid: { display: false }, ticks: { color: '#64748b' } }
-            },
-            plugins: { legend: { display: false } }
+            maintainAspectRatio: false, 
+            scales: { x: { ticks: { autoSkip: true, maxTicksLimit: 10 } } },
+            plugins: { legend: { display: false } } 
         }
     });
 }
@@ -204,68 +215,93 @@ function renderChart(periodo) {
 async function exportarPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
+    const btn = document.getElementById('btnPdf');
     const aba = document.querySelector('.tab.active').innerText;
     
-    doc.setFillColor(16, 22, 37);
-    doc.rect(0, 0, 210, 45, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(22);
-    doc.text("NEWENERGY", 15, 20);
-    doc.setFontSize(9);
-    doc.setTextColor(0, 210, 255);
-    doc.text("RELATÓRIO DE MONITORAMENTO - " + aba.toUpperCase(), 15, 28);
-    
-    doc.setFillColor(245, 247, 250);
-    doc.rect(15, 55, 180, 15, 'F');
-    doc.setTextColor(100); doc.setFontSize(8);
-    doc.text(`Limites no Registro: Temp [${limitesAtivos.tMin}-${limitesAtivos.tMax}] | Hum [${limitesAtivos.hMin}-${limitesAtivos.hMax}]`, 20, 65);
+    btn.disabled = true;
+    const originalText = "Gerar Relatório Executivo";
 
-    const imgData = document.getElementById('mainChart').toDataURL("image/png", 1.0);
-    doc.addImage(imgData, 'PNG', 15, 80, 180, 60);
+    const desenharHeader = (pg) => {
+        doc.setFillColor(26, 54, 93); doc.rect(0, 0, 210, 35, 'F');
+        doc.setTextColor(255); doc.setFontSize(18); doc.text("NEWENERGY", 15, 15);
+        doc.setFontSize(8); doc.text(`RELATÓRIO TÉCNICO COMPLETO: ${aba.toUpperCase()} | PÁGINA: ${pg}`, 15, 22);
+    };
 
-    let py = 150;
-    doc.setTextColor(0); doc.setFontSize(10); doc.text("LOG DE REGISTROS TÉCNICOS", 15, py); py += 8;
-    
-    doc.setFillColor(230, 235, 245);
-    doc.rect(15, py, 180, 8, 'F');
-    doc.setFontSize(8);
-    doc.text("DATA/HORA", 20, py + 5.5);
-    doc.text("TEMPERATURA", 80, py + 5.5);
-    doc.text("UMIDADE", 120, py + 5.5);
-    doc.text("STATUS", 165, py + 5.5);
-    py += 8;
+    const desenharTitulosTabela = (y) => {
+        doc.setFillColor(26, 54, 93); doc.rect(15, y, 180, 8, 'F');
+        doc.setTextColor(255); doc.setFontSize(8);
+        doc.text("DATA / HORA", 20, y + 5); 
+        doc.text("TEMPERATURA", 80, y + 5); 
+        doc.text("UMIDADE", 120, y + 5); 
+        doc.text("STATUS", 165, y + 5);
+    };
 
-    globalData.forEach((d, i) => {
-        if (py > 270) { doc.addPage(); py = 20; }
-        if (i % 2 === 0) { doc.setFillColor(248, 250, 255); doc.rect(15, py, 180, 7, 'F'); }
-        const tErr = (d.temp > limitesAtivos.tMax || d.temp < limitesAtivos.tMin);
-        const hErr = (d.hum > limitesAtivos.hMax || d.hum < limitesAtivos.hMin);
-        if (tErr || hErr) doc.setTextColor(200, 0, 0); else doc.setTextColor(80);
-        doc.text(`${d.data} ${d.hora}`, 20, py + 5);
-        doc.text(`${d.temp.toFixed(2)}°C`, 80, py + 5);
-        doc.text(`${d.hum.toFixed(2)}%`, 120, py + 5);
-        doc.text((tErr || hErr) ? "ALERTA" : "NORMAL", 165, py + 5);
-        py += 7;
-    });
+    desenharHeader(1);
 
-    doc.save(`Relatorio_Performance_${aba}.pdf`);
+    doc.setFillColor(240, 244, 248); doc.rect(15, 40, 180, 10, 'F');
+    doc.setTextColor(60); doc.setFontSize(8);
+    doc.text(`Limites de Alerta: T: ${limitesAtivos.tMin}C a ${limitesAtivos.tMax}C | H: ${limitesAtivos.hMin}% a ${limitesAtivos.hMax}%`, 20, 46.5);
+
+    try {
+        const img = document.getElementById('mainChart').toDataURL("image/png", 0.7);
+        doc.addImage(img, 'PNG', 15, 55, 180, 60);
+    } catch(e) {}
+
+    desenharTitulosTabela(125);
+
+    let py = 140; 
+    let pgCount = 1;
+
+    for (let i = 0; i < globalData.length; i++) {
+        const d = globalData[i];
+        
+        if (py > 280) { 
+            doc.addPage(); 
+            pgCount++; 
+            desenharHeader(pgCount); 
+            desenharTitulosTabela(40); 
+            py = 55; 
+        }
+        
+        const erro = d.temp > limitesAtivos.tMax || d.temp < limitesAtivos.tMin || d.hum > limitesAtivos.hMax || d.hum < limitesAtivos.hMin;
+        
+        if (i % 2 === 0) { 
+            doc.setFillColor(245, 247, 250); 
+            doc.rect(15, py - 4, 180, 6, 'F'); 
+        }
+        
+        doc.setTextColor(erro ? 200 : 50, 0, 0); 
+        doc.setFontSize(8);
+        
+        doc.text(`${d.data} ${d.hora}`, 20, py);
+        doc.text(`${d.temp.toFixed(2)} °C`, 80, py);
+        doc.text(`${d.hum.toFixed(2)} %`, 120, py);
+        doc.text(erro ? "ALERTA !!!" : "NORMAL", 165, py);
+        
+        py += 6;
+
+        if (i % 400 === 0) {
+            btn.innerText = `PROCESSANDO: ${Math.round((i/globalData.length)*100)}%`;
+            await new Promise(r => setTimeout(r, 1));
+        }
+    }
+
+    doc.save(`Relatorio_NewEnergy_Full_${aba}.pdf`);
+    btn.disabled = false; btn.innerText = originalText;
 }
 
 firebase.auth().onAuthStateChanged(u => { 
-    if(u) {
-        sincronizarConfiguracoes();
-        fetchData('diario'); 
-    } else {
-        location.href='index.html'; 
-    }
+    if(u) fetchData('diario'); 
+    else location.href='index.html'; 
 });
 
 document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', function() {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
     this.classList.add('active');
-    fetchData(this.getAttribute('data-periodo'));
+    fetchData(this.dataset.periodo);
 }));
 </script>
 </body>
 </html>
+
 
