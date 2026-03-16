@@ -7,53 +7,204 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --brand-primary: #1a365d;
-            --brand-accent: #007aff;
-            --bg-body: #f8fafc;
-            --card-bg: #ffffff;
-            --text-main: #1e293b;
-            --text-muted: #64748b;
-            --border: #e2e8f0;
-            --danger: #e11d48;
-            --accent-temp: #f43f5e;
-            --accent-hum: #007aff;
-            --shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
+            --brand-primary: #1a365d; --brand-accent: #007aff; --bg-body: #f8fafc;
+            --card-bg: #ffffff; --text-main: #1e293b; --text-muted: #64748b;
+            --border: #e2e8f0; --danger: #e11d48; --accent-temp: #f43f5e;
+            --accent-hum: #007aff; --shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
         }
-
-        body { 
-            margin: 0; font-family: 'Inter', sans-serif; 
-            background: var(--bg-body); color: var(--text-main); 
-            display: flex; justify-content: center; padding: 20px;
-        }
-
-        .card { 
-            background: var(--card-bg); border-radius: 16px; padding: 40px; 
-            width: 100%; max-width: 900px; border: 1px solid var(--border); 
-            box-shadow: var(--shadow); 
-        }
-        
-        header { border-left: 4px solid var(--brand-accent); padding-left: 20px; margin-bottom: 35px; }
-        header h1 { margin:0; font-size: 24px; font-weight: 800; color: var(--brand-primary); letter-spacing: -0.5px; }
-        header p { margin:4px 0 0; color: var(--text-muted); font-size: 13px; font-weight: 500; }
-
+        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-body); color: var(--text-main); display: flex; justify-content: center; padding: 20px; }
+        .card { background: var(--card-bg); border-radius: 16px; padding: 30px; width: 100%; max-width: 900px; border: 1px solid var(--border); box-shadow: var(--shadow); }
+        header { border-left: 4px solid var(--brand-accent); padding-left: 20px; margin-bottom: 30px; }
+        header h1 { margin:0; font-size: 22px; color: var(--brand-primary); }
         .tabs { display: flex; background: #f1f5f9; padding: 4px; border-radius: 10px; margin-bottom: 25px; gap: 4px; }
-        .tab { flex: 1; padding: 10px; text-align: center; border-radius: 7px; cursor: pointer; font-size: 12px; font-weight: 600; color: var(--text-muted); transition: 0.2s; }
+        .tab { flex: 1; padding: 10px; text-align: center; border-radius: 7px; cursor: pointer; font-size: 12px; font-weight: 600; color: var(--text-muted); }
         .tab.active { background: white; color: var(--brand-accent); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-
-        .chart-container { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 30px; border: 1px solid var(--border); height: 350px; }
-
-        #lista { max-height: 400px; overflow-y: auto; padding-right: 10px; }
-        .data-divider { color: var(--brand-primary); font-size: 11px; font-weight: 700; margin: 25px 0 12px; display: flex; align-items: center; }
+        .chart-container { background: #fff; border-radius: 12px; padding: 10px; margin-bottom: 25px; border: 1px solid var(--border); height: 300px; position: relative; }
+        #lista { max-height: 400px; overflow-y: auto; }
+        .data-divider { color: var(--brand-primary); font-size: 11px; font-weight: 700; margin: 20px 0 10px; display: flex; align-items: center; }
         .data-divider::after { content: ""; flex: 1; height: 1px; background: var(--border); margin-left: 15px; }
-
-        .item { 
-            background: #fff; padding: 14px 20px; border-radius: 10px; 
-            margin-bottom: 8px; display: flex; justify-content: space-between; 
-            align-items: center; border: 1px solid var(--border); transition: 0.2s;
-        }
+        .item { background: #fff; padding: 12px 15px; border-radius: 8px; margin-bottom: 6px; display: flex; justify-content: space-between; border: 1px solid var(--border); font-size: 13px; }
         .item.alerta { border-left: 4px solid var(--danger); background: #fff1f2; }
+        .btn-group { display: flex; gap: 10px; margin-top: 25px; }
+        .btn { flex: 1; padding: 14px; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; }
+        .btn-pdf { background: var(--brand-primary); color: #fff; }
+        .btn-back { background: #fff; color: var(--text-muted); border: 1px solid var(--border); }
+        .valor-critico { color: var(--danger) !important; font-weight: 800; }
+    </style>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+<div class="card">
+    <header>
+        <h1>Performance Analytics</h1>
+        <p>Monitoramento NewEnergy</p>
+    </header>
+
+    <div class="tabs">
+        <div class="tab active" onclick="setPeriodo('diario', this)">Diário</div>
+        <div class="tab" onclick="setPeriodo('semanal', this)">Semanal</div>
+        <div class="tab" onclick="setPeriodo('mensal', this)">Mensal</div>
+        <div class="tab" onclick="setPeriodo('anual', this)">Anual</div>
+    </div>
+
+    <div class="chart-container">
+        <canvas id="mainChart"></canvas>
+    </div>
+
+    <div id="lista"></div>
+
+    <div class="btn-group">
+        <button class="btn btn-pdf" id="btnPdf" onclick="exportarPDF()">Gerar PDF</button>
+        <button class="btn btn-back" onclick="location.href='painel.html'">Voltar</button>
+    </div>
+</div>
+
+<script>
+// CONFIGURAÇÃO FIREBASE
+const firebaseConfig = {
+    apiKey: "AIzaSyB5FnkQiFi3gn9Iup2KNcbrKxWd-0Jjo6Y",
+    authDomain: "oficial-688e8.firebaseapp.com",
+    databaseURL: "https://oficial-688e8-default-rtdb.firebaseio.com/",
+    projectId: "oficial-688e8"
+};
+
+// INICIALIZAÇÃO SEGURA
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
+const db = firebase.database();
+let myChart = null, globalData = [], limitesAtivos = { tMin: 15, tMax: 35, hMin: 30, hMax: 80 };
+
+// BUSCAR LIMITES
+db.ref("/config_alertas").on("value", snap => {
+    if(snap.val()) limitesAtivos = snap.val();
+});
+
+async function fetchData(periodo) {
+    console.log("Iniciando busca para:", periodo);
+    const listaDiv = document.getElementById("lista");
+    listaDiv.innerHTML = "<p style='text-align:center;'>Carregando...</p>";
+    globalData = [];
+
+    try {
+        const snapshot = await db.ref("/historico/diario").once("value");
+        const base = snapshot.val();
         
-        .btn-group { display: flex; gap: 12px; margin-top: 30px; }
-        .btn { flex: 1; padding: 14px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 14px; transition: all 0.2s; }
-        .btn-pdf { background: var(--brand-primary); color: #ffffff; box-shadow: 0 4px 12px rgba(26, 54, 93, 0.15); }
-        .btn
+        if (!base) {
+            listaDiv.innerHTML = "<p style='text-align:center;'>Nenhum registro no banco.</p>";
+            return;
+        }
+
+        const agora = new Date();
+        const hojeLocal = agora.toLocaleDateString('pt-BR');
+        const mesAtual = agora.getMonth();
+        const anoAtual = agora.getFullYear();
+
+        Object.keys(base).forEach(diaChave => {
+            const registros = base[diaChave];
+            Object.keys(registros).forEach(ts => {
+                const dt = new Date(parseInt(ts) * 1000);
+                let ok = false;
+
+                if (periodo === 'diario') {
+                    if (dt.toLocaleDateString('pt-BR') === hojeLocal) ok = true;
+                } else if (periodo === 'semanal') {
+                    if (Date.now() - dt.getTime() < 432000000) ok = true; // 5 dias
+                } else if (periodo === 'mensal') {
+                    if (dt.getMonth() === mesAtual && dt.getFullYear() === anoAtual) ok = true;
+                } else if (periodo === 'anual') {
+                    if (dt.getFullYear() === anoAtual) ok = true;
+                }
+
+                if (ok) {
+                    globalData.push({
+                        ts: parseInt(ts),
+                        temp: parseFloat(registros[ts].temp),
+                        hum: parseFloat(registros[ts].hum),
+                        data: dt.toLocaleDateString('pt-BR'),
+                        hora: dt.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})
+                    });
+                }
+            });
+        });
+
+        globalData.sort((a,b) => b.ts - a.ts);
+        renderUI();
+        renderChart(periodo);
+        
+    } catch (e) {
+        console.error("Erro Fatal:", e);
+        listaDiv.innerHTML = "<p style='color:red;'>Erro de conexão.</p>";
+    }
+}
+
+function renderUI() {
+    const listaDiv = document.getElementById("lista");
+    listaDiv.innerHTML = "";
+    let ultimaData = "";
+
+    if(globalData.length === 0) {
+        listaDiv.innerHTML = "<p style='text-align:center;'>Sem dados para este período.</p>";
+        return;
+    }
+
+    globalData.forEach(d => {
+        if (d.data !== ultimaData) {
+            const div = document.createElement('div');
+            div.className = 'data-divider';
+            div.innerHTML = `📌 ${d.data}`;
+            listaDiv.appendChild(div);
+            ultimaData = d.data;
+        }
+        const erro = d.temp > limitesAtivos.tMax || d.temp < limitesAtivos.tMin || d.hum > limitesAtivos.hMax || d.hum < limitesAtivos.hMin;
+        const item = document.createElement('div');
+        item.className = `item ${erro ? 'alerta' : ''}`;
+        item.innerHTML = `<b>${d.hora}</b> <span>${d.temp.toFixed(1)}°C | ${d.hum.toFixed(1)}%</span>`;
+        listaDiv.appendChild(item);
+    });
+}
+
+function renderChart(periodo) {
+    const ctx = document.getElementById('mainChart').getContext('2d');
+    if (myChart) myChart.destroy();
+    const cleanData = [...globalData].sort((a, b) => a.ts - b.ts);
+    myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: cleanData.map(d => periodo === 'diario' ? d.hora : d.data.substring(0,5)),
+            datasets: [
+                { label: 'Temp', data: cleanData.map(d => d.temp), borderColor: '#f43f5e', tension: 0.2, pointRadius: 0 },
+                { label: 'Hum', data: cleanData.map(d => d.hum), borderColor: '#007aff', tension: 0.2, pointRadius: 0 }
+            ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    });
+}
+
+function setPeriodo(p, el) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    fetchData(p);
+}
+
+// Inicialização após login
+firebase.auth().onAuthStateChanged(u => {
+    if(u) fetchData('diario');
+    else location.href='index.html';
+});
+
+async function exportarPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.text("Relatório NewEnergy", 15, 15);
+    doc.save("relatorio.pdf");
+}
+</script>
+</body>
+</html>
