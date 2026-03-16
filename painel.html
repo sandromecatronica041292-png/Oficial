@@ -4,96 +4,103 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>NewEnergy | Monitor Pro Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root { 
-    --bg-dark: #070a13; --card-bg: #101625; --accent: #00d2ff; 
-    --text-main: #f0f4f8; --text-muted: #64748b; --on: #00ff88; 
-    --off: #f43f5e; --warn: #fbbf24; --glass: rgba(255, 255, 255, 0.03); 
+    --brand-primary: #1a365d;    
+    --brand-accent: #007aff;     
+    --bg-body: #f1f5f9;         
+    --card-bg: #ffffff;
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --on: #10b981;              
+    --off: #e11d48;             
+    --warn: #f59e0b;            
+    --shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05);
   }
   
   body { 
-    margin: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; 
-    background: var(--bg-dark); color: var(--text-main); 
+    margin: 0; font-family: 'Inter', sans-serif; 
+    background: var(--bg-body); color: var(--text-main); 
     display: flex; justify-content: center; align-items: center; 
-    min-height: 100vh; padding: 15px; overflow-x: hidden;
+    min-height: 100vh; padding: 15px;
+    background-image: radial-gradient(at 0% 0%, rgba(0, 122, 255, 0.03) 0, transparent 50%);
   }
   
   .card { 
-    background: var(--card-bg); border-radius: 28px; padding: 30px; width: 100%; 
-    max-width: 420px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7); 
-    border: 1px solid rgba(255,255,255,0.08); text-align: center; 
-    position: relative; backdrop-filter: blur(10px);
+    background: var(--card-bg); border-radius: 20px; padding: 35px; width: 100%; 
+    max-width: 440px; box-shadow: var(--shadow); 
+    border: 1px solid rgba(0,0,0,0.03); text-align: center; 
+    position: relative;
   }
 
-  .header-main { position: relative; margin-bottom: 30px; }
+  .header-main { position: relative; margin-bottom: 25px; }
   .logo-principal { 
-    font-size: 20px; text-transform: uppercase; letter-spacing: 5px; font-weight: 900; 
-    background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%); 
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
-    cursor: pointer; transition: 0.3s;
+    font-size: 18px; text-transform: uppercase; letter-spacing: 3px; font-weight: 800; 
+    color: var(--brand-primary); cursor: pointer; transition: 0.3s;
   }
-  .logo-principal:hover { transform: scale(1.05); filter: brightness(1.2); }
   
   .btn-logout { 
-    position: absolute; top: -10px; right: -10px; background: rgba(244, 63, 94, 0.1); 
-    border: 1px solid rgba(244, 63, 94, 0.2); color: var(--off); 
-    padding: 6px 12px; border-radius: 10px; font-size: 10px; cursor: pointer; font-weight: 700; 
+    position: absolute; top: -15px; right: -15px; background: #fff1f2; 
+    border: 1px solid #ffe4e6; color: var(--off); 
+    padding: 6px 12px; border-radius: 8px; font-size: 10px; cursor: pointer; font-weight: 700; 
   }
 
-  .status-container { margin-bottom: 25px; }
+  .status-container { margin-bottom: 30px; }
   .status-badge { 
     display: inline-flex; align-items: center; gap: 8px; 
-    padding: 8px 20px; border-radius: 50px; font-size: 11px; 
-    font-weight: 800; letter-spacing: 1px; border: 1px solid rgba(255,255,255,0.05); 
+    padding: 6px 16px; border-radius: 50px; font-size: 11px; 
+    font-weight: 700; letter-spacing: 0.5px; border: 1px solid rgba(0,0,0,0.05);
   }
   
-  .dot { width: 8px; height: 8px; border-radius: 50%; position: relative; }
-  .st-online .dot { background: var(--on); box-shadow: 0 0 10px var(--on); animation: pulse 1.5s infinite; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .st-online .dot { background: var(--on); box-shadow: 0 0 8px var(--on); animation: pulse 2s infinite; }
   .st-offline .dot { background: var(--off); }
   
   @keyframes pulse {
-    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7); }
-    70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(0, 255, 136, 0); }
-    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); }
+    0% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.2); }
+    100% { opacity: 1; transform: scale(1); }
   }
 
-  .st-online { color: var(--on); background: rgba(0, 255, 136, 0.05); }
-  .st-offline { color: var(--off); background: rgba(244, 63, 94, 0.05); }
+  .st-online { color: var(--on); background: #ecfdf5; }
+  .st-offline { color: var(--off); background: #fff1f2; }
 
-  .gauges-container { display: flex; gap: 15px; margin-bottom: 30px; }
+  .gauges-container { display: flex; gap: 15px; margin-bottom: 25px; }
   .gauge-box { 
-    flex: 1; background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0) 100%); 
-    padding: 20px 10px; border-radius: 22px; border: 1px solid rgba(255,255,255,0.05); 
+    flex: 1; background: #f8fafc; 
+    padding: 20px 10px; border-radius: 16px; border: 1px solid #f1f5f9; 
     display: flex; flex-direction: column; align-items: center;
   }
-  .gauge-box canvas { width: 140px !important; height: 85px !important; }
-  .g-title { font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 8px; }
-  .g-value { font-size: 22px; font-weight: 900; letter-spacing: -1px; }
+  .gauge-box canvas { width: 150px !important; height: 90px !important; }
+  .g-title { font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 10px; }
+  .g-value { font-size: 24px; font-weight: 700; color: var(--brand-primary); }
 
   .btn-action { 
-    width: 100%; padding: 18px; border: none; border-radius: 16px; 
-    font-size: 13px; font-weight: 800; cursor: pointer; transition: 0.3s; 
-    margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;
+    width: 100%; padding: 16px; border: none; border-radius: 12px; 
+    font-size: 14px; font-weight: 700; cursor: pointer; transition: 0.2s; 
+    margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;
   }
-  .btn-led.on { background: var(--on); color: #052e16; box-shadow: 0 10px 20px -5px rgba(0, 255, 136, 0.3); }
-  .btn-led.off { background: #1e293b; color: var(--text-muted); border: 1px solid rgba(255,255,255,0.1); }
+  .btn-led.on { background: var(--brand-primary); color: #fff; box-shadow: 0 4px 12px rgba(26,54,93,0.2); }
+  .btn-led.off { background: #e2e8f0; color: var(--text-light); }
   
-  .btn-history { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
-  .btn-history:hover { background: var(--accent); color: #000; }
+  .btn-history { background: #fff; color: var(--brand-accent); border: 1.5px solid var(--brand-accent); }
+  .btn-history:hover { background: var(--brand-accent); color: #fff; }
 
-  /* Admin Panel overlay */
   #adminPanel { 
     display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-    background: #0f172a; border-radius: 28px; padding: 30px; box-sizing: border-box; 
+    background: #ffffff; border-radius: 20px; padding: 30px; box-sizing: border-box; 
     z-index: 100; flex-direction: column; overflow-y: auto; text-align: left;
   }
   .admin-input { 
-    background: #070a13; border: 1px solid #334155; color: white; 
-    padding: 12px; border-radius: 10px; width: 100%; box-sizing: border-box; 
-    font-size: 14px; margin-bottom: 15px; outline: none; transition: 0.3s;
+    background: #f8fafc; border: 1.5px solid #e2e8f0; color: var(--text-main); 
+    padding: 12px; border-radius: 8px; width: 100%; box-sizing: border-box; 
+    font-size: 14px; margin-bottom: 15px; outline: none;
   }
-  .admin-input:focus { border-color: var(--accent); }
-  label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 5px; display: block; }
+  .admin-input:focus { border-color: var(--brand-accent); background: #fff; }
+  label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 5px; display: block; }
+
+  #alertMessage { min-height: 20px; font-size: 12px; margin-bottom: 15px; color: var(--off); font-weight: 600; }
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -106,7 +113,7 @@
 <body>
 <div class="card">
   <div id="adminPanel">
-    <div class="logo-principal" style="font-size: 14px; margin-bottom: 25px;">Configurações Avançadas</div>
+    <div class="logo-principal" style="font-size: 14px; margin-bottom: 20px; color: var(--brand-accent);">Configurações de Engenharia</div>
     
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
       <div><label>Temp Mín</label><input type="number" id="tMin" class="admin-input"></div>
@@ -115,30 +122,37 @@
       <div><label>Hum Máx</label><input type="number" id="hMax" class="admin-input"></div>
     </div>
 
-    <label>E-mail para Alertas</label>
+    <label>E-mail de Notificação</label>
     <div style="display: flex; gap: 8px; margin-bottom: 15px;">
         <input type="email" id="cfgEmail" class="admin-input" style="flex: 2; margin-bottom: 0;">
-        <button onclick="enviarEmailTeste()" class="btn-action" style="flex: 1; font-size: 10px; padding: 0; height: 42px; background: transparent; color: var(--accent); border: 1px solid var(--accent); margin-bottom:0;">TESTAR</button>
+        <button onclick="enviarEmailTeste()" class="btn-action" style="flex: 1; font-size: 10px; padding: 0; height: 45px; background: transparent; color: var(--brand-accent); border: 1px solid var(--brand-accent); margin-bottom:0;">TESTAR</button>
     </div>
 
-    <label>Frequência do Histórico (Leituras / Hora)</label>
-    <input type="number" id="cfgFreq" class="admin-input" placeholder="Ex: 5, 10, 20...">
-    <p style="font-size: 9px; color: var(--text-muted); margin-top: -10px; margin-bottom: 15px;">* Define o tempo entre registros no banco de relatórios.</p>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div>
+            <label>Intervalo de Alerta (Min)</label>
+            <input type="number" id="cfgTempoEmail" class="admin-input" placeholder="Minutos">
+        </div>
+        <div>
+            <label>Frequência de Registro</label>
+            <input type="number" id="cfgFreq" class="admin-input" placeholder="Qtd/Hora">
+        </div>
+    </div>
     
-    <div style="background: rgba(0,210,255,0.05); padding: 15px; border-radius: 12px; border: 1px solid rgba(0,210,255,0.1); margin-bottom: 20px;">
+    <div style="background: #f1f5f9; padding: 12px; border-radius: 10px; margin-bottom: 20px;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-size: 11px; font-weight: bold;">ALERTAS ENVIADOS: <span id="countEmailDisplay" style="color:var(--accent)">0</span></span>
-            <button onclick="resetarContador()" style="background:var(--off); color:white; border:none; padding:4px 8px; border-radius:5px; font-size:9px; cursor:pointer;">ZERAR</button>
+            <span style="font-size: 11px; font-weight: 700;">Alertas: <span id="countEmailDisplay" style="color:var(--brand-accent)">0</span></span>
+            <button onclick="resetarContador()" style="background:var(--off); color:white; border:none; padding:4px 8px; border-radius:4px; font-size:9px; cursor:pointer;">ZERAR</button>
         </div>
     </div>
 
-    <button id="btnSalvar" class="btn-action" style="background:var(--accent); color:#000;" onclick="salvarConfig()">Gravar Configurações</button>
-    <button class="btn-action" style="background:transparent; color:var(--text-muted); border:1px solid #334155" onclick="fecharAdmin()">Voltar</button>
+    <button id="btnSalvar" class="btn-action" style="background:var(--brand-primary); color:#fff;" onclick="salvarConfig()">Salvar Alterações</button>
+    <button class="btn-action" style="background:transparent; color:var(--text-muted); border:1px solid #e2e8f0" onclick="fecharAdmin()">Cancelar</button>
   </div>
 
   <div class="header-main">
     <div class="logo-principal" id="logoAdmin">NewEnergy</div>
-    <button class="btn-logout" onclick="fazerLogout()">Logout</button>
+    <button class="btn-logout" onclick="fazerLogout()">Sair</button>
   </div>
   
   <div class="status-container">
@@ -151,19 +165,19 @@
     <div class="gauge-box">
       <div class="g-title">Temperatura</div>
       <canvas id="gTemp"></canvas>
-      <div id="tempVal" class="g-value" style="color:var(--off)">--°C</div>
+      <div id="tempVal" class="g-value">--°C</div>
     </div>
     <div class="gauge-box">
       <div class="g-title">Umidade</div>
       <canvas id="gHum"></canvas>
-      <div id="humVal" class="g-value" style="color:var(--accent)">--%</div>
+      <div id="humVal" class="g-value">--%</div>
     </div>
   </div>
 
-  <div id="alertMessage" style="color:var(--warn); min-height:20px; font-size:11px; margin-bottom:20px; font-weight:bold; letter-spacing: 0.5px;"></div>
+  <div id="alertMessage"></div>
 
-  <button id="btnLED" class="btn-action btn-led off">Sincronizando LED...</button>
-  <button class="btn-action btn-history" onclick="location.href='historico.html'">Relatórios Avançados</button>
+  <button id="btnLED" class="btn-action btn-led off">Conectando...</button>
+  <button class="btn-action btn-history" onclick="location.href='historico.html'">Relatórios de Performance</button>
 </div>
 
 <script>
@@ -183,23 +197,23 @@ let gT, gH, ultimaVezAlertado = 0;
 
 function rodarDashboard() {
   const gOpt = (col) => ({
-    angle: 0.15, lineWidth: 0.22, radiusScale: 1,
-    pointer: { length: 0.6, strokeWidth: 0.04, color: '#f0f4f8' },
-    colorStart: col, colorStop: col, strokeColor: '#1e293b',
+    angle: 0.15, lineWidth: 0.2, radiusScale: 0.9,
+    pointer: { length: 0.5, strokeWidth: 0.03, color: '#1a365d' },
+    colorStart: col, colorStop: col, strokeColor: '#e2e8f0',
     highDpiSupport: true, generateGradient: true
   });
 
-  gT = new Gauge(document.getElementById("gTemp")).setOptions(gOpt('#f43f5e'));
+  gT = new Gauge(document.getElementById("gTemp")).setOptions(gOpt('#e11d48'));
   gT.maxValue = 60; gT.setMinValue(-10); gT.set(0);
 
-  gH = new Gauge(document.getElementById("gHum")).setOptions(gOpt('#00d2ff'));
+  gH = new Gauge(document.getElementById("gHum")).setOptions(gOpt('#007aff'));
   gH.maxValue = 100; gH.setMinValue(0); gH.set(0);
 
   db.ref("/last_seen").on("value", snap => {
     const check = () => {
       const isOff = (Date.now() - (snap.val() * 1000)) > (config.intervalo + 15000);
       const st = document.getElementById("status");
-      st.innerHTML = isOff ? '<div class="dot"></div> OFFLINE' : '<div class="dot"></div> SISTEMA ATIVO';
+      st.innerHTML = isOff ? '<div class="dot"></div> SISTEMA OFFLINE' : '<div class="dot"></div> MONITORAMENTO ATIVO';
       st.className = "status-badge " + (isOff ? "st-offline" : "st-online");
     };
     check();
@@ -208,7 +222,7 @@ function rodarDashboard() {
   db.ref("/led").on("value", s => {
     const on = s.val() == 1;
     const b = document.getElementById("btnLED");
-    b.innerText = on ? "DESATIVAR ILUMINAÇÃO" : "ATIVAR ILUMINAÇÃO";
+    b.innerText = on ? "DESLIGAR ILUMINAÇÃO" : "LIGAR ILUMINAÇÃO";
     b.className = "btn-action btn-led " + (on ? "on" : "off");
   });
 
@@ -230,7 +244,7 @@ function analisarAlertas() {
   const h = parseFloat(document.getElementById("humVal").innerText);
   const msg = document.getElementById("alertMessage");
   let erro = (t > config.tMax || t < config.tMin || h > config.hMax || h < config.hMin);
-  msg.innerText = erro ? "⚠️ ATENÇÃO: PARÂMETROS FORA DA ZONA DE SEGURANÇA" : "";
+  msg.innerText = erro ? "⚠️ ALERTA: PARÂMETROS FORA DA NORMA" : "";
   
   if (erro && (Date.now() - ultimaVezAlertado > config.tempoEmail)) {
     enviarAlertaEmail(t, h);
@@ -248,33 +262,29 @@ function enviarAlertaEmail(t, h) {
   }).then(() => {
     ultimaVezAlertado = Date.now();
     db.ref("/config_alertas/contadorAlertas").set((config.contadorAlertas || 0) + 1);
+
+    const agoraTS = Math.floor(Date.now() / 1000);
+    const dataPasta = new Date().toLocaleDateString('pt-BR').split('/').reverse().join('-');
+    db.ref(`/historico/diario/${dataPasta}/${agoraTS}`).set({
+      temp: t,
+      hum: h
+    });
   });
 }
 
-// NOVO: Função para enviar e-mail de teste
 function enviarEmailTeste() {
     const destino = document.getElementById("cfgEmail").value;
-    if(!destino) return alert("Por favor, digite um e-mail.");
-    
-    const btn = event.target;
-    btn.innerText = "ENVIANDO...";
-    
+    if(!destino) return alert("Digite um e-mail.");
+    const btn = event.target; btn.innerText = "...";
     emailjs.send("service_kx31f3s", "template_mqzi3at", {
         equipamento: "NewEnergy - TESTE",
-        tipo: "Verificação de Conexão",
-        valor: "Configuração de e-mail funcionando corretamente.",
+        tipo: "Verificação de Sistema",
+        valor: "Conexão estabelecida com sucesso.",
         data: new Date().toLocaleString(),
         para_email: destino
-    }).then(() => {
-        alert("E-mail de teste enviado!");
-        btn.innerText = "TESTAR";
-    }).catch(err => {
-        alert("Erro no envio: " + err);
-        btn.innerText = "ERRO";
-    });
+    }).then(() => { alert("Teste enviado!"); btn.innerText = "TESTAR"; });
 }
 
-// Interação Logo-Admin (5 cliques)
 let cliques = 0;
 document.getElementById("logoAdmin").onclick = () => {
   if(++cliques >= 5) {
@@ -285,6 +295,7 @@ document.getElementById("logoAdmin").onclick = () => {
     document.getElementById("hMax").value = config.hMax;
     document.getElementById("cfgEmail").value = config.emailDestino;
     document.getElementById("cfgFreq").value = config.leiturasPorHora || 20;
+    document.getElementById("cfgTempoEmail").value = config.tempoEmail ? (config.tempoEmail / 60000) : 10;
     cliques = 0;
   }
 };
@@ -296,16 +307,17 @@ function salvarConfig() {
     hMin: parseFloat(document.getElementById("hMin").value),
     hMax: parseFloat(document.getElementById("hMax").value),
     emailDestino: document.getElementById("cfgEmail").value,
-    leiturasPorHora: parseInt(document.getElementById("cfgFreq").value) || 20
+    leiturasPorHora: parseInt(document.getElementById("cfgFreq").value) || 20,
+    tempoEmail: (parseFloat(document.getElementById("cfgTempoEmail").value) || 10) * 60000
   };
   db.ref("/config_alertas").update(updates).then(() => {
-    alert("Configurações salvas com sucesso!");
+    alert("Configurações atualizadas!");
     fecharAdmin();
   });
 }
 
 function fecharAdmin() { document.getElementById("adminPanel").style.display = "none"; }
-function resetarContador() { if(confirm("Zerar estatísticas de alertas?")) db.ref("/config_alertas/contadorAlertas").set(0); }
+function resetarContador() { if(confirm("Resetar contador?")) db.ref("/config_alertas/contadorAlertas").set(0); }
 function fazerLogout() { auth.signOut().then(() => window.location.replace("index.html")); }
 document.getElementById("btnLED").onclick = () => { db.ref("/led").get().then(s => db.ref("/led").set(s.val() == 1 ? 0 : 1)); };
 
