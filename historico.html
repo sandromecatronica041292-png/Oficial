@@ -113,12 +113,14 @@ db.ref("/config_alertas").on("value", snap => {
 
 async function fetchData(periodo) {
     const listaDiv = document.getElementById("lista");
-    listaDiv.innerHTML = "<p style='text-align:center; padding:50px; color:#64748b;'>Acessando Base de Dados Completa...</p>";
+    listaDiv.innerHTML = "<p style='text-align:center; padding:50px; color:#64748b;'>Sincronizando Base de Dados...</p>";
     globalData = [];
 
     try {
-        const snapshot = await db.ref("/historico/" + periodo).once("value");
+        // CORREÇÃO: Lê sempre da raiz 'diario' para poder filtrar tudo localmente
+        const snapshot = await db.ref("/historico/diario").once("value");
         const base = snapshot.val();
+        
         if (!base) {
             listaDiv.innerHTML = "<p style='text-align:center; padding:40px;'>Nenhum registro encontrado.</p>";
             if(myChart) myChart.destroy();
@@ -126,19 +128,28 @@ async function fetchData(periodo) {
         }
 
         const agora = new Date();
-        const mesAtual = agora.getMonth();
-        const anoAtual = agora.getFullYear();
+        const hojeZeroHora = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate()).getTime();
 
-        Object.keys(base).forEach(dia => {
-            const registros = base[dia];
+        Object.keys(base).forEach(diaChave => {
+            const registros = base[diaChave];
             Object.keys(registros).forEach(ts => {
-                const dt = new Date(parseInt(ts) * 1000);
+                const tsMS = parseInt(ts) * 1000;
+                const dt = new Date(tsMS);
                 let ok = false;
 
-                if (periodo === 'diario' && dt.toLocaleDateString() === agora.toLocaleDateString()) ok = true;
-                else if (periodo === 'semanal' && (agora - dt) <= 604800000) ok = true;
-                else if (periodo === 'mensal' && dt.getMonth() === mesAtual && dt.getFullYear() === anoAtual) ok = true;
-                else if (periodo === 'anual' && dt.getFullYear() === anoAtual) ok = true;
+                if (periodo === 'diario') {
+                    if (dt.toLocaleDateString() === agora.toLocaleDateString()) ok = true;
+                } 
+                else if (periodo === 'semanal') {
+                    // Últimos 7 dias
+                    if (tsMS >= (hojeZeroHora - 604800000)) ok = true;
+                } 
+                else if (periodo === 'mensal') {
+                    if (dt.getMonth() === agora.getMonth() && dt.getFullYear() === agora.getFullYear()) ok = true;
+                } 
+                else if (periodo === 'anual') {
+                    if (dt.getFullYear() === agora.getFullYear()) ok = true;
+                }
 
                 if (ok) {
                     globalData.push({
@@ -153,8 +164,14 @@ async function fetchData(periodo) {
         });
 
         globalData.sort((a,b) => b.ts - a.ts);
-        renderUI();
-        renderChart(periodo);
+        
+        if (globalData.length === 0) {
+            listaDiv.innerHTML = "<p style='text-align:center; padding:40px;'>Sem registros neste período.</p>";
+            if(myChart) myChart.destroy();
+        } else {
+            renderUI();
+            renderChart(periodo);
+        }
     } catch (e) { console.error(e); }
 }
 
@@ -173,7 +190,6 @@ function renderUI() {
         }
 
         const erro = d.temp > limitesAtivos.tMax || d.temp < limitesAtivos.tMin || d.hum > limitesAtivos.hMax || d.hum < limitesAtivos.hMin;
-        
         const item = document.createElement('div');
         item.className = `item ${erro ? 'alerta' : ''}`;
         item.innerHTML = `
@@ -197,7 +213,8 @@ function renderChart(periodo) {
     myChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: cleanData.map(d => periodo === 'diario' ? d.hora : d.data),
+            // Se não for diário, mostra o dia no eixo X para não confundir
+            labels: cleanData.map(d => periodo === 'diario' ? d.hora : `${d.data.substring(0,5)} ${d.hora}`),
             datasets: [
                 { label: 'Temp', data: cleanData.map(d => d.temp), borderColor: '#f43f5e', tension: 0.3, pointRadius: cleanData.length > 50 ? 0 : 3 },
                 { label: 'Hum', data: cleanData.map(d => d.hum), borderColor: '#007aff', tension: 0.3, pointRadius: cleanData.length > 50 ? 0 : 3 }
@@ -213,18 +230,19 @@ function renderChart(periodo) {
 }
 
 async function exportarPDF() {
+    if(globalData.length === 0) return alert("Sem dados para exportar.");
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     const btn = document.getElementById('btnPdf');
     const aba = document.querySelector('.tab.active').innerText;
-    
     btn.disabled = true;
     const originalText = "Gerar Relatório Executivo";
 
     const desenharHeader = (pg) => {
         doc.setFillColor(26, 54, 93); doc.rect(0, 0, 210, 35, 'F');
         doc.setTextColor(255); doc.setFontSize(18); doc.text("NEWENERGY", 15, 15);
-        doc.setFontSize(8); doc.text(`RELATÓRIO TÉCNICO COMPLETO: ${aba.toUpperCase()} | PÁGINA: ${pg}`, 15, 22);
+        doc.setFontSize(8); doc.text(`RELATÓRIO TÉCNICO: ${aba.toUpperCase()} | EMISSÃO: ${new Date().toLocaleString()}`, 15, 22);
+        doc.text(`PÁGINA: ${pg}`, 185, 22);
     };
 
     const desenharTitulosTabela = (y) => {
@@ -237,10 +255,9 @@ async function exportarPDF() {
     };
 
     desenharHeader(1);
-
     doc.setFillColor(240, 244, 248); doc.rect(15, 40, 180, 10, 'F');
     doc.setTextColor(60); doc.setFontSize(8);
-    doc.text(`Limites de Alerta: T: ${limitesAtivos.tMin}C a ${limitesAtivos.tMax}C | H: ${limitesAtivos.hMin}% a ${limitesAtivos.hMax}%`, 20, 46.5);
+    doc.text(`Limites Ativos: T: ${limitesAtivos.tMin}C a ${limitesAtivos.tMax}C | H: ${limitesAtivos.hMin}% a ${limitesAtivos.hMax}%`, 20, 46.5);
 
     try {
         const img = document.getElementById('mainChart').toDataURL("image/png", 0.7);
@@ -248,45 +265,27 @@ async function exportarPDF() {
     } catch(e) {}
 
     desenharTitulosTabela(125);
-
-    let py = 140; 
-    let pgCount = 1;
+    let py = 140, pgCount = 1;
 
     for (let i = 0; i < globalData.length; i++) {
         const d = globalData[i];
-        
         if (py > 280) { 
-            doc.addPage(); 
-            pgCount++; 
+            doc.addPage(); pgCount++; 
             desenharHeader(pgCount); 
-            desenharTitulosTabela(40); 
-            py = 55; 
+            desenharTitulosTabela(40); py = 55; 
         }
-        
         const erro = d.temp > limitesAtivos.tMax || d.temp < limitesAtivos.tMin || d.hum > limitesAtivos.hMax || d.hum < limitesAtivos.hMin;
-        
-        if (i % 2 === 0) { 
-            doc.setFillColor(245, 247, 250); 
-            doc.rect(15, py - 4, 180, 6, 'F'); 
-        }
-        
-        doc.setTextColor(erro ? 200 : 50, 0, 0); 
-        doc.setFontSize(8);
-        
+        if (i % 2 === 0) { doc.setFillColor(245, 247, 250); doc.rect(15, py - 4, 180, 6, 'F'); }
+        doc.setTextColor(erro ? 200 : 50, 0, 0); doc.setFontSize(8);
         doc.text(`${d.data} ${d.hora}`, 20, py);
         doc.text(`${d.temp.toFixed(2)} °C`, 80, py);
         doc.text(`${d.hum.toFixed(2)} %`, 120, py);
-        doc.text(erro ? "ALERTA !!!" : "NORMAL", 165, py);
-        
+        doc.text(erro ? "ALERTA" : "NORMAL", 165, py);
         py += 6;
-
-        if (i % 400 === 0) {
-            btn.innerText = `PROCESSANDO: ${Math.round((i/globalData.length)*100)}%`;
-            await new Promise(r => setTimeout(r, 1));
-        }
+        if (i % 300 === 0) { btn.innerText = `GERANDO...`; await new Promise(r => setTimeout(r, 1)); }
     }
 
-    doc.save(`Relatorio_NewEnergy_Full_${aba}.pdf`);
+    doc.save(`Relatorio_NewEnergy_${aba}_${new Date().toLocaleDateString()}.pdf`);
     btn.disabled = false; btn.innerText = originalText;
 }
 
