@@ -110,14 +110,14 @@ db.ref("/config_alertas").on("value", s => { if(s.val()) limites = s.val(); });
 
 async function fetchData(periodo) {
     const listaDiv = document.getElementById("lista");
-    listaDiv.innerHTML = "<p style='text-align:center; padding:40px; color:var(--text-muted)'>Processando...</p>";
+    listaDiv.innerHTML = "<p style='text-align:center; padding:40px;'>Sincronizando dados...</p>";
     globalData = []; 
     if(myChart) myChart.destroy();
 
     try {
         const snapshot = await db.ref("/historico").once("value");
         const base = snapshot.val();
-        if (!base) { listaDiv.innerHTML = "<p style='text-align:center;'>Sem dados.</p>"; return; }
+        if (!base) { listaDiv.innerHTML = "<p style='text-align:center;'>Sem registros.</p>"; return; }
 
         const agora = new Date();
         const inicioHoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate()).getTime();
@@ -182,7 +182,6 @@ function renderChart(periodo) {
     const chartData = [...globalData].sort((a,b) => a.ts - b.ts);
     const ctx = document.getElementById('mainChart').getContext('2d');
     
-    // Gradientes idênticos para todas as abas
     const gradT = ctx.createLinearGradient(0, 0, 0, 400);
     gradT.addColorStop(0, 'rgba(244, 63, 94, 0.2)'); gradT.addColorStop(1, 'rgba(244, 63, 94, 0)');
     const gradH = ctx.createLinearGradient(0, 0, 0, 400);
@@ -191,7 +190,7 @@ function renderChart(periodo) {
     myChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: chartData.map(d => (periodo === 'diario' || periodo === 'semanal') ? `${d.data.split('/')[0]} ${d.hora}` : d.data),
+            labels: chartData.map(d => (periodo === 'diario' || periodo === 'semanal') ? `${d.data.split('/')[0]}/${d.data.split('/')[1]} ${d.hora}` : d.data),
             datasets: [
                 { label: 'Temperatura (°C)', data: chartData.map(d => d.temp), borderColor: '#f43f5e', backgroundColor: gradT, fill: true, tension: 0.4, pointRadius: chartData.length > 50 ? 0 : 2, borderWidth: 2 },
                 { label: 'Umidade (%)', data: chartData.map(d => d.hum), borderColor: '#007aff', backgroundColor: gradH, fill: true, tension: 0.4, pointRadius: chartData.length > 50 ? 0 : 2, borderWidth: 2 }
@@ -217,8 +216,14 @@ async function exportarPDF() {
     
     btn.disabled = true;
     const originalText = btn.innerText;
-    const itensPorPagina = 28; 
-    const totalPaginas = Math.ceil(globalData.length / itensPorPagina);
+
+    // Cálculo exato de páginas
+    const itensP1 = 20; 
+    const itensSeguintes = 32; 
+    let totalPaginas = 1;
+    if (globalData.length > itensP1) {
+        totalPaginas += Math.ceil((globalData.length - itensP1) / itensSeguintes);
+    }
 
     const header = (p) => {
         doc.setFillColor(26, 54, 93); doc.rect(0, 0, 210, 38, 'F');
@@ -250,12 +255,12 @@ async function exportarPDF() {
         doc.addImage(img, 'PNG', 15, 48, 180, 45);
     } catch(e) {}
 
-    let y = 105; let pg = 1;
+    let y = 105, pg = 1;
     y = drawTableHead(y);
 
     for (let i = 0; i < globalData.length; i++) {
         const d = globalData[i];
-        if (y > 275) { doc.addPage(); pg++; header(pg); y = 50; y = drawTableHead(y); }
+        if (y > 280) { doc.addPage(); pg++; header(pg); y = 52; y = drawTableHead(y); }
         const erroGeral = d.temp > limites.tMax || d.temp < limites.tMin || d.hum > limites.hMax || d.hum < limites.hMin;
 
         if (erroGeral) {
