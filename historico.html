@@ -3,21 +3,22 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>NewEnergy | Histórico de Performance</title>
+    <title>NewEnergy | Monitoramento Profissional</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --brand-primary: #1a365d;
             --brand-accent: #007aff;
-            --bg-body: #f8fafc;
+            --bg-body: #f1f5f9;
             --card-bg: #ffffff;
             --text-main: #1e293b;
             --text-muted: #64748b;
             --border: #e2e8f0;
             --danger: #e11d48;
+            --success: #10b981;
             --accent-temp: #f43f5e;
             --accent-hum: #007aff;
-            --shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
+            --shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
         }
 
         body { 
@@ -27,39 +28,51 @@
         }
 
         .card { 
-            background: var(--card-bg); border-radius: 16px; padding: 30px; 
+            background: var(--card-bg); border-radius: 12px; padding: 30px; 
             width: 100%; max-width: 900px; border: 1px solid var(--border); 
             box-shadow: var(--shadow); 
         }
         
-        header { border-left: 4px solid var(--brand-accent); padding-left: 20px; margin-bottom: 30px; }
-        header h1 { margin:0; font-size: 22px; font-weight: 800; color: var(--brand-primary); }
-        header p { margin:4px 0 0; color: var(--text-muted); font-size: 13px; }
+        header { 
+            border-left: 5px solid var(--brand-primary); 
+            padding-left: 20px; margin-bottom: 30px; 
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        header h1 { margin:0; font-size: 24px; font-weight: 800; color: var(--brand-primary); letter-spacing: -0.5px; }
+        header p { margin:4px 0 0; color: var(--text-muted); font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
 
-        .tabs { display: flex; background: #f1f5f9; padding: 4px; border-radius: 10px; margin-bottom: 25px; gap: 4px; }
-        .tab { flex: 1; padding: 10px; text-align: center; border-radius: 7px; cursor: pointer; font-size: 12px; font-weight: 600; color: var(--text-muted); transition: 0.2s; }
-        .tab.active { background: white; color: var(--brand-accent); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .tabs { display: flex; background: #f8fafc; padding: 4px; border-radius: 8px; margin-bottom: 25px; gap: 4px; border: 1px solid var(--border); }
+        .tab { flex: 1; padding: 12px; text-align: center; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; color: var(--text-muted); transition: 0.2s; }
+        .tab.active { background: white; color: var(--brand-accent); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 
-        .chart-container { background: #fff; border-radius: 12px; padding: 15px; margin-bottom: 30px; border: 1px solid var(--border); height: 350px; }
+        .chart-container { background: #fff; border-radius: 10px; padding: 15px; margin-bottom: 30px; border: 1px solid var(--border); height: 350px; }
 
-        #lista { max-height: 400px; overflow-y: auto; padding-right: 10px; border-top: 1px solid var(--border); }
-        .data-divider { color: var(--brand-primary); font-size: 11px; font-weight: 700; margin: 20px 0 10px; display: flex; align-items: center; }
+        #lista { max-height: 400px; overflow-y: auto; padding-right: 10px; }
+        .data-divider { color: var(--brand-primary); font-size: 11px; font-weight: 700; margin: 25px 0 10px; display: flex; align-items: center; text-transform: uppercase; }
         .data-divider::after { content: ""; flex: 1; height: 1px; background: var(--border); margin-left: 15px; }
 
         .item { 
-            background: #fff; padding: 12px 18px; border-radius: 10px; 
-            margin-bottom: 6px; display: flex; justify-content: space-between; 
-            align-items: center; border: 1px solid var(--border);
+            background: #fff; padding: 14px 20px; border-radius: 8px; 
+            margin-bottom: 8px; display: flex; justify-content: space-between; 
+            align-items: center; border: 1px solid var(--border); transition: transform 0.1s;
         }
+        .item:hover { border-color: var(--brand-accent); }
         .item.alerta { border-left: 4px solid var(--danger); background: #fff1f2; }
         
         .btn-group { display: flex; gap: 12px; margin-top: 25px; }
-        .btn { flex: 1; padding: 14px; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; transition: 0.2s; }
+        .btn { flex: 1; padding: 16px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.3s; font-size: 14px; }
         .btn-pdf { background: var(--brand-primary); color: #fff; }
+        .btn-pdf:hover { background: #1e40af; }
         .btn-pdf:disabled { background: #94a3b8; cursor: not-allowed; }
         .btn-back { background: #fff; color: var(--text-muted); border: 1px solid var(--border); }
+        .btn-back:hover { background: #f8fafc; color: var(--brand-primary); }
 
         .valor-critico { color: var(--danger) !important; font-weight: 800; }
+        
+        /* Scrollbar Personalizada */
+        #lista::-webkit-scrollbar { width: 6px; }
+        #lista::-webkit-scrollbar-track { background: transparent; }
+        #lista::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
     
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -72,8 +85,10 @@
 
 <div class="card">
     <header>
-        <h1>Performance Analytics</h1>
-        <p>Relatórios Inteligentes NewEnergy</p>
+        <div>
+            <h1>NEWENERGY</h1>
+            <p>Monitoramento</p>
+        </div>
     </header>
 
     <div class="tabs">
@@ -91,11 +106,12 @@
 
     <div class="btn-group">
         <button class="btn btn-pdf" id="btnPdf" onclick="exportarPDF()">Gerar Relatório PDF</button>
-        <button class="btn btn-back" onclick="location.href='painel.html'">Voltar</button>
+        <button class="btn btn-back" onclick="location.href='painel.html'">Voltar ao Painel</button>
     </div>
 </div>
 
 <script>
+// CONFIGURAÇÃO FIREBASE
 firebase.initializeApp({
     apiKey: "AIzaSyB5FnkQiFi3gn9Iup2KNcbrKxWd-0Jjo6Y",
     authDomain: "oficial-688e8.firebaseapp.com",
@@ -106,12 +122,12 @@ firebase.initializeApp({
 const db = firebase.database();
 let myChart = null, globalData = [], limites = { tMin: 0, tMax: 40, hMin: 0, hMax: 100 };
 
-// Sincroniza limites de alerta para usar no PDF e UI
+// Sincroniza limites de alerta
 db.ref("/config_alertas").on("value", s => { if(s.val()) limites = s.val(); });
 
 async function fetchData(periodo) {
     const listaDiv = document.getElementById("lista");
-    listaDiv.innerHTML = "<p style='text-align:center; padding:30px;'>Filtrando base de dados...</p>";
+    listaDiv.innerHTML = "<p style='text-align:center; padding:30px; color:#64748b;'>Sincronizando dados cloud...</p>";
     
     globalData = []; 
     if(myChart) myChart.destroy();
@@ -119,11 +135,7 @@ async function fetchData(periodo) {
     try {
         const snapshot = await db.ref("/historico").once("value");
         const base = snapshot.val();
-        
-        if (!base) {
-            listaDiv.innerHTML = "<p style='text-align:center;'>Nenhum dado encontrado.</p>";
-            return;
-        }
+        if (!base) { listaDiv.innerHTML = "<p style='text-align:center;'>Nenhum registro encontrado.</p>"; return; }
 
         const agora = new Date();
         const inicioHoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate()).getTime();
@@ -156,7 +168,6 @@ async function fetchData(periodo) {
             });
         });
 
-        // Remove duplicados causados pelo envio duplo do ESP32
         globalData = globalData.filter((v, i, a) => a.findIndex(t => (t.ts === v.ts)) === i);
         globalData.sort((a, b) => b.ts - a.ts);
 
@@ -174,7 +185,7 @@ function renderUI() {
         if (d.data !== lastD) {
             const div = document.createElement('div');
             div.className = 'data-divider';
-            div.innerHTML = `📌 ${d.data}`;
+            div.innerHTML = `<span>${d.data}</span>`;
             listaDiv.appendChild(div);
             lastD = d.data;
         }
@@ -183,10 +194,10 @@ function renderUI() {
         const item = document.createElement('div');
         item.className = `item ${erro ? 'alerta' : ''}`;
         item.innerHTML = `
-            <b>${d.hora}</b>
-            <div style="display:flex; gap:15px; text-align:right;">
-                <div><small style="display:block;font-size:8px">TEMP</small><span style="color:var(--accent-temp);font-weight:700" class="${(d.temp > limites.tMax || d.temp < limites.tMin) ? 'valor-critico':''}">${d.temp.toFixed(1)}°C</span></div>
-                <div><small style="display:block;font-size:8px">HUM</small><span style="color:var(--accent-hum);font-weight:700" class="${(d.hum > limites.hMax || d.hum < limites.hMin) ? 'valor-critico':''}">${d.hum.toFixed(1)}%</span></div>
+            <b style="color:var(--brand-primary)">${d.hora}</b>
+            <div style="display:flex; gap:20px; text-align:right;">
+                <div><small style="display:block;font-size:9px;color:var(--text-muted)">TEMP</small><span style="color:var(--accent-temp);font-weight:700" class="${(d.temp > limites.tMax || d.temp < limites.tMin) ? 'valor-critico':''}">${d.temp.toFixed(1)}°C</span></div>
+                <div><small style="display:block;font-size:9px;color:var(--text-muted)">HUM</small><span style="color:var(--accent-hum);font-weight:700" class="${(d.hum > limites.hMax || d.hum < limites.hMin) ? 'valor-critico':''}">${d.hum.toFixed(1)}%</span></div>
             </div>`;
         listaDiv.appendChild(item);
     });
@@ -200,11 +211,16 @@ function renderChart(periodo) {
         data: {
             labels: chartData.map(d => periodo === 'diario' ? d.hora : d.data),
             datasets: [
-                { label: 'Temp', data: chartData.map(d => d.temp), borderColor: '#f43f5e', tension: 0.3, pointRadius: chartData.length > 40 ? 0 : 3 },
-                { label: 'Hum', data: chartData.map(d => d.hum), borderColor: '#007aff', tension: 0.3, pointRadius: chartData.length > 40 ? 0 : 3 }
+                { label: 'Temperatura (°C)', data: chartData.map(d => d.temp), borderColor: '#f43f5e', backgroundColor: 'rgba(244, 63, 94, 0.05)', fill: true, tension: 0.4, pointRadius: chartData.length > 50 ? 0 : 3 },
+                { label: 'Umidade (%)', data: chartData.map(d => d.hum), borderColor: '#007aff', backgroundColor: 'rgba(0, 122, 255, 0.05)', fill: true, tension: 0.4, pointRadius: chartData.length > 50 ? 0 : 3 }
             ]
         },
-        options: { responsive: true, maintainAspectRatio: false, scales: { x: { ticks: { autoSkip: true, maxTicksLimit: 10 } } } }
+        options: { 
+            responsive: true, 
+            maintainAspectRatio: false, 
+            plugins: { legend: { position: 'top', labels: { usePointStyle: true, font: { family: 'Inter', size: 11 } } } },
+            scales: { y: { beginAtZero: false }, x: { ticks: { autoSkip: true, maxTicksLimit: 8 } } }
+        }
     });
 }
 
@@ -218,42 +234,64 @@ async function exportarPDF() {
     btn.disabled = true;
     const originalText = btn.innerText;
 
-    const itensPorPagina = 35;
+    const itensPorPagina = 32;
     const totalPaginas = Math.ceil(globalData.length / itensPorPagina);
 
     const header = (p) => {
-        doc.setFillColor(26, 54, 93); 
+        // Estilo Panorama Health - Clean White
+        doc.setFillColor(255, 255, 255);
         doc.rect(0, 0, 210, 40, 'F');
-        doc.setTextColor(255);
-        doc.setFont("helvetica", "bold"); doc.setFontSize(18); doc.text("NEWENERGY", 15, 18);
-        doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.text("MONITORAMENTO AMBIENTAL", 15, 24);
-        doc.setFontSize(8); doc.text(`RELATÓRIO: ${aba.toUpperCase()}`, 15, 32);
-        doc.text(`EXTRAÇÃO: ${new Date().toLocaleString('pt-BR')}`, 15, 36);
-        doc.text(`PÁGINA: ${p} DE ${totalPaginas}`, 180, 36);
+        doc.setDrawColor(226, 232, 240); 
+        doc.line(15, 38, 195, 38);
 
-        // Badge de Limites
-        doc.setFillColor(255, 255, 255, 0.15);
-        doc.roundedRect(135, 10, 60, 20, 2, 2, 'F');
-        doc.text("LIMITES DE SEGURANÇA:", 138, 15);
+        doc.setTextColor(26, 54, 93); 
+        doc.setFont("helvetica", "bold"); 
+        doc.setFontSize(22); 
+        doc.text("NEWENERGY", 15, 22);
+        
+        doc.setFontSize(9); 
+        doc.setFont("helvetica", "normal"); 
+        doc.setTextColor(100, 116, 139); 
+        doc.text("SISTEMA DE MONITORAMENTO", 15, 29);
+        
+        // Info Direita
+        doc.setFontSize(8);
+        doc.setTextColor(148, 163, 184);
+        doc.text(`Relatório: ${aba.toUpperCase()}`, 195, 18, {align: "right"});
+        doc.text(`Página ${p} de ${totalPaginas}`, 195, 23, {align: "right"});
+        doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 195, 28, {align: "right"});
+
+        // Box Limites
+        doc.setFillColor(248, 250, 252);
+        doc.roundedRect(115, 12, 55, 20, 2, 2, 'F');
+        doc.setTextColor(71, 85, 105);
+        doc.setFontSize(7);
+        doc.text("LIMITES OPERACIONAIS", 119, 18);
         doc.setFont("helvetica", "bold");
-        doc.text(`TEMP: ${limites.tMin}°C - ${limites.tMax}°C`, 138, 21);
-        doc.text(`HUM:  ${limites.hMin}% - ${limites.hMax}%`, 138, 26);
+        doc.text(`T: ${limites.tMin}°C a ${limites.tMax}°C`, 119, 24);
+        doc.text(`H: ${limites.hMin}% a ${limites.hMax}%`, 119, 28);
     };
 
     header(1);
+    
     try {
         const img = document.getElementById('mainChart').toDataURL("image/png", 1.0);
-        doc.addImage(img, 'PNG', 15, 48, 180, 50);
+        doc.setDrawColor(241, 245, 249);
+        doc.rect(15, 45, 180, 50);
+        doc.addImage(img, 'PNG', 16, 46, 178, 48);
     } catch(e) {}
 
-    let y = 112; 
+    let y = 110; 
     let pg = 1;
-    
+
     const drawTableHead = (yPos) => {
-        doc.setFillColor(248, 250, 252); doc.rect(15, yPos - 6, 180, 10, 'F');
-        doc.setDrawColor(226, 232, 240); doc.line(15, yPos + 4, 195, yPos + 4);
-        doc.setTextColor(71, 85, 105); doc.setFont("helvetica", "bold"); doc.setFontSize(9);
-        doc.text("DATA / HORA", 20, yPos); doc.text("TEMPERATURA", 80, yPos); doc.text("UMIDADE", 125, yPos); doc.text("STATUS", 168, yPos);
+        doc.setFillColor(248, 250, 252); 
+        doc.rect(15, yPos - 6, 180, 10, 'F');
+        doc.setDrawColor(226, 232, 240);
+        doc.line(15, yPos + 4, 195, yPos + 4);
+        doc.setTextColor(30, 41, 59); 
+        doc.setFont("helvetica", "bold"); doc.setFontSize(9);
+        doc.text("DATA / HORA", 20, yPos); doc.text("TEMPERATURA", 85, yPos); doc.text("UMIDADE", 135, yPos); doc.text("STATUS", 170, yPos);
         return yPos + 10;
     };
 
@@ -261,31 +299,27 @@ async function exportarPDF() {
 
     for (let i = 0; i < globalData.length; i++) {
         const d = globalData[i];
-        if (y > 280) { doc.addPage(); pg++; header(pg); y = 55; y = drawTableHead(y); }
+        if (y > 275) { doc.addPage(); pg++; header(pg); y = 55; y = drawTableHead(y); }
         
-        const erroT = d.temp > limites.tMax || d.temp < limites.tMin;
-        const erroH = d.hum > limites.hMax || d.hum < limites.hMin;
-        const erroGeral = erroT || erroH;
+        const erroGeral = d.temp > limites.tMax || d.temp < limites.tMin || d.hum > limites.hMax || d.hum < limites.hMin;
 
         if (erroGeral) {
-            doc.setFillColor(254, 242, 242); doc.rect(15, y - 5, 180, 7, 'F');
-            doc.setTextColor(153, 27, 27); doc.setFont("helvetica", "bold");
-        } else if (i % 2 === 0) {
-            doc.setFillColor(249, 250, 251); doc.rect(15, y - 5, 180, 7, 'F');
-            doc.setTextColor(51, 65, 85); doc.setFont("helvetica", "normal");
+            doc.setFillColor(254, 242, 242); doc.rect(15, y - 5, 180, 8, 'F');
+            doc.setTextColor(220, 38, 38); doc.setFont("helvetica", "bold");
         } else {
-            doc.setTextColor(51, 65, 85); doc.setFont("helvetica", "normal");
+            doc.setTextColor(71, 85, 105); doc.setFont("helvetica", "normal");
+            if (i % 2 === 0) { doc.setFillColor(252, 253, 255); doc.rect(15, y - 5, 180, 8, 'F'); }
         }
 
         doc.setFontSize(8);
         doc.text(`${d.data}  ${d.hora}`, 20, y);
-        doc.text(`${d.temp.toFixed(1)}°C`, 85, y);
-        doc.text(`${d.hum.toFixed(1)}%`, 130, y);
+        doc.text(`${d.temp.toFixed(1)}°C`, 90, y);
+        doc.text(`${d.hum.toFixed(1)}%`, 140, y);
         
-        if (erroGeral) { doc.text("● ALERTA CRÍTICO", 168, y); }
-        else { doc.setTextColor(34, 197, 94); doc.text("● NORMAL", 168, y); }
+        if (erroGeral) { doc.text("FORA DO LIMITE", 170, y); }
+        else { doc.setTextColor(22, 163, 74); doc.text("NORMAL", 170, y); }
         
-        y += 7;
+        y += 8;
         if (i % 50 === 0) {
             btn.innerText = `Gerando... ${Math.round((i/globalData.length)*100)}%`;
             await new Promise(r => setTimeout(r, 1));
@@ -293,8 +327,8 @@ async function exportarPDF() {
     }
 
     doc.setFontSize(7); doc.setTextColor(148, 163, 184);
-    doc.text("NewEnergy Monitor Pro - Relatório Digital Gerado via Cloud", 105, 290, {align: "center"});
-    doc.save(`NewEnergy_Relatorio_${aba.replace(/ /g, "_")}.pdf`);
+    doc.text("Relatório gerado automaticamente pelo sistema NewEnergy Analytics", 105, 292, {align: "center"});
+    doc.save(`Relatorio_Monitoramento_${aba.replace(/ /g, "_")}.pdf`);
     btn.disabled = false; btn.innerText = originalText;
 }
 
