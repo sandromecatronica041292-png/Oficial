@@ -77,10 +77,10 @@
     </header>
 
     <div class="tabs">
-        <div class="tab active" data-periodo="diario">Diário</div>
-        <div class="tab" data-periodo="semanal">Semanal</div>
-        <div class="tab" data-periodo="mensal">Mensal</div>
-        <div class="tab" data-periodo="anual">Anual</div>
+        <div class="tab active" data-periodo="diario">Hoje</div>
+        <div class="tab" data-periodo="semanal">Últimos 7 dias</div>
+        <div class="tab" data-periodo="mensal">Mês Atual</div>
+        <div class="tab" data-periodo="anual">Ano Atual</div>
     </div>
 
     <div class="chart-container">
@@ -106,11 +106,12 @@ firebase.initializeApp({
 const db = firebase.database();
 let myChart = null, globalData = [], limites = { tMin: 0, tMax: 40, hMin: 0, hMax: 100 };
 
+// Sincroniza limites de alerta para usar no PDF e UI
 db.ref("/config_alertas").on("value", s => { if(s.val()) limites = s.val(); });
 
 async function fetchData(periodo) {
     const listaDiv = document.getElementById("lista");
-    listaDiv.innerHTML = "<p style='text-align:center; padding:30px;'>Filtrando dados...</p>";
+    listaDiv.innerHTML = "<p style='text-align:center; padding:30px;'>Filtrando base de dados...</p>";
     
     globalData = []; 
     if(myChart) myChart.destroy();
@@ -128,7 +129,6 @@ async function fetchData(periodo) {
         const inicioHoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate()).getTime();
         const seteDiasAtras = agora.getTime() - (7 * 24 * 60 * 60 * 1000);
 
-        // Percorre diario/ e semanal/ unificando tudo
         Object.keys(base).forEach(pasta => {
             const dias = base[pasta];
             Object.keys(dias).forEach(diaKey => {
@@ -156,7 +156,7 @@ async function fetchData(periodo) {
             });
         });
 
-        // Limpeza de duplicados (crucial porque o ESP32 salva em 2 pastas)
+        // Remove duplicados causados pelo envio duplo do ESP32
         globalData = globalData.filter((v, i, a) => a.findIndex(t => (t.ts === v.ts)) === i);
         globalData.sort((a, b) => b.ts - a.ts);
 
@@ -209,7 +209,7 @@ function renderChart(periodo) {
 }
 
 async function exportarPDF() {
-    if(globalData.length === 0) return;
+    if (globalData.length === 0) return;
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     const btn = document.getElementById('btnPdf');
@@ -218,44 +218,83 @@ async function exportarPDF() {
     btn.disabled = true;
     const originalText = btn.innerText;
 
+    const itensPorPagina = 35;
+    const totalPaginas = Math.ceil(globalData.length / itensPorPagina);
+
     const header = (p) => {
-        doc.setFillColor(26, 54, 93); doc.rect(0, 0, 210, 30, 'F');
-        doc.setTextColor(255); doc.setFontSize(16); doc.text("NEWENERGY - RELATÓRIO", 15, 18);
-        doc.setFontSize(8); doc.text(`PERÍODO: ${aba} | PÁGINA: ${p}`, 15, 25);
+        doc.setFillColor(26, 54, 93); 
+        doc.rect(0, 0, 210, 40, 'F');
+        doc.setTextColor(255);
+        doc.setFont("helvetica", "bold"); doc.setFontSize(18); doc.text("NEWENERGY", 15, 18);
+        doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.text("MONITORAMENTO AMBIENTAL", 15, 24);
+        doc.setFontSize(8); doc.text(`RELATÓRIO: ${aba.toUpperCase()}`, 15, 32);
+        doc.text(`EXTRAÇÃO: ${new Date().toLocaleString('pt-BR')}`, 15, 36);
+        doc.text(`PÁGINA: ${p} DE ${totalPaginas}`, 180, 36);
+
+        // Badge de Limites
+        doc.setFillColor(255, 255, 255, 0.15);
+        doc.roundedRect(135, 10, 60, 20, 2, 2, 'F');
+        doc.text("LIMITES DE SEGURANÇA:", 138, 15);
+        doc.setFont("helvetica", "bold");
+        doc.text(`TEMP: ${limites.tMin}°C - ${limites.tMax}°C`, 138, 21);
+        doc.text(`HUM:  ${limites.hMin}% - ${limites.hMax}%`, 138, 26);
     };
 
     header(1);
     try {
         const img = document.getElementById('mainChart').toDataURL("image/png", 1.0);
-        doc.addImage(img, 'PNG', 15, 40, 180, 60);
-    } catch(e){}
+        doc.addImage(img, 'PNG', 15, 48, 180, 50);
+    } catch(e) {}
 
-    let y = 115;
+    let y = 112; 
     let pg = 1;
     
-    doc.setFillColor(26, 54, 93); doc.rect(15, 105, 180, 8, 'F');
-    doc.setTextColor(255); doc.setFontSize(8);
-    doc.text("DATA / HORA", 20, 110); doc.text("TEMP", 80, 110); doc.text("HUM", 120, 110); doc.text("STATUS", 160, 110);
+    const drawTableHead = (yPos) => {
+        doc.setFillColor(248, 250, 252); doc.rect(15, yPos - 6, 180, 10, 'F');
+        doc.setDrawColor(226, 232, 240); doc.line(15, yPos + 4, 195, yPos + 4);
+        doc.setTextColor(71, 85, 105); doc.setFont("helvetica", "bold"); doc.setFontSize(9);
+        doc.text("DATA / HORA", 20, yPos); doc.text("TEMPERATURA", 80, yPos); doc.text("UMIDADE", 125, yPos); doc.text("STATUS", 168, yPos);
+        return yPos + 10;
+    };
+
+    y = drawTableHead(y);
 
     for (let i = 0; i < globalData.length; i++) {
         const d = globalData[i];
-        if (y > 280) { doc.addPage(); pg++; header(pg); y = 40; }
+        if (y > 280) { doc.addPage(); pg++; header(pg); y = 55; y = drawTableHead(y); }
         
-        const erro = d.temp > limites.tMax || d.temp < limites.tMin || d.hum > limites.hMax || d.hum < limites.hMin;
-        doc.setTextColor(erro ? 200 : 50, 0, 0);
-        doc.text(`${d.data} ${d.hora}`, 20, y);
-        doc.text(`${d.temp.toFixed(1)}°C`, 80, y);
-        doc.text(`${d.hum.toFixed(1)}%`, 120, y);
-        doc.text(erro ? "ALERTA" : "NORMAL", 160, y);
-        y += 6;
+        const erroT = d.temp > limites.tMax || d.temp < limites.tMin;
+        const erroH = d.hum > limites.hMax || d.hum < limites.hMin;
+        const erroGeral = erroT || erroH;
 
-        if (i % 100 === 0) {
-            btn.innerText = `Processando... ${Math.round((i/globalData.length)*100)}%`;
+        if (erroGeral) {
+            doc.setFillColor(254, 242, 242); doc.rect(15, y - 5, 180, 7, 'F');
+            doc.setTextColor(153, 27, 27); doc.setFont("helvetica", "bold");
+        } else if (i % 2 === 0) {
+            doc.setFillColor(249, 250, 251); doc.rect(15, y - 5, 180, 7, 'F');
+            doc.setTextColor(51, 65, 85); doc.setFont("helvetica", "normal");
+        } else {
+            doc.setTextColor(51, 65, 85); doc.setFont("helvetica", "normal");
+        }
+
+        doc.setFontSize(8);
+        doc.text(`${d.data}  ${d.hora}`, 20, y);
+        doc.text(`${d.temp.toFixed(1)}°C`, 85, y);
+        doc.text(`${d.hum.toFixed(1)}%`, 130, y);
+        
+        if (erroGeral) { doc.text("● ALERTA CRÍTICO", 168, y); }
+        else { doc.setTextColor(34, 197, 94); doc.text("● NORMAL", 168, y); }
+        
+        y += 7;
+        if (i % 50 === 0) {
+            btn.innerText = `Gerando... ${Math.round((i/globalData.length)*100)}%`;
             await new Promise(r => setTimeout(r, 1));
         }
     }
 
-    doc.save(`NewEnergy_${aba}_2026.pdf`);
+    doc.setFontSize(7); doc.setTextColor(148, 163, 184);
+    doc.text("NewEnergy Monitor Pro - Relatório Digital Gerado via Cloud", 105, 290, {align: "center"});
+    doc.save(`NewEnergy_Relatorio_${aba.replace(/ /g, "_")}.pdf`);
     btn.disabled = false; btn.innerText = originalText;
 }
 
