@@ -9,12 +9,12 @@
   :root { 
     --brand-primary: #1a365d;    
     --brand-accent: #007aff;     
-    --bg-body: #f1f5f9;         
+    --bg-body: #f1f5f9;          
     --card-bg: #ffffff;
     --text-main: #1e293b;
     --text-muted: #64748b;
     --on: #10b981;              
-    --off: #e11d48;             
+    --off: #e11d48;              
     --warn: #f59e0b;            
     --shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05);
   }
@@ -82,7 +82,7 @@
     margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;
   }
   .btn-led.on { background: var(--brand-primary); color: #fff; box-shadow: 0 4px 12px rgba(26,54,93,0.2); }
-  .btn-led.off { background: #e2e8f0; color: var(--text-light); }
+  .btn-led.off { background: #e2e8f0; color: var(--text-muted); }
   
   .btn-history { background: #fff; color: var(--brand-accent); border: 1.5px solid var(--brand-accent); }
   .btn-history:hover { background: var(--brand-accent); color: #fff; }
@@ -130,20 +130,31 @@
 
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
         <div>
-            <label>Intervalo de Alerta (Min)</label>
+            <label>Intervalo Alerta (Min)</label>
             <input type="number" id="cfgTempoEmail" class="admin-input" placeholder="Minutos">
         </div>
         <div>
-            <label>Frequência de Registro</label>
+            <label>Freq. Registro</label>
             <input type="number" id="cfgFreq" class="admin-input" placeholder="Qtd/Hora">
         </div>
     </div>
     
-    <div style="background: #f1f5f9; padding: 12px; border-radius: 10px; margin-bottom: 20px;">
+    <div style="background: #f1f5f9; padding: 12px; border-radius: 10px; margin-bottom: 15px;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <span style="font-size: 11px; font-weight: 700;">Alertas: <span id="countEmailDisplay" style="color:var(--brand-accent)">0</span></span>
             <button onclick="resetarContador()" style="background:var(--off); color:white; border:none; padding:4px 8px; border-radius:4px; font-size:9px; cursor:pointer;">ZERAR</button>
         </div>
+    </div>
+
+    <div style="margin-top: 10px; border-top: 1px dashed #e2e8f0; padding-top: 15px; margin-bottom: 20px;">
+        <label style="color: var(--off);">Manutenção de Banco de Dados</label>
+        <button id="btnLimpar" onclick="executarLimpezaInteligente()" 
+            style="background: #fff; color: var(--off); border: 1.5px solid var(--off); padding: 10px; border-radius: 10px; font-weight: 700; cursor: pointer; width: 100%; font-size: 11px; transition: 0.3s;">
+            OTIMIZAR / LIMPAR HISTÓRICO ANTIGO
+        </button>
+        <p style="font-size: 9px; color: var(--text-muted); margin-top: 5px; text-align: center;">
+            * Mantém os últimos 2 anos de registros (recomendado).
+        </p>
     </div>
 
     <button id="btnSalvar" class="btn-action" style="background:var(--brand-primary); color:#fff;" onclick="salvarConfig()">Salvar Alterações</button>
@@ -210,13 +221,10 @@ function rodarDashboard() {
   gH.maxValue = 100; gH.setMinValue(0); gH.set(0);
 
   db.ref("/last_seen").on("value", snap => {
-    const check = () => {
-      const isOff = (Date.now() - (snap.val() * 1000)) > (config.intervalo + 15000);
-      const st = document.getElementById("status");
-      st.innerHTML = isOff ? '<div class="dot"></div> SISTEMA OFFLINE' : '<div class="dot"></div> MONITORAMENTO ATIVO';
-      st.className = "status-badge " + (isOff ? "st-offline" : "st-online");
-    };
-    check();
+    const isOff = (Date.now() - (snap.val() * 1000)) > 25000;
+    const st = document.getElementById("status");
+    st.innerHTML = isOff ? '<div class="dot"></div> SISTEMA OFFLINE' : '<div class="dot"></div> MONITORAMENTO ATIVO';
+    st.className = "status-badge " + (isOff ? "st-offline" : "st-online");
   });
 
   db.ref("/led").on("value", s => {
@@ -262,27 +270,45 @@ function enviarAlertaEmail(t, h) {
   }).then(() => {
     ultimaVezAlertado = Date.now();
     db.ref("/config_alertas/contadorAlertas").set((config.contadorAlertas || 0) + 1);
-
-    const agoraTS = Math.floor(Date.now() / 1000);
-    const dataPasta = new Date().toLocaleDateString('pt-BR').split('/').reverse().join('-');
-    db.ref(`/historico/diario/${dataPasta}/${agoraTS}`).set({
-      temp: t,
-      hum: h
-    });
   });
 }
 
+async function executarLimpezaInteligente() {
+    const conf = confirm("Deseja remover registros com mais de 2 anos para otimizar o sistema?");
+    if (conf) {
+        const palavra = prompt("Digite 'LIMPAR' para confirmar:");
+        if (palavra !== "LIMPAR") return alert("Cancelado.");
+
+        const btn = document.getElementById('btnLimpar');
+        btn.innerText = "PROCESSANDO..."; btn.disabled = true;
+
+        try {
+            const snapshot = await db.ref("/historico/diario").once("value");
+            const hist = snapshot.val();
+            if (!hist) return alert("Sem dados.");
+
+            const dataCorte = new Date();
+            dataCorte.setFullYear(dataCorte.getFullYear() - 2);
+            let cont = 0;
+
+            for (const dStr in hist) {
+                if (new Date(dStr) < dataCorte) {
+                    await db.ref(`/historico/diario/${dStr}`).remove();
+                    cont++;
+                }
+            }
+            alert(`Manutenção concluída! ${cont} pastas removidas.`);
+        } catch (e) { alert("Erro na limpeza."); }
+        finally { btn.innerText = "OTIMIZAR / LIMPAR HISTÓRICO ANTIGO"; btn.disabled = false; }
+    }
+}
+
 function enviarEmailTeste() {
-    const destino = document.getElementById("cfgEmail").value;
-    if(!destino) return alert("Digite um e-mail.");
-    const btn = event.target; btn.innerText = "...";
+    const d = document.getElementById("cfgEmail").value;
+    if(!d) return alert("Digite um e-mail.");
     emailjs.send("service_kx31f3s", "template_mqzi3at", {
-        equipamento: "NewEnergy - TESTE",
-        tipo: "Verificação de Sistema",
-        valor: "Conexão estabelecida com sucesso.",
-        data: new Date().toLocaleString(),
-        para_email: destino
-    }).then(() => { alert("Teste enviado!"); btn.innerText = "TESTAR"; });
+        equipamento: "NewEnergy - TESTE", tipo: "Verificação", valor: "OK", para_email: d
+    }).then(() => alert("Teste enviado!"));
 }
 
 let cliques = 0;
@@ -294,8 +320,8 @@ document.getElementById("logoAdmin").onclick = () => {
     document.getElementById("hMin").value = config.hMin;
     document.getElementById("hMax").value = config.hMax;
     document.getElementById("cfgEmail").value = config.emailDestino;
-    document.getElementById("cfgFreq").value = config.leiturasPorHora || 20;
-    document.getElementById("cfgTempoEmail").value = config.tempoEmail ? (config.tempoEmail / 60000) : 10;
+    document.getElementById("cfgFreq").value = config.leiturasPorHora;
+    document.getElementById("cfgTempoEmail").value = config.tempoEmail / 60000;
     cliques = 0;
   }
 };
@@ -310,26 +336,18 @@ function salvarConfig() {
     leiturasPorHora: parseInt(document.getElementById("cfgFreq").value) || 20,
     tempoEmail: (parseFloat(document.getElementById("cfgTempoEmail").value) || 10) * 60000
   };
-  db.ref("/config_alertas").update(updates).then(() => {
-    alert("Configurações atualizadas!");
-    fecharAdmin();
-  });
+  db.ref("/config_alertas").update(updates).then(() => { alert("Salvo!"); fecharAdmin(); });
 }
 
 function fecharAdmin() { document.getElementById("adminPanel").style.display = "none"; }
-function resetarContador() { if(confirm("Resetar contador?")) db.ref("/config_alertas/contadorAlertas").set(0); }
+function resetarContador() { if(confirm("Zerar?")) db.ref("/config_alertas/contadorAlertas").set(0); }
 function fazerLogout() { auth.signOut().then(() => window.location.replace("index.html")); }
 document.getElementById("btnLED").onclick = () => { db.ref("/led").get().then(s => db.ref("/led").set(s.val() == 1 ? 0 : 1)); };
 
 auth.onAuthStateChanged(user => { 
   if (!user) window.location.replace("index.html"); 
   else {
-    db.ref("/config_alertas").on("value", s => { 
-      if(s.val()) {
-        config = s.val();
-        document.getElementById("countEmailDisplay").innerText = config.contadorAlertas || 0;
-      }
-    });
+    db.ref("/config_alertas").on("value", s => { if(s.val()) { config = s.val(); document.getElementById("countEmailDisplay").innerText = config.contadorAlertas || 0; } });
     rodarDashboard(); 
   }
 });
