@@ -115,7 +115,7 @@ async function fetchData(periodo) {
     if(myChart) myChart.destroy();
 
     try {
-        const snapshot = await db.ref("/historico").once("value");
+        const snapshot = await db.ref("/historico/diario").once("value");
         const base = snapshot.val();
         if (!base) { listaDiv.innerHTML = "<p style='text-align:center;'>Sem registros.</p>"; return; }
 
@@ -123,28 +123,26 @@ async function fetchData(periodo) {
         const inicioHoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate()).getTime();
         const seteDiasAtras = agora.getTime() - (7 * 24 * 60 * 60 * 1000);
 
-        Object.keys(base).forEach(p => {
-            Object.keys(base[p]).forEach(d => {
-                const regs = base[p][d];
-                Object.keys(regs).forEach(ts => {
-                    const tsM = parseInt(ts) * 1000;
-                    const dObj = new Date(tsM);
-                    let ok = false;
-                    if (periodo === 'diario' && tsM >= inicioHoje) ok = true;
-                    else if (periodo === 'semanal' && tsM >= seteDiasAtras) ok = true;
-                    else if (periodo === 'mensal' && dObj.getMonth() === agora.getMonth()) ok = true;
-                    else if (periodo === 'anual' && dObj.getFullYear() === agora.getFullYear()) ok = true;
+        Object.keys(base).forEach(d => {
+            const regs = base[d];
+            Object.keys(regs).forEach(ts => {
+                const tsM = parseInt(ts) * 1000;
+                const dObj = new Date(tsM);
+                let ok = false;
+                if (periodo === 'diario' && tsM >= inicioHoje) ok = true;
+                else if (periodo === 'semanal' && tsM >= seteDiasAtras) ok = true;
+                else if (periodo === 'mensal' && dObj.getMonth() === agora.getMonth() && dObj.getFullYear() === agora.getFullYear()) ok = true;
+                else if (periodo === 'anual' && dObj.getFullYear() === agora.getFullYear()) ok = true;
 
-                    if (ok) {
-                        globalData.push({
-                            ts: parseInt(ts),
-                            temp: parseFloat(regs[ts].temp),
-                            hum: parseFloat(regs[ts].hum),
-                            data: dObj.toLocaleDateString('pt-BR'),
-                            hora: dObj.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})
-                        });
-                    }
-                });
+                if (ok) {
+                    globalData.push({
+                        ts: parseInt(ts),
+                        temp: parseFloat(regs[ts].temp),
+                        hum: parseFloat(regs[ts].hum),
+                        data: dObj.toLocaleDateString('pt-BR'),
+                        hora: dObj.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})
+                    });
+                }
             });
         });
 
@@ -171,8 +169,8 @@ function renderUI() {
         const item = document.createElement('div');
         item.className = `item ${erro ? 'alerta' : ''}`;
         item.innerHTML = `<b>${d.hora}</b><div style="display:flex; gap:20px; text-align:right;">
-            <div><small style="display:block;font-size:8px;color:var(--text-muted)">TEMP</small><span style="color:var(--accent-temp);font-weight:700" class="${(d.temp > limites.tMax || d.temp < limites.tMin) ? 'valor-critico':''}">${d.temp.toFixed(1)}°C</span></div>
-            <div><small style="display:block;font-size:8px;color:var(--text-muted)">UMID</small><span style="color:var(--accent-hum);font-weight:700" class="${(d.hum > limites.hMax || d.hum < limites.hMin) ? 'valor-critico':''}">${d.hum.toFixed(1)}%</span></div>
+            <div><small style="display:block;font-size:8px;color:var(--text-muted)">TEMP</small><span style="font-weight:700" class="${(d.temp > limites.tMax || d.temp < limites.tMin) ? 'valor-critico':''}">${d.temp.toFixed(1)}°C</span></div>
+            <div><small style="display:block;font-size:8px;color:var(--text-muted)">UMID</small><span style="font-weight:700" class="${(d.hum > limites.hMax || d.hum < limites.hMin) ? 'valor-critico':''}">${d.hum.toFixed(1)}%</span></div>
         </div>`;
         listaDiv.appendChild(item);
     });
@@ -217,13 +215,17 @@ async function exportarPDF() {
     btn.disabled = true;
     const originalText = btn.innerText;
 
-    // Cálculo exato de páginas
-    const itensP1 = 20; 
-    const itensSeguintes = 32; 
-    let totalPaginas = 1;
-    if (globalData.length > itensP1) {
-        totalPaginas += Math.ceil((globalData.length - itensP1) / itensSeguintes);
-    }
+    // --- CORREÇÃO: PRÉ-CÁLCULO DINÂMICO DE PÁGINAS ---
+    const calcularTotalPaginas = () => {
+        let tempY = 105; 
+        let totalPg = 1;
+        for (let i = 0; i < globalData.length; i++) {
+            if (tempY > 280) { totalPg++; tempY = 52 + 10; }
+            tempY += 8;
+        }
+        return totalPg;
+    };
+    const totalPaginasReal = calcularTotalPaginas();
 
     const header = (p) => {
         doc.setFillColor(26, 54, 93); doc.rect(0, 0, 210, 38, 'F');
@@ -237,7 +239,7 @@ async function exportarPDF() {
         doc.setTextColor(255, 255, 255); doc.setFontSize(8);
         doc.text(`RELATÓRIO: ${aba.toUpperCase()}`, 195, 15, {align: "right"});
         doc.text(`DATA: ${new Date().toLocaleDateString('pt-BR')}`, 195, 21, {align: "right"});
-        doc.text(`PÁGINA: ${p} / ${totalPaginas}`, 195, 27, {align: "right"});
+        doc.text(`PÁGINA: ${p} / ${totalPaginasReal}`, 195, 27, {align: "right"});
         doc.setFillColor(0, 122, 255); doc.rect(0, 38, 210, 1.2, 'F');
     };
 
