@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>NewEnergy | Sistema de Monitoramento</title>
+    <title>NewEnergy | Monitoramento de Precisão</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -81,7 +81,7 @@
 
     <div class="tabs">
         <div class="tab active" data-periodo="diario">Hoje</div>
-        <div class="tab" data-periodo="semanal">7 Dias</div>
+        <div class="tab" data-periodo="semanal">Últimos 7 Dias</div>
         <div class="tab" data-periodo="mensal">Mês Atual</div>
         <div class="tab" data-periodo="anual">Ano Atual</div>
     </div>
@@ -184,16 +184,54 @@ function renderUI() {
 function renderChart(periodo) {
     const chartData = [...globalData].sort((a,b) => a.ts - b.ts);
     const ctx = document.getElementById('mainChart').getContext('2d');
+    
+    // Melhoria visual: Gradiente sutil
+    const gradientTemp = ctx.createLinearGradient(0, 0, 0, 400);
+    gradientTemp.addColorStop(0, 'rgba(244, 63, 94, 0.15)');
+    gradientTemp.addColorStop(1, 'rgba(244, 63, 94, 0)');
+
+    const gradientHum = ctx.createLinearGradient(0, 0, 0, 400);
+    gradientHum.addColorStop(0, 'rgba(0, 122, 255, 0.15)');
+    gradientHum.addColorStop(1, 'rgba(0, 122, 255, 0)');
+
     myChart = new Chart(ctx, {
         type: 'line',
         data: {
             labels: chartData.map(d => periodo === 'diario' ? d.hora : d.data),
             datasets: [
-                { label: 'Temp', data: chartData.map(d => d.temp), borderColor: '#f43f5e', tension: 0.4, pointRadius: chartData.length > 40 ? 0 : 3 },
-                { label: 'Umid', data: chartData.map(d => d.hum), borderColor: '#007aff', tension: 0.4, pointRadius: chartData.length > 40 ? 0 : 3 }
+                { 
+                    label: 'Temperatura (°C)', 
+                    data: chartData.map(d => d.temp), 
+                    borderColor: '#f43f5e', 
+                    backgroundColor: gradientTemp,
+                    fill: true,
+                    tension: 0.4, 
+                    pointRadius: chartData.length > 50 ? 0 : 3,
+                    borderWidth: 2
+                },
+                { 
+                    label: 'Umidade (%)', 
+                    data: chartData.map(d => d.hum), 
+                    borderColor: '#007aff', 
+                    backgroundColor: gradientHum,
+                    fill: true,
+                    tension: 0.4, 
+                    pointRadius: chartData.length > 50 ? 0 : 3,
+                    borderWidth: 2
+                }
             ]
         },
-        options: { responsive: true, maintainAspectRatio: false, scales: { x: { ticks: { autoSkip: true, maxTicksLimit: 10 } } } }
+        options: { 
+            responsive: true, 
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { labels: { font: { family: 'Inter', weight: 'bold' } } }
+            },
+            scales: { 
+                x: { ticks: { autoSkip: true, maxTicksLimit: 10 } },
+                y: { grid: { color: '#f1f5f9' } }
+            } 
+        }
     });
 }
 
@@ -207,11 +245,11 @@ async function exportarPDF() {
     btn.disabled = true;
     const originalText = btn.innerText;
 
-    const itensPorPagina = 30; 
+    const itensPorPagina = 28; // Mais respiro para o rodapé
     const totalPaginas = Math.ceil(globalData.length / itensPorPagina);
 
     const header = (p) => {
-        // Cabeçalho Híbrido (Azul Marinho Sólido - Impacto)
+        // Cabeçalho Híbrido NewEnergy
         doc.setFillColor(26, 54, 93);
         doc.rect(0, 0, 210, 38, 'F');
         
@@ -219,10 +257,18 @@ async function exportarPDF() {
         doc.setFont("helvetica", "bold"); doc.setFontSize(22); doc.text("NEWENERGY", 15, 18);
         doc.setFontSize(9); doc.setFont("helvetica", "normal"); doc.text("SISTEMA DE MONITORAMENTO", 15, 26);
         
-        // Info Direita (Limpa)
-        doc.setFontSize(8);
+        // --- BOX DE LIMITES (PAINEL DE SERVIÇO) ---
+        doc.setFillColor(255, 255, 255, 0.12); // Transparência elegante
+        doc.roundedRect(85, 10, 55, 20, 2, 2, 'F');
+        doc.setFontSize(7); doc.text("LIMITES CONFIGURADOS", 89, 15);
+        doc.setFont("helvetica", "bold"); doc.setFontSize(8);
+        doc.text(`T: ${limites.tMin}°C a ${limites.tMax}°C`, 89, 21);
+        doc.text(`H: ${limites.hMin}% a ${limites.hMax}%`, 89, 26);
+
+        // Info Direita
+        doc.setFontSize(8); doc.setFont("helvetica", "normal");
         doc.text(`RELATÓRIO: ${aba.toUpperCase()}`, 195, 15, {align: "right"});
-        doc.text(`GERADO EM: ${new Date().toLocaleString('pt-BR')}`, 195, 21, {align: "right"});
+        doc.text(`DATA: ${new Date().toLocaleDateString('pt-BR')}`, 195, 21, {align: "right"});
         doc.text(`PÁGINA: ${p} / ${totalPaginas}`, 195, 27, {align: "right"});
 
         doc.setFillColor(0, 122, 255); doc.rect(0, 38, 210, 1.5, 'F');
@@ -233,9 +279,9 @@ async function exportarPDF() {
         doc.setDrawColor(200, 210, 220); doc.line(15, yPos + 4, 195, yPos + 4);
         doc.setTextColor(26, 54, 93); doc.setFont("helvetica", "bold"); doc.setFontSize(9);
         doc.text("DATA / HORA", 20, yPos); 
-        doc.text("TEMPERATURA", 75, yPos); 
-        doc.text("UMIDADE", 125, yPos); 
-        doc.text("STATUS", 170, yPos);
+        doc.text("TEMPERATURA", 78, yPos); 
+        doc.text("UMIDADE", 128, yPos); 
+        doc.text("STATUS", 172, yPos);
         return yPos + 10;
     };
 
@@ -267,13 +313,13 @@ async function exportarPDF() {
 
         doc.setFontSize(8);
         doc.text(`${d.data}  ${d.hora}`, 20, y);
-        doc.text(`${d.temp.toFixed(1)}°C`, 82, y);
-        doc.text(`${d.hum.toFixed(1)}%`, 132, y);
+        doc.text(`${d.temp.toFixed(1)}°C`, 83, y);
+        doc.text(`${d.hum.toFixed(1)}%`, 133, y);
         
         if (erroGeral) { 
-            doc.text("ALERTA", 170, y); 
+            doc.text("ALERTA", 172, y); 
         } else { 
-            doc.setTextColor(16, 185, 129); doc.text("NORMAL", 170, y); 
+            doc.setTextColor(16, 185, 129); doc.text("NORMAL", 172, y); 
         }
         
         y += 8;
@@ -284,7 +330,7 @@ async function exportarPDF() {
     }
 
     doc.setFontSize(7); doc.setTextColor(148, 163, 184);
-    doc.text("NewEnergy Analytics - Monitoramento de Precisão", 105, 292, {align: "center"});
+    doc.text("Relatório Performance NewEnergy - Inteligência e Monitoramento", 105, 292, {align: "center"});
     doc.save(`Relatorio_NewEnergy_${aba.replace(/ /g, "_")}.pdf`);
     btn.disabled = false; btn.innerText = originalText;
 }
