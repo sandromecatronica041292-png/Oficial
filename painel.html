@@ -66,6 +66,12 @@
   .st-online { color: var(--on); background: #ecfdf5; }
   .st-offline { color: var(--off); background: #fff1f2; }
 
+  /* Estilo dos novos campos de identificação */
+  .info-client-box {
+    margin-top: 15px; text-align: left; padding-left: 15px;
+    border-left: 3px solid var(--brand-accent); font-size: 12px;
+  }
+
   .gauges-container { display: flex; gap: 15px; margin-bottom: 25px; }
   .gauge-box { 
     flex: 1; background: #f8fafc; 
@@ -115,6 +121,11 @@
   <div id="adminPanel">
     <div class="logo-principal" style="font-size: 14px; margin-bottom: 20px; color: var(--brand-accent);">Configurações de Engenharia</div>
     
+    <label>Nome do Cliente</label>
+    <input type="text" id="cfgCliente" class="admin-input" placeholder="Digite o nome do cliente">
+    <label>Local da Instalação</label>
+    <input type="text" id="cfgLocal" class="admin-input" placeholder="Ex: CPD Principal / Galpão A">
+
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
       <div><label>Temp Mín</label><input type="number" id="tMin" class="admin-input"></div>
       <div><label>Temp Máx</label><input type="number" id="tMax" class="admin-input"></div>
@@ -152,9 +163,6 @@
             style="background: #fff; color: var(--off); border: 1.5px solid var(--off); padding: 10px; border-radius: 10px; font-weight: 700; cursor: pointer; width: 100%; font-size: 11px; transition: 0.3s;">
             OTIMIZAR / LIMPAR HISTÓRICO ANTIGO
         </button>
-        <p style="font-size: 9px; color: var(--text-muted); margin-top: 5px; text-align: center;">
-            * Mantém os últimos 2 anos de registros (recomendado).
-        </p>
     </div>
 
     <button id="btnSalvar" class="btn-action" style="background:var(--brand-primary); color:#fff;" onclick="salvarConfig()">Salvar Alterações</button>
@@ -169,6 +177,10 @@
   <div class="status-container">
     <div id="status" class="status-badge st-online">
       <div class="dot"></div> <span>SINCRONIZANDO...</span>
+    </div>
+    <div class="info-client-box">
+        <div style="color: var(--text-muted); margin-bottom: 2px;">CLIENTE: <strong id="dispCliente" style="color: var(--brand-primary);">--</strong></div>
+        <div style="color: var(--text-muted);">LOCAL: <strong id="dispLocal" style="color: var(--brand-primary);">--</strong></div>
     </div>
   </div>
 
@@ -203,7 +215,8 @@ firebase.initializeApp({
 const db = firebase.database();
 const auth = firebase.auth();
 
-let config = { tMin: 15, tMax: 35, hMin: 30, hMax: 80, intervalo: 2000, emailDestino: "", tempoEmail: 600000, contadorAlertas: 0, leiturasPorHora: 20 };
+// Configurações iniciais atualizadas
+let config = { tMin: 15, tMax: 35, hMin: 30, hMax: 80, intervalo: 2000, emailDestino: "", tempoEmail: 600000, contadorAlertas: 0, leiturasPorHora: 20, cliente: "", local: "" };
 let gT, gH, ultimaVezAlertado = 0;
 
 function rodarDashboard() {
@@ -278,19 +291,15 @@ async function executarLimpezaInteligente() {
     if (conf) {
         const palavra = prompt("Digite 'LIMPAR' para confirmar:");
         if (palavra !== "LIMPAR") return alert("Cancelado.");
-
         const btn = document.getElementById('btnLimpar');
         btn.innerText = "PROCESSANDO..."; btn.disabled = true;
-
         try {
             const snapshot = await db.ref("/historico/diario").once("value");
             const hist = snapshot.val();
             if (!hist) return alert("Sem dados.");
-
             const dataCorte = new Date();
             dataCorte.setFullYear(dataCorte.getFullYear() - 2);
             let cont = 0;
-
             for (const dStr in hist) {
                 if (new Date(dStr) < dataCorte) {
                     await db.ref(`/historico/diario/${dStr}`).remove();
@@ -322,6 +331,9 @@ document.getElementById("logoAdmin").onclick = () => {
     document.getElementById("cfgEmail").value = config.emailDestino;
     document.getElementById("cfgFreq").value = config.leiturasPorHora;
     document.getElementById("cfgTempoEmail").value = config.tempoEmail / 60000;
+    // Preenche novos campos no admin ao abrir
+    document.getElementById("cfgCliente").value = config.cliente || "";
+    document.getElementById("cfgLocal").value = config.local || "";
     cliques = 0;
   }
 };
@@ -334,7 +346,9 @@ function salvarConfig() {
     hMax: parseFloat(document.getElementById("hMax").value),
     emailDestino: document.getElementById("cfgEmail").value,
     leiturasPorHora: parseInt(document.getElementById("cfgFreq").value) || 20,
-    tempoEmail: (parseFloat(document.getElementById("cfgTempoEmail").value) || 10) * 60000
+    tempoEmail: (parseFloat(document.getElementById("cfgTempoEmail").value) || 10) * 60000,
+    cliente: document.getElementById("cfgCliente").value,
+    local: document.getElementById("cfgLocal").value
   };
   db.ref("/config_alertas").update(updates).then(() => { alert("Salvo!"); fecharAdmin(); });
 }
@@ -347,7 +361,15 @@ document.getElementById("btnLED").onclick = () => { db.ref("/led").get().then(s 
 auth.onAuthStateChanged(user => { 
   if (!user) window.location.replace("index.html"); 
   else {
-    db.ref("/config_alertas").on("value", s => { if(s.val()) { config = s.val(); document.getElementById("countEmailDisplay").innerText = config.contadorAlertas || 0; } });
+    db.ref("/config_alertas").on("value", s => { 
+        if(s.val()) { 
+            config = s.val(); 
+            document.getElementById("countEmailDisplay").innerText = config.contadorAlertas || 0;
+            // Atualiza exibição na tela principal
+            document.getElementById("dispCliente").innerText = config.cliente || "Não definido";
+            document.getElementById("dispLocal").innerText = config.local || "Não definido";
+        } 
+    });
     rodarDashboard(); 
   }
 });
