@@ -6,99 +6,146 @@
 <title>NewEnergy | Monitor Pro Intelligence</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-/* (SEU CSS ORIGINAL - NÃO ALTERADO) */
-:root { 
-  --brand-primary: #1a365d;    
-  --brand-accent: #007aff;     
-  --bg-body: #f1f5f9;          
-  --card-bg: #ffffff;
-  --text-main: #1e293b;
-  --text-muted: #64748b;
-  --on: #10b981;              
-  --off: #e11d48;              
-  --warn: #f59e0b;            
-  --shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05);
-}
-/* resto do CSS igual... */
+  :root { 
+    --brand-primary: #1a365d;    
+    --brand-accent: #007aff;     
+    --bg-body: #f1f5f9;          
+    --card-bg: #ffffff;
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --on: #10b981;              
+    --off: #e11d48;              
+    --warn: #f59e0b;            
+    --shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05);
+  }
+
+  body { 
+    margin: 0; font-family: 'Inter', sans-serif; 
+    background: var(--bg-body); color: var(--text-main); 
+    display: flex; justify-content: center; align-items: center; 
+    min-height: 100vh; padding: 15px;
+  }
+
+  .card { 
+    background: var(--card-bg); border-radius: 20px; padding: 35px; width: 100%; 
+    max-width: 440px; box-shadow: var(--shadow); 
+    border: 1px solid rgba(0,0,0,0.03); text-align: center; 
+    position: relative;
+  }
+
+  .header-main { position: relative; margin-bottom: 25px; }
+  .logo-principal { font-size: 18px; letter-spacing: 3px; font-weight: 800; cursor:pointer; }
+  .btn-logout { position:absolute; top:-15px; right:-15px; }
+
+  .status-container { margin-bottom: 20px; }
+
+  .gauges-container { display: flex; gap: 15px; margin-bottom: 25px; }
+
+  .gauge-box { flex: 1; background: #f8fafc; padding: 20px 10px; border-radius: 16px; }
+
+  .g-value { font-size: 24px; font-weight: 700; }
+
+  .btn-action { width: 100%; padding: 16px; border-radius: 12px; }
+
+  #adminPanel { display:none; position:absolute; top:0; left:0; width:100%; height:100%; background:#fff; z-index:100; padding:20px; }
+
+  .admin-input { width:100%; margin-bottom:10px; padding:10px; }
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gaugeJS/dist/gauge.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 
 <body>
 <div class="card">
 
-<!-- ADMIN -->
 <div id="adminPanel">
-  <div class="logo-principal" style="font-size: 14px; margin-bottom: 20px; color: var(--brand-accent);">Configurações de Engenharia</div>
+<label>Cliente</label>
+<input id="cfgCliente" class="admin-input">
 
-  <!-- (SEU ADMIN ORIGINAL) -->
+<label>Local</label>
+<input id="cfgLocal" class="admin-input">
 
-  <!-- 🔥 NOVO -->
-  <label>Cliente</label>
-  <input type="text" id="cfgCliente" class="admin-input">
-
-  <label>Local</label>
-  <input type="text" id="cfgLocal" class="admin-input">
-
-  <button id="btnSalvar" class="btn-action" style="background:var(--brand-primary); color:#fff;" onclick="salvarConfig()">Salvar Alterações</button>
+<button onclick="salvarConfig()">Salvar</button>
 </div>
 
 <div class="header-main">
-  <div class="logo-principal" id="logoAdmin">NewEnergy</div>
+<div class="logo-principal" id="logoAdmin">NewEnergy</div>
 </div>
 
 <div class="status-container">
-  <div id="status" class="status-badge st-online">
-    <div class="dot"></div> <span>SINCRONIZANDO...</span>
-  </div>
+<div id="status">MONITORANDO</div>
 </div>
 
-<!-- 🔥 NOVO BLOCO -->
-<div style="margin-bottom:15px; font-size:12px; color:var(--text-muted);">
-  <div><strong>Cliente:</strong> <span id="clienteNome">--</span></div>
-  <div><strong>Local:</strong> <span id="clienteLocal">--</span></div>
+<!-- ✅ CLIENTE E LOCAL -->
+<div style="margin-bottom:15px; font-size:12px;">
+<div><strong>Cliente:</strong> <span id="clienteNome">--</span></div>
+<div><strong>Local:</strong> <span id="clienteLocal">--</span></div>
 </div>
 
-<!-- (RESTO DO HTML IGUAL - GAUGES, BOTÕES, ETC) -->
+<div class="gauges-container">
+<div class="gauge-box">
+<canvas id="gTemp"></canvas>
+<div id="tempVal" class="g-value">--</div>
+</div>
+
+<div class="gauge-box">
+<canvas id="gHum"></canvas>
+<div id="humVal" class="g-value">--</div>
+</div>
+</div>
 
 </div>
 
 <script>
-emailjs.init("W2__8f2fBoqRPX9hX");
 
 firebase.initializeApp({
-  apiKey: "AIza...",
-  databaseURL: "https://oficial-688e8-default-rtdb.firebaseio.com/"
+  apiKey: "AIzaSy",
+  authDomain: "x",
+  databaseURL: "x"
 });
 
 const db = firebase.database();
-const auth = firebase.auth();
 
-let config = {
-  tMin: 15, tMax: 35, hMin: 30, hMax: 80,
-  intervalo: 2000,
-  emailDestino: "",
-  tempoEmail: 600000,
-  contadorAlertas: 0,
-  leiturasPorHora: 20,
+let config = {};
 
-  // 🔥 NOVO
-  cliente: "",
-  local: ""
-};
+let gT = new Gauge(document.getElementById("gTemp")).setOptions({});
+gT.maxValue = 60; gT.set(0);
 
+let gH = new Gauge(document.getElementById("gHum")).setOptions({});
+gH.maxValue = 100; gH.set(0);
+
+db.ref("/temp").on("value", s => {
+  let v = s.val();
+  gT.set(v);
+  document.getElementById("tempVal").innerText = v;
+});
+
+db.ref("/hum").on("value", s => {
+  let v = s.val();
+  gH.set(v);
+  document.getElementById("humVal").innerText = v;
+});
+
+/* 🔥 CARREGA CLIENTE E LOCAL */
+db.ref("/config_alertas").on("value", s => {
+  if(s.val()){
+    config = s.val();
+
+    document.getElementById("clienteNome").innerText = config.cliente || "--";
+    document.getElementById("clienteLocal").innerText = config.local || "--";
+  }
+});
+
+/* 🔥 ABRIR ADMIN */
 let cliques = 0;
-
 document.getElementById("logoAdmin").onclick = () => {
-  if(++cliques >= 5) {
-    document.getElementById("adminPanel").style.display = "flex";
+  if(++cliques >= 5){
+    document.getElementById("adminPanel").style.display="block";
 
-    // 🔥 NOVO
     document.getElementById("cfgCliente").value = config.cliente || "";
     document.getElementById("cfgLocal").value = config.local || "";
 
@@ -106,29 +153,17 @@ document.getElementById("logoAdmin").onclick = () => {
   }
 };
 
-function salvarConfig() {
-  const updates = {
-    tMin: config.tMin,
-    tMax: config.tMax,
-
-    // 🔥 NOVO
+/* 🔥 SALVAR */
+function salvarConfig(){
+  db.ref("/config_alertas").update({
     cliente: document.getElementById("cfgCliente").value,
     local: document.getElementById("cfgLocal").value
-  };
-
-  db.ref("/config_alertas").update(updates);
+  }).then(()=>{
+    alert("Salvo!");
+    document.getElementById("adminPanel").style.display="none";
+  });
 }
 
-db.ref("/config_alertas").on("value", s => {
-  if(s.val()){
-    config = s.val();
-
-    // 🔥 NOVO
-    document.getElementById("clienteNome").innerText = config.cliente || "--";
-    document.getElementById("clienteLocal").innerText = config.local || "--";
-  }
-});
 </script>
-
 </body>
 </html>
