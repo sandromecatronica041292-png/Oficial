@@ -4,7 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>NewEnergy | Monitor Pro Intelligence</title>
+
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
 <style>
   :root { 
     --brand-primary: #1a365d;    
@@ -18,7 +20,7 @@
     --warn: #f59e0b;            
     --shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05);
   }
-  
+
   body { 
     margin: 0; font-family: 'Inter', sans-serif; 
     background: var(--bg-body); color: var(--text-main); 
@@ -26,7 +28,7 @@
     min-height: 100vh; padding: 15px;
     background-image: radial-gradient(at 0% 0%, rgba(0, 122, 255, 0.03) 0, transparent 50%);
   }
-  
+
   .card { 
     background: var(--card-bg); border-radius: 20px; padding: 35px; width: 100%; 
     max-width: 440px; box-shadow: var(--shadow); 
@@ -39,7 +41,7 @@
     font-size: 18px; text-transform: uppercase; letter-spacing: 3px; font-weight: 800; 
     color: var(--brand-primary); cursor: pointer; transition: 0.3s;
   }
-  
+
   .btn-logout { 
     position: absolute; top: -15px; right: -15px; background: #fff1f2; 
     border: 1px solid #ffe4e6; color: var(--off); 
@@ -47,16 +49,18 @@
   }
 
   .status-container { margin-bottom: 30px; }
+
   .status-badge { 
     display: inline-flex; align-items: center; gap: 8px; 
     padding: 6px 16px; border-radius: 50px; font-size: 11px; 
     font-weight: 700; letter-spacing: 0.5px; border: 1px solid rgba(0,0,0,0.05);
   }
-  
+
   .dot { width: 8px; height: 8px; border-radius: 50%; }
+
   .st-online .dot { background: var(--on); box-shadow: 0 0 8px var(--on); animation: pulse 2s infinite; }
   .st-offline .dot { background: var(--off); }
-  
+
   @keyframes pulse {
     0% { opacity: 1; transform: scale(1); }
     50% { opacity: 0.5; transform: scale(1.2); }
@@ -72,31 +76,24 @@
   }
 
   .gauges-container { display: flex; gap: 15px; margin-bottom: 25px; }
+
   .gauge-box { 
     flex: 1; background: #f8fafc; 
     padding: 20px 10px; border-radius: 16px; border: 1px solid #f1f5f9; 
     display: flex; flex-direction: column; align-items: center;
   }
-  .gauge-box canvas { width: 150px !important; height: 90px !important; }
-  .g-title { font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 10px; }
+
   .g-value { font-size: 24px; font-weight: 700; color: var(--brand-primary); }
 
   .btn-action { 
     width: 100%; padding: 16px; border: none; border-radius: 12px; 
-    font-size: 14px; font-weight: 700; cursor: pointer; transition: 0.2s; 
-    margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;
+    font-size: 14px; font-weight: 700; cursor: pointer; 
   }
-  .btn-led.on { background: var(--brand-primary); color: #fff; box-shadow: 0 4px 12px rgba(26,54,93,0.2); }
-  .btn-led.off { background: #e2e8f0; color: var(--text-muted); }
-  
-  .btn-history { background: #fff; color: var(--brand-accent); border: 1.5px solid var(--brand-accent); }
-  .btn-history:hover { background: var(--brand-accent); color: #fff; }
 
-  #adminPanel { 
-    display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-    background: #ffffff; border-radius: 20px; padding: 30px; box-sizing: border-box; 
-    z-index: 100; flex-direction: column; overflow-y: auto; text-align: left;
-  }
+  .btn-led.on { background: var(--brand-primary); color: #fff; }
+  .btn-led.off { background: #e2e8f0; color: var(--text-muted); }
+
+  #alertMessage { min-height: 20px; font-size: 12px; margin-bottom: 15px; color: var(--off); font-weight: 600; }
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -104,13 +101,15 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gaugeJS/dist/gauge.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
 </head>
 
 <body>
+
 <div class="card">
 
   <div class="header-main">
-    <div class="logo-principal" id="logoAdmin">NewEnergy</div>
+    <div class="logo-principal">NewEnergy</div>
     <button class="btn-logout" onclick="fazerLogout()">Sair</button>
   </div>
 
@@ -122,13 +121,12 @@
 
   <div class="gauges-container">
     <div class="gauge-box">
-      <div class="g-title">Temperatura</div>
-      <canvas id="gTemp"></canvas>
+      <div>Temperatura</div>
       <div id="tempVal" class="g-value">--°C</div>
     </div>
+
     <div class="gauge-box">
-      <div class="g-title">Umidade</div>
-      <canvas id="gHum"></canvas>
+      <div>Umidade</div>
       <div id="humVal" class="g-value">--%</div>
     </div>
   </div>
@@ -136,11 +134,10 @@
   <div id="alertMessage"></div>
 
   <button id="btnLED" class="btn-action btn-led off">Conectando...</button>
+
 </div>
 
 <script>
-emailjs.init("W2__8f2fBoqRPX9hX");
-
 firebase.initializeApp({
   apiKey: "AIzaSyB5FnkQiFi3gn9Iup2KNcbrKxWd-0Jjo6Y",
   authDomain: "oficial-688e8.firebaseapp.com",
@@ -151,127 +148,46 @@ firebase.initializeApp({
 const db = firebase.database();
 const auth = firebase.auth();
 
-let config = { tMin: 15, tMax: 35, hMin: 30, hMax: 80, emailDestino: "", tempoEmail: 600000, contadorAlertas: 0 };
-let gT, gH, ultimaVezAlertado = 0;
+let ultimaAtualizacao = 0;
 
-let lastTemp = 0;
-let lastHum = 0;
+function rodar() {
 
-function rodarDashboard() {
+  // 🔥 CORREÇÃO PRINCIPAL DO OFFLINE
+  db.ref("/dados").on("value", snap => {
 
-  const gOpt = (col) => ({
-    angle: 0.15,
-    lineWidth: 0.2,
-    radiusScale: 0.9,
-    pointer: { length: 0.5, strokeWidth: 0.03, color: '#1a365d' },
-    colorStart: col,
-    colorStop: col,
-    strokeColor: '#e2e8f0',
-    highDpiSupport: true
-  });
+    const d = snap.val();
+    const ts = d?.ts;
 
-  gT = new Gauge(document.getElementById("gTemp")).setOptions(gOpt('#e11d48'));
-  gT.maxValue = 60;
-  gT.setMinValue(-10);
-
-  gH = new Gauge(document.getElementById("gHum")).setOptions(gOpt('#007aff'));
-  gH.maxValue = 100;
-  gH.setMinValue(0);
-
-  db.ref("/last_seen").on("value", snap => {
-    const v = snap.val();
-    if (!v) return;
-    const isOff = (Date.now() - (v * 1000)) > 25000;
+    const isOff = !ts || (Date.now()/1000 - ts) > 25;
 
     const st = document.getElementById("status");
-    st.innerHTML = isOff ? '<div class="dot"></div> SISTEMA OFFLINE' : '<div class="dot"></div> MONITORAMENTO ATIVO';
+
+    st.innerHTML = isOff
+      ? '<div class="dot"></div> SISTEMA OFFLINE'
+      : '<div class="dot"></div> MONITORAMENTO ATIVO';
+
     st.className = "status-badge " + (isOff ? "st-offline" : "st-online");
+
+    if (d?.temp != null) document.getElementById("tempVal").innerText = d.temp.toFixed(1) + "°C";
+    if (d?.hum != null) document.getElementById("humVal").innerText = d.hum.toFixed(1) + "%";
   });
 
   db.ref("/led").on("value", s => {
     const on = s.val() == 1;
     const b = document.getElementById("btnLED");
-    b.innerText = on ? "DESLIGAR ILUMINAÇÃO" : "LIGAR ILUMINAÇÃO";
+    b.innerText = on ? "DESLIGAR" : "LIGAR";
     b.className = "btn-action btn-led " + (on ? "on" : "off");
   });
-
-  db.ref("/temp").on("value", s => {
-    const v = parseFloat(s.val());
-    if (!isNaN(v)) {
-      lastTemp = v;
-      gT.set(v);
-      document.getElementById("tempVal").innerText = v.toFixed(1) + "°C";
-      analisarAlertas();
-    }
-  });
-
-  db.ref("/hum").on("value", s => {
-    const v = parseFloat(s.val());
-    if (!isNaN(v)) {
-      lastHum = v;
-      gH.set(v);
-      document.getElementById("humVal").innerText = v.toFixed(1) + "%";
-      analisarAlertas();
-    }
-  });
 }
 
-function analisarAlertas() {
-  const t = lastTemp;
-  const h = lastHum;
-
-  const msg = document.getElementById("alertMessage");
-  const erro = (t > config.tMax || t < config.tMin || h > config.hMax || h < config.hMin);
-
-  msg.innerText = erro ? "⚠️ ALERTA: PARÂMETROS FORA DA NORMA" : "";
-
-  if (erro && (Date.now() - ultimaVezAlertado > config.tempoEmail)) {
-    enviarAlertaEmail(t, h);
-  }
+function fazerLogout(){
+  auth.signOut().then(()=>location.reload());
 }
 
-function enviarAlertaEmail(t, h) {
-  if (!config.emailDestino) return;
-
-  emailjs.send("service_kx31f3s", "template_mqzi3at", {
-    equipamento: "NewEnergy Monitor Pro",
-    tipo: "Anomalia Detectada",
-    valor: `Temp: ${t}°C | Hum: ${h}%`,
-    data: new Date().toLocaleString(),
-    para_email: config.emailDestino
-  }).then(() => {
-
-    ultimaVezAlertado = Date.now();
-
-    db.ref("/config_alertas/contadorAlertas").transaction(val => {
-      return (val || 0) + 1;
-    });
-
-  });
-}
-
-document.getElementById("btnLED").onclick = () => {
-  db.ref("/led").get().then(s => {
-    db.ref("/led").set(s.val() == 1 ? 0 : 1);
-  });
-};
-
-auth.onAuthStateChanged(user => {
-  if (!user) window.location.replace("index.html");
-  else {
-    db.ref("/config_alertas").on("value", s => {
-      if (s.val()) {
-        config = s.val();
-      }
-    });
-
-    rodarDashboard();
-  }
+auth.onAuthStateChanged(u=>{
+  if(!u) location.href="index.html";
+  else rodar();
 });
-
-function fazerLogout() {
-  auth.signOut().then(() => window.location.replace("index.html"));
-}
 </script>
 
 </body>
