@@ -233,22 +233,12 @@ function rodarDashboard() {
   gH = new Gauge(document.getElementById("gHum")).setOptions(gOpt('#007aff'));
   gH.maxValue = 100; gH.setMinValue(0); gH.set(0);
 
- db.ref("/last_seen").on("value", snap => {
-  const v = snap.val();
-
-  const lastSeen = Number(v);
-
-  // se não existir dado, não acusa offline agressivo
-  const isOff = !lastSeen || (Date.now() - (lastSeen * 1000) > 60000);
-
-  const st = document.getElementById("status");
-
-  st.innerHTML = isOff
-    ? '<div class="dot"></div> SISTEMA OFFLINE'
-    : '<div class="dot"></div> MONITORAMENTO ATIVO';
-
-  st.className = "status-badge " + (isOff ? "st-offline" : "st-online");
-});
+  db.ref("/last_seen").on("value", snap => {
+    const isOff = (Date.now() - (snap.val() * 1000)) > 25000;
+    const st = document.getElementById("status");
+    st.innerHTML = isOff ? '<div class="dot"></div> SISTEMA OFFLINE' : '<div class="dot"></div> MONITORAMENTO ATIVO';
+    st.className = "status-badge " + (isOff ? "st-offline" : "st-online");
+  });
 
   db.ref("/led").on("value", s => {
     const on = s.val() == 1;
